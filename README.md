@@ -94,4 +94,4 @@ pre-commit run --all-files
 pytest
 ```
 
-CI fails if any document, image or spreadsheet file is committed, or if the package imports anything from a host application.
+CI fails if any document, image or spreadsheet file is committed, or if the package imports anything from a host application. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to make a change.
