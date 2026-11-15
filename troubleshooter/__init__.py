@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
@@ -199,6 +200,26 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         )
 
+        files = item.get("file")
+        files = files if isinstance(files, list) else [files]
+        if item["type"] in ("document", "photo") and any(
+            isinstance(f, Path) and not f.is_file() for f in files
+        ):
+            text = f"*{item['title']}*\n\n📄 This document isn't available right now."
+            if query.message.text:
+                await query.edit_message_text(
+                    text, parse_mode="Markdown", reply_markup=kb
+                )
+            else:
+                await close_message(query)
+                await context.bot.send_message(
+                    query.message.chat_id,
+                    text,
+                    parse_mode="Markdown",
+                    reply_markup=kb,
+                )
+            return
+
         if item["type"] == "text":
             await query.edit_message_text(
                 caption, parse_mode="Markdown", reply_markup=kb
@@ -207,12 +228,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif item["type"] == "document":
             await close_message(query)
 
-            docs = item["file"]
-            if not isinstance(docs, list):
-                docs = [docs]
-
-            for i, doc in enumerate(docs):
-                is_last = i == len(docs) - 1
+            for i, doc in enumerate(files):
+                is_last = i == len(files) - 1
                 await query.message.reply_document(
                     document=doc,
                     caption=caption if is_last else None,
