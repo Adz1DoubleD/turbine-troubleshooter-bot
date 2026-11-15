@@ -329,7 +329,13 @@ async def test_content_is_loaded_from_the_database(
 
     monkeypatch.setattr(SETTINGS, "files_dir", Path("/media"))
     cur = make_cursor(
-        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}, {"t": "io1"}],
+        fetchone=[
+            {"t": "content"},
+            {"t": "codes"},
+            {"t": "users"},
+            {"t": "parts"},
+            {"t": "io1"},
+        ],
         fetchall=[content_rows(**FULL_CONTENT), [], [], [], [], []],
     )
     patch_session(ts, cur)
@@ -356,7 +362,7 @@ async def test_content_falls_back_to_setup_when_table_incomplete(
     original = SETTINGS.content
     monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
     cur = make_cursor(
-        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}],
+        fetchone=[{"t": "content"}, {"t": "codes"}, {"t": "users"}, {"t": "parts"}],
         fetchall=[rows, [], [], [], []],
     )
     patch_session(ts, cur)
@@ -410,7 +416,7 @@ async def test_no_content_anywhere_gives_empty_menus(
     reported = MagicMock()
     monkeypatch.setattr(ts.sentry_sdk, "capture_message", reported)
     cur = make_cursor(
-        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}],
+        fetchone=[{"t": "content"}, {"t": "codes"}, {"t": "users"}, {"t": "parts"}],
         fetchall=[
             [],
             [{"id": 1, "code": "E1", "advice": "a", "parts": "p"}],
@@ -428,3 +434,16 @@ async def test_no_content_anywhere_gives_empty_menus(
     assert SETTINGS.content.IO_BOARDS == {}
     assert "E1" in app.bot_data["codes"]
     assert "missing" in reported.call_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_content_table_created_only_when_missing(make_cursor, patch_session):
+    cur = make_cursor(fetchone=[None, {"t": "codes"}, {"t": "users"}, {"t": "parts"}])
+    patch_session(ts, cur)
+
+    await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
+
+    sql = [" ".join(c.args[0].split()) for c in cur.execute.call_args_list]
+    assert sql[0] == "SHOW TABLES LIKE 'content'"
+    assert sql[1].startswith("CREATE TABLE content")
+    assert not any("IF NOT EXISTS" in s for s in sql)

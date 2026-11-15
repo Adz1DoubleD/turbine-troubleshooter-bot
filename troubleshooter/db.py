@@ -115,12 +115,15 @@ async def init_troubleshooter_db(application):
 
     try:
         async with db_session() as cur:
-            await cur.execute("""
-                CREATE TABLE IF NOT EXISTS content (
-                    name VARCHAR(64) PRIMARY KEY,
-                    data MEDIUMTEXT NOT NULL
-                ) DEFAULT CHARSET=utf8mb4
-            """)
+            await cur.execute("SHOW TABLES LIKE 'content'")
+            if not await cur.fetchone():
+                print("🔄 Creating Troubleshooter Content table...")
+                await cur.execute("""
+                    CREATE TABLE content (
+                        name VARCHAR(64) PRIMARY KEY,
+                        data MEDIUMTEXT NOT NULL
+                    ) DEFAULT CHARSET=utf8mb4
+                """)
             await cur.execute("SELECT name, data FROM content")
             stored = {
                 r["name"]: content_from_json(r["data"]) for r in await cur.fetchall()
