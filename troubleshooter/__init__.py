@@ -11,7 +11,7 @@ from telegram.ext import (
     filters,
 )
 
-from troubleshooter.db import user_add
+from troubleshooter.db import close_db, init_troubleshooter_db, user_add
 from troubleshooter.helpers import (
     close_message,
     error_handler,
@@ -27,7 +27,7 @@ from .blocks.admin import codes as admin_codes
 from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
 from .blocks.user import LOCKED_MARKUP, LOCKED_TEXT
-from .settings import SETTINGS
+from .settings import SETTINGS, setup
 from .tools import (
     get_troubleshooter_content,
     send_notification_troubleshooter,
@@ -409,20 +409,24 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-async def start_troubleshooter_bot(main_app):
+async def start_troubleshooter_bot(share_with=None, **options):
     global application
+    setup(**options)
     application = Application.builder().token(SETTINGS.token).build()
-
-    application.bot_data["codes"] = main_app.bot_data.get("codes", {})
-    application.bot_data["parts"] = main_app.bot_data.get("parts", [])
-    application.bot_data["io_boards"] = main_app.bot_data.get("io_boards", {})
-    application.bot_data["troubleshooter_admins"] = main_app.bot_data.get(
-        "troubleshooter_admins", {}
-    )
-    application.bot_data["troubleshooter_approved"] = main_app.bot_data.get(
-        "troubleshooter_approved", set()
-    )
     application.bot_data["is_troubleshooter"] = True
+
+    await init_troubleshooter_db(application)
+    shared = {
+        "codes": {},
+        "parts": [],
+        "io_boards": {},
+        "troubleshooter_admins": {},
+        "troubleshooter_approved": set(),
+    }
+    for key, default in shared.items():
+        value = application.bot_data.setdefault(key, default)
+        if share_with is not None:
+            share_with.bot_data[key] = value
 
     application.add_handler(CommandHandler("start", command_handler))
     application.add_handler(CallbackQueryHandler(callback_handler))
@@ -439,3 +443,16 @@ async def start_troubleshooter_bot(main_app):
     await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
     print("🚀 Troubleshooting Bot initialized and polling")
     return application
+
+
+async def stop_troubleshooter_bot():
+    global application
+    if application is not None:
+        if application.updater and application.updater.running:
+            await application.updater.stop()
+        if application.running:
+            await application.stop()
+        if application._initialized:
+            await application.shutdown()
+        application = None
+    await close_db()
