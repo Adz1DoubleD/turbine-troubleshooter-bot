@@ -11,15 +11,7 @@ from troubleshooter import start_troubleshooter_bot
 from troubleshooter.db import close_db, init_troubleshooter_db
 from troubleshooter.settings import setup
 
-setup(
-    name="Acme Troubleshooter",
-    wtg_prefix="WT",
-    token=BOT_TOKEN,
-    owner_id=OWNER_CHAT_ID,
-    alerts_chat_id=ALERTS_CHAT_ID,
-    timezone="Europe/London",
-    files_dir=Path("media"),
-)
+setup(files_dir=Path("media"))
 
 await init_troubleshooter_db(main_application)
 await start_troubleshooter_bot(main_application)
@@ -27,21 +19,23 @@ await start_troubleshooter_bot(main_application)
 await close_db()
 ```
 
-| Setting | Purpose |
-|---|---|
-| `name` | Shown in menus and messages ("*name* Bot") |
-| `wtg_prefix` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
-| `token` | Telegram bot token |
-| `owner_id` | Telegram ID of the owner (approves access and admins) |
-| `alerts_chat_id` | Chat for new-user, access-request and change notifications |
-| `timezone` | Used for edit timestamps |
-| `noise_filters` | Error messages to ignore (network blips etc.) |
-| `notify_settings` | Dict with `troubleshooter_notify_added/edited/deleted` toggles |
-| `content` | Fallback content when the database has none (see below) |
-| `files_dir` | Folder that `file:` references in the content resolve against |
-| `cefas_buoy` | Cefas WaveNet buoy ID for sea state (e.g. `ABCDEFGH`); enables 🌦 Work Weather |
-| `windquest_api_key`, `windquest_api_token` | WindQuest API credentials for wind, lightning and tides |
-| `windquest_location` | Preferred WindQuest forecast location name (falls back to the main location) |
+`setup()` reads the settings below from the environment; any keyword passed to `setup()` overrides the environment.
+
+| Setting | Environment variable | Purpose |
+|---|---|---|
+| `name` | `TROUBLESHOOTER_NAME` | Shown in menus and messages ("*name* Bot"). Default `Troubleshooter` |
+| `wtg_prefix` | `TROUBLESHOOTER_WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
+| `token` | `TROUBLESHOOTER_BOT_TOKEN` | Telegram bot token |
+| `owner_id` | `TROUBLESHOOTER_OWNER_ID` | Telegram ID of the owner (approves access and admins) |
+| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Chat for new-user, access-request and change notifications |
+| `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
+| `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Work Weather |
+| `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
+| `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
+| `files_dir` | — | Folder that `file:` references in the content resolve against |
+| `notify_settings` | — | Dict with `troubleshooter_notify_added/edited/deleted` toggles |
+| `content` | — | Fallback content when the database has none (see below) |
+| `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
 
