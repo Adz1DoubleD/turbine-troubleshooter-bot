@@ -277,21 +277,29 @@ async def test_part_update_with_editor_appends_history(make_cursor, patch_sessio
     assert params == ("new", "@bob", "2026-07-02 00:30", 7)
 
 
-def test_uses_its_own_database_when_set(monkeypatch):
-    import importlib
+@pytest.mark.asyncio
+async def test_database_url_is_read_when_connecting(monkeypatch):
+    calls = []
+
+    async def create_pool(**kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(ts.aiomysql, "create_pool", create_pool)
+    monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
 
     monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@ts-host:3306/tsdb")
-    monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
-    own = importlib.reload(ts).db_url
+    monkeypatch.setattr(ts, "_pool", None)
+    await ts.get_db_pool()
 
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
-    fallback = importlib.reload(ts).db_url
+    monkeypatch.setattr(ts, "_pool", None)
+    await ts.get_db_pool()
 
-    monkeypatch.undo()
-    importlib.reload(ts)
-
-    assert (own.hostname, own.path) == ("ts-host", "/tsdb")
-    assert (fallback.hostname, fallback.path) == ("main-host", "/maindb")
+    assert [(c["host"], c["db"]) for c in calls] == [
+        ("ts-host", "tsdb"),
+        ("main-host", "maindb"),
+    ]
 
 
 @pytest.mark.asyncio

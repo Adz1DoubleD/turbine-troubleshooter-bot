@@ -14,9 +14,6 @@ import sentry_sdk
 
 from troubleshooter.settings import SETTINGS
 
-db_url = urlparse(
-    os.environ.get("TROUBLESHOOTER_DB_URL") or os.environ.get("JAWSDB_URL") or ""
-)
 EXPORT_TABLES = ("codes", "parts", "users", "io_boards")
 CONTENT_ITEMS = {"MODULES_MAP", "WTG_MAP", "IO_BOARDS", "PART_ACCESSORIES"}
 FILE_PREFIX = "file:"
@@ -34,6 +31,11 @@ async def get_db_pool():
     global _pool
     async with _pool_lock:
         if _pool is None:
+            db_url = urlparse(
+                os.environ.get("TROUBLESHOOTER_DB_URL")
+                or os.environ.get("JAWSDB_URL")
+                or ""
+            )
             _pool = await aiomysql.create_pool(
                 host=db_url.hostname,
                 user=db_url.username,
