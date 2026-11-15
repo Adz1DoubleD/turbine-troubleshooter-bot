@@ -375,6 +375,17 @@ async def test_set_user_roles_no_admins_configured():
     assert context.user_data["is_admin"] is False
 
 
+@pytest.mark.asyncio
+async def test_set_user_roles_owner_is_admin(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "owner_id", "999")
+    context = SimpleNamespace(user_data={}, bot_data={})
+
+    await notify.set_user_roles(context, 999)
+
+    assert context.user_data["is_admin"] is True
+    assert context.user_data["is_approved"] is True
+
+
 @pytest.mark.parametrize(
     "user_data,bot_data,expected",
     [
