@@ -55,7 +55,9 @@ The menus, turbine map, IO boards and part-search hints are loaded from the `con
 
 ## Run it yourself
 
-You need Python 3.12+, MySQL (Docker is easiest) and your own test bot from [@BotFather](https://t.me/BotFather). Your copy uses its own bot and database, so it never touches anyone else's.
+You need Python 3.12+, a MySQL database and your own test bot from [@BotFather](https://t.me/BotFather). Your copy uses its own bot and database, so it never touches anyone else's.
+
+Any MySQL works (a local install, or a free hosted one such as JawsDB). The `docker run` line below is the quickest way if you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed; skip it otherwise.
 
 ```bash
 git clone https://github.com/Adz1DoubleD/troubleshooter-bot
@@ -68,10 +70,6 @@ docker run -d --name ts-db -p 3306:3306 -e MYSQL_ROOT_PASSWORD=dev -e MYSQL_DATA
 
 cp .env.example .env               # Windows: copy .env.example .env
 ```
-
-On Windows:
-- If `python` says "Python was not found" (the Microsoft Store shortcut), create the venv with the launcher instead: `py -3.13 -m venv .venv`.
-- If `activate` says "running scripts is disabled", skip it and call the venv's Python directly: `.venv\Scripts\python -m pip install -e ".[dev]"` and `.venv\Scripts\python -m troubleshooter`.
 
 In `.env`, set these three (the bot refuses to start and lists any that are missing):
 - `TROUBLESHOOTER_BOT_TOKEN`: your test bot's token.
