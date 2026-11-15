@@ -2,24 +2,31 @@
 
 A Telegram bot for field technicians: search fault codes and spare parts, look up turbine info and IO board pin-outs, and browse reference content (text, documents, photos). Access is by approval, with admins who can add and edit codes and parts.
 
-It is a Python package that a host application installs and starts. All site-specific content and documents are supplied by the host at runtime; nothing private lives in this repo.
+It is a Python package that a host application installs and starts, or that runs on its own. All site-specific content and documents are supplied by the host at runtime; nothing private lives in this repo.
 
 ## Use
 
+Inside a host application:
+
 ```python
-from troubleshooter import start_troubleshooter_bot
-from troubleshooter.db import close_db, init_troubleshooter_db
-from troubleshooter.settings import setup
+from troubleshooter import start_troubleshooter_bot, stop_troubleshooter_bot
 
-setup(files_dir=Path("media"))
-
-await init_troubleshooter_db(main_application)
-await start_troubleshooter_bot(main_application)
+await start_troubleshooter_bot(share_with=main_application, files_dir=Path("media"))
 ...
-await close_db()
+await stop_troubleshooter_bot()
 ```
 
-`setup()` reads the settings below from the environment; any keyword passed to `setup()` overrides the environment.
+`share_with` is optional: pass the host's `Application` when the host shows the troubleshooter menus too, so both bots use the same loaded codes, parts and users.
+
+On its own (reads a `.env` in the current folder):
+
+```bash
+python -m troubleshooter
+```
+
+Standalone also uses `TROUBLESHOOTER_FILES_DIR` (default `media`) and `TROUBLESHOOTER_SENTRY_DSN` (Sentry is off when unset).
+
+The settings below are read from the environment; any keyword passed to `start_troubleshooter_bot()` overrides the environment.
 
 | Setting | Environment variable | Purpose |
 |---|---|---|
