@@ -11,7 +11,10 @@ SETTINGS = SimpleNamespace(
     notify_settings={},
     content=None,
     files_dir=None,
-    weather_button=None,
+    cefas_buoy=None,
+    windquest_api_key=None,
+    windquest_api_token=None,
+    windquest_location=None,
 )
 
 

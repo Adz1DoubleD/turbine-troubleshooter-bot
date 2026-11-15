@@ -39,7 +39,9 @@ await close_db()
 | `notify_settings` | Dict with `troubleshooter_notify_added/edited/deleted` toggles |
 | `content` | Fallback content when the database has none (see below) |
 | `files_dir` | Folder that `file:` references in the content resolve against |
-| `weather_button` | Optional async handler; shows a 🌦 Weather button when set |
+| `cefas_buoy` | Cefas WaveNet buoy ID for sea state (e.g. `ABCDEFGH`); enables 🌦 Work Weather |
+| `windquest_api_key`, `windquest_api_token` | WindQuest API credentials for wind, lightning and tides |
+| `windquest_location` | Preferred WindQuest forecast location name (falls back to the main location) |
 
 ## Database
 

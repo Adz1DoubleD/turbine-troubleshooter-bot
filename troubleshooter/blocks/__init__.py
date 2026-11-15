@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
+from .. import weather
 from ..settings import SETTINGS
 from ..tools import get_troubleshooter_content
 
@@ -27,7 +28,7 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
 
     for i in range(0, len(buttons), 2):
         kb.append(buttons[i : i + 2])
-    if SETTINGS.weather_button and context.bot_data.get("is_troubleshooter"):
+    if weather.is_enabled() and context.bot_data.get("is_troubleshooter"):
         kb.append(
             [InlineKeyboardButton("🌦 Weather", callback_data="troubleshooter:weather")]
         )

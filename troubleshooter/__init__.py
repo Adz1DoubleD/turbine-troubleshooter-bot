@@ -19,6 +19,7 @@ from troubleshooter.helpers import (
     error_kb,
 )
 
+from . import weather
 from .blocks import admin as admin_menu
 from .blocks import codes, handle_block, io_boards, parts, user, wtg
 from .blocks.admin import broadcast as admin_broadcast
@@ -238,8 +239,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("troubleshooter:code_search:"):
         await codes.button_page(update, context)
 
-    elif SETTINGS.weather_button and data.startswith("troubleshooter:weather"):
-        await SETTINGS.weather_button(update, context)
+    elif weather.is_enabled() and data.startswith("troubleshooter:weather"):
+        await weather.handle_button(update, context)
 
     elif data == "troubleshooter:wtg_search":
         await wtg.button_search(update, context)
