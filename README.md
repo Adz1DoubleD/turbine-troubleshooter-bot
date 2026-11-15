@@ -95,3 +95,7 @@ pytest
 ```
 
 CI fails if any document, image or spreadsheet file is committed, or if the package imports anything from a host application. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to make a change.
+
+## Licence
+
+[MIT](LICENSE). The licence covers the code only; site content supplied by a host is not part of this repository.
