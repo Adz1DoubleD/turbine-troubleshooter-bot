@@ -1,0 +1,34 @@
+name: Bug report
+description: Something in the bot doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Don't paste real fault codes, part numbers, turbine details, documents, tokens or database URLs. Use made-up examples.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Send /start
+        2. Tap ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error output
+      description: Any traceback from the terminal, with tokens and URLs removed.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release tag you're running, e.g. v0.5.4.
