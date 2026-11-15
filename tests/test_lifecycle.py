@@ -22,7 +22,81 @@ def fake_app(monkeypatch):
     monkeypatch.setattr(troubleshooter.Application, "builder", lambda: builder)
     monkeypatch.setattr(troubleshooter, "close_db", AsyncMock())
     monkeypatch.setattr(troubleshooter, "application", None)
+    monkeypatch.setattr(SETTINGS, "owner_id", "42")
+    monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@db-host:3306/ts")
+    app.builder = builder
     return app
+
+
+@pytest.mark.asyncio
+async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
+    monkeypatch.setattr(SETTINGS, "token", None)
+    monkeypatch.setattr(SETTINGS, "owner_id", None)
+    monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
+    monkeypatch.delenv("JAWSDB_URL", raising=False)
+    for var in ("TROUBLESHOOTER_BOT_TOKEN", "TROUBLESHOOTER_OWNER_ID"):
+        monkeypatch.delenv(var, raising=False)
+
+    with pytest.raises(ValueError) as error:
+        await troubleshooter.start_troubleshooter_bot()
+
+    assert str(error.value) == (
+        "Troubleshooter needs these settings: TROUBLESHOOTER_BOT_TOKEN, "
+        "TROUBLESHOOTER_OWNER_ID, TROUBLESHOOTER_DB_URL"
+    )
+    fake_app.builder.token.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_main_db_url_counts_as_database(monkeypatch, fake_app):
+    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
+    monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/main")
+
+    assert await troubleshooter.start_troubleshooter_bot() is fake_app
+
+
+@pytest.mark.asyncio
+async def test_alerts_go_to_owner_when_unset(monkeypatch, fake_app):
+    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.setattr(SETTINGS, "alerts_chat_id", None)
+    monkeypatch.delenv("TROUBLESHOOTER_ALERTS_CHAT_ID", raising=False)
+
+    await troubleshooter.start_troubleshooter_bot()
+
+    assert SETTINGS.alerts_chat_id == "42"
+
+
+@pytest.mark.asyncio
+async def test_alerts_chat_kept_when_set(monkeypatch, fake_app):
+    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+
+    await troubleshooter.start_troubleshooter_bot(alerts_chat_id="-100")
+
+    assert SETTINGS.alerts_chat_id == "-100"
+
+
+@pytest.mark.asyncio
+async def test_standalone_prints_missing_settings_without_traceback(
+    monkeypatch, capsys
+):
+    import troubleshooter.__main__ as standalone
+
+    monkeypatch.setattr(standalone, "load_dotenv", lambda: None)
+    monkeypatch.setattr(standalone.sentry_sdk, "init", lambda **kwargs: None)
+    monkeypatch.setattr(
+        standalone,
+        "start_troubleshooter_bot",
+        AsyncMock(side_effect=ValueError("Troubleshooter needs these settings: X")),
+    )
+    stop = AsyncMock()
+    monkeypatch.setattr(standalone, "stop_troubleshooter_bot", stop)
+
+    await standalone.main()
+
+    out = capsys.readouterr().out
+    assert "❌ Troubleshooter needs these settings: X. Add them to .env" in out
+    stop.assert_not_awaited()
 
 
 @pytest.mark.asyncio
