@@ -69,11 +69,22 @@ docker run -d --name ts-db -p 3306:3306 -e MYSQL_ROOT_PASSWORD=dev -e MYSQL_DATA
 cp .env.example .env               # Windows: copy .env.example .env
 ```
 
-In `.env`, set `TROUBLESHOOTER_BOT_TOKEN` to your test bot's token and `TROUBLESHOOTER_OWNER_ID` to your Telegram user ID (message [@userinfobot](https://t.me/userinfobot) to find it). Everything else is optional. Then:
+On Windows:
+- If `python` says "Python was not found" (the Microsoft Store shortcut), create the venv with the launcher instead: `py -3.13 -m venv .venv`.
+- If `activate` says "running scripts is disabled", skip it and call the venv's Python directly: `.venv\Scripts\python -m pip install -e ".[dev]"` and `.venv\Scripts\python -m troubleshooter`.
+
+In `.env`, set:
+- `TROUBLESHOOTER_BOT_TOKEN`: your test bot's token.
+- `TROUBLESHOOTER_OWNER_ID`: your Telegram user ID (message [@userinfobot](https://t.me/userinfobot) to find it).
+- `TROUBLESHOOTER_ALERTS_CHAT_ID`: where access requests, feedback and change notices go. Use your own user ID while testing.
+
+Everything else is optional. Then:
 
 ```bash
 python -m troubleshooter
 ```
+
+Run your own copy on its own bot token: a token can only be used by one running bot at a time, so sharing the live one gives "Conflict" errors.
 
 Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and while the database has no content the menus use the made-up [`example_content.py`](troubleshooter/example_content.py). Add codes and parts from **Admin Panel → Add Code / Add Part**. Stop with Ctrl+C.
 
