@@ -333,23 +333,29 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown",
                 )
 
-    elif admin and data == "troubleshooter:admin_list":
-        await admin_users.button_admin_list(update, context)
-
     elif admin and data.startswith("troubleshooter:user_list"):
         await admin_users.button_users_list(update, context)
 
-    elif admin and data.startswith("troubleshooter:admin_revoke:"):
-        await admin_users.button_admin_revoke(update, context)
+    elif admin and data.startswith("troubleshooter:user:"):
+        await admin_users.button_user_card(update, context)
+
+    elif admin and data.startswith("troubleshooter:user_act:"):
+        await admin_users.button_user_action(update, context)
+
+    elif admin and data.startswith("troubleshooter:user_do:"):
+        await admin_users.button_user_do(update, context)
+
+    elif admin and data.startswith("troubleshooter:pending"):
+        await admin_users.button_pending(update, context)
+
+    elif admin and data == "troubleshooter:user_search":
+        await admin_users.button_user_search(update, context)
+
+    elif admin and data == "troubleshooter:export_menu":
+        await admin_menu.button_export_menu(update, context)
 
     elif admin and data.startswith("export:"):
         await admin_menu.button_export(update, context)
-
-    elif admin and data == "troubleshooter:access_list":
-        await admin_users.button_access_list(update, context)
-
-    elif admin and data.startswith("troubleshooter:access_revoke:"):
-        await admin_users.button_access_revoke(update, context)
 
     elif admin and data.startswith("troubleshooter:notify_users"):
         await admin_menu.button_notify(update, context)
@@ -424,6 +430,9 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif state == "troubleshooter:feedback":
         await user.handle_feedback(update, context, text)
+
+    elif admin and state == "troubleshooter:user_search":
+        await admin_users.handle_user_search(update, context, text)
 
     elif state == "troubleshooter:broadcast":
         await admin_broadcast.handle_broadcast(update, context, text)

@@ -38,6 +38,35 @@ async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+EXPORT_LABELS = {
+    "codes": "Codes",
+    "parts": "Spare Parts",
+    "io_boards": "IO Boards",
+    "users": "Users",
+}
+
+
+async def button_export_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not user_is_admin(context):
+        await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
+        return
+
+    kb = [
+        [InlineKeyboardButton(f"📤 {label}", callback_data=f"export:{table}")]
+        for table, label in EXPORT_LABELS.items()
+    ]
+    kb.append(
+        [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:admin_menu")]
+    )
+
+    await query.edit_message_text(
+        "📤 *Export*\n\nPick a table to download as CSV:",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(kb),
+    )
+
+
 NOTIFY_LABELS = {"added": "➕ Added", "edited": "✏️ Edited", "deleted": "🗑️ Deleted"}
 
 
@@ -93,35 +122,24 @@ async def handle_block(
     text = status or "⚙️ *Admin Panel*\n\nSelect an option below:"
 
     user = update.effective_user
+    owner = bool(user and is_owner(user.id))
+
+    pending = sum(
+        len(context.bot_data.get(f"pending_{kind}_requests", {}))
+        for kind in ("access", "admin")
+    )
+    users_label = (
+        f"👥 Users (⏳ {pending} pending)" if owner and pending else "👥 Users"
+    )
 
     kb = [
         [InlineKeyboardButton("➕ Add Code", callback_data="troubleshooter:code_add")],
         [InlineKeyboardButton("🔩 Add Part", callback_data="troubleshooter:part_add")],
-        [
-            InlineKeyboardButton(
-                "👤 View Users", callback_data="troubleshooter:user_list"
-            )
-        ],
-        [InlineKeyboardButton("📤 Export Codes", callback_data="export:codes")],
-        [InlineKeyboardButton("📤 Export Spare Parts", callback_data="export:parts")],
-        [InlineKeyboardButton("📤 Export IO Boards", callback_data="export:io_boards")],
+        [InlineKeyboardButton(users_label, callback_data="troubleshooter:user_list")],
+        [InlineKeyboardButton("📤 Export", callback_data="troubleshooter:export_menu")],
     ]
 
-    if user and is_owner(user.id):
-        kb.append(
-            [
-                InlineKeyboardButton(
-                    "⚙️ Manage Admins", callback_data="troubleshooter:admin_list"
-                )
-            ]
-        )
-        kb.append(
-            [
-                InlineKeyboardButton(
-                    "🔑 Manage Access", callback_data="troubleshooter:access_list"
-                )
-            ]
-        )
+    if owner:
         kb.append(
             [
                 InlineKeyboardButton(

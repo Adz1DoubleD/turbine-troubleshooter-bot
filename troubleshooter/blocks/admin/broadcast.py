@@ -2,11 +2,13 @@ import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import users_get
+from troubleshooter.db import user_get, users_get
 from troubleshooter.helpers import escape_markdown, is_owner
 
 from ...tools import send_notification_troubleshooter
 from . import handle_block
+
+PICKER_PAGE_SIZE = 20
 
 
 async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -54,6 +56,11 @@ async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if choice == "choose":
         users = await users_get()
+        users.sort(key=lambda u: (not u["username"], (u["username"] or "").lower()))
+        pages = max((len(users) - 1) // PICKER_PAGE_SIZE + 1, 1)
+        page = int(parts[3]) if len(parts) > 3 and parts[3].isdigit() else 0
+        page = min(page, pages - 1)
+        shown = users[page * PICKER_PAGE_SIZE : (page + 1) * PICKER_PAGE_SIZE]
 
         buttons = [
             InlineKeyboardButton(
@@ -61,15 +68,35 @@ async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{'@' + u['username'] if u['username'] else u['user_id']}",
                 callback_data=f"troubleshooter:broadcast:user:{u['user_id']}",
             )
-            for u in users
+            for u in shown
         ]
         kb = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
+        nav = []
+        if page > 0:
+            nav.append(
+                InlineKeyboardButton(
+                    "◀️ Prev",
+                    callback_data=f"troubleshooter:broadcast:choose:{page - 1}",
+                )
+            )
+        if page < pages - 1:
+            nav.append(
+                InlineKeyboardButton(
+                    "Next ▶️",
+                    callback_data=f"troubleshooter:broadcast:choose:{page + 1}",
+                )
+            )
+        if nav:
+            kb.append(nav)
         kb.append(
             [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:broadcast")]
         )
 
+        text = "👤 *Choose a user:*" if users else "👤 No users found."
+        if pages > 1:
+            text += f"\n\nPage {page + 1} of {pages}"
         await query.edit_message_text(
-            "👤 *Choose a user:*" if users else "👤 No users found.",
+            text,
             reply_markup=InlineKeyboardMarkup(kb),
             parse_mode="Markdown",
         )
@@ -78,9 +105,7 @@ async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if choice == "user":
         audience = int(parts[3])
         try:
-            match = next(
-                (u for u in await users_get() if u["user_id"] == audience), None
-            )
+            match = await user_get(audience)
         except Exception as e:
             sentry_sdk.capture_exception(e)
             match = None

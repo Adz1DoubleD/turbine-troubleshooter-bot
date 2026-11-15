@@ -114,6 +114,7 @@ async def init_troubleshooter_db(application):
     io_boards = {}
     admins = {}
     parts = []
+    requests = {"access": {}, "admin": {}}
 
     try:
         async with db_session() as cur:
@@ -276,11 +277,30 @@ async def init_troubleshooter_db(application):
                 r["name"]: int(r["value"]) for r in await cur.fetchall()
             }
 
+            await cur.execute("SHOW TABLES LIKE 'requests'")
+            if not await cur.fetchone():
+                print("🔄 Creating Troubleshooter Requests table...")
+                await cur.execute("""
+                    CREATE TABLE requests (
+                        user_id BIGINT PRIMARY KEY,
+                        kind VARCHAR(10) NOT NULL,
+                        name VARCHAR(255) DEFAULT NULL,
+                        requested_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+            await cur.execute("SELECT user_id, kind, name FROM requests")
+            for r in await cur.fetchall():
+                if r["kind"] in requests:
+                    uid = int(r["user_id"])
+                    requests[r["kind"]][uid] = r["name"] or str(uid)
+
         application.bot_data["codes"] = codes
         application.bot_data["io_boards"] = io_boards
         application.bot_data["troubleshooter_admins"] = admins
         application.bot_data["troubleshooter_approved"] = approved
         application.bot_data["parts"] = parts
+        application.bot_data["pending_access_requests"] = requests["access"]
+        application.bot_data["pending_admin_requests"] = requests["admin"]
 
         print(
             f"✅ Troubleshooter tables verified: {len(codes)} codes, "
@@ -436,25 +456,50 @@ async def user_revoke(user_id):
         return cur.rowcount > 0
 
 
-async def users_get():
+async def request_add(user_id, kind, name=None):
     async with db_session() as cur:
         await cur.execute(
-            "SELECT user_id, username, is_admin, last_login, notifications_enabled, "
-            "is_approved FROM users"
+            "INSERT INTO requests (user_id, kind, name) VALUES (%s, %s, %s) AS new "
+            "ON DUPLICATE KEY UPDATE kind = new.kind, name = new.name, "
+            "requested_at = NOW()",
+            (user_id, kind, name),
         )
-        records = await cur.fetchall()
 
-        return [
-            {
-                "user_id": int(record["user_id"]),
-                "username": record.get("username"),
-                "is_admin": int(record["is_admin"]),
-                "last_login": record.get("last_login"),
-                "notifications_enabled": int(record.get("notifications_enabled", 1)),
-                "is_approved": int(record.get("is_approved") or 0),
-            }
-            for record in records
-        ]
+
+async def request_remove(user_id):
+    async with db_session() as cur:
+        await cur.execute("DELETE FROM requests WHERE user_id = %s", (user_id,))
+        return cur.rowcount > 0
+
+
+USER_COLUMNS = (
+    "SELECT user_id, username, is_admin, last_login, notifications_enabled, "
+    "is_approved FROM users"
+)
+
+
+def user_from_row(record):
+    return {
+        "user_id": int(record["user_id"]),
+        "username": record.get("username"),
+        "is_admin": int(record["is_admin"]),
+        "last_login": record.get("last_login"),
+        "notifications_enabled": int(record.get("notifications_enabled", 1)),
+        "is_approved": int(record.get("is_approved") or 0),
+    }
+
+
+async def users_get():
+    async with db_session() as cur:
+        await cur.execute(USER_COLUMNS)
+        return [user_from_row(r) for r in await cur.fetchall()]
+
+
+async def user_get(user_id):
+    async with db_session() as cur:
+        await cur.execute(f"{USER_COLUMNS} WHERE user_id = %s", (user_id,))
+        row = await cur.fetchone()
+        return user_from_row(row) if row else None
 
 
 async def user_notifications_toggle(user_id):
