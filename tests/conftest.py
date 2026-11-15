@@ -97,7 +97,10 @@ def troubleshooter_settings(monkeypatch):
         "notify_settings": {},
         "content": example_content,
         "files_dir": None,
-        "weather_button": None,
+        "cefas_buoy": None,
+        "windquest_api_key": None,
+        "windquest_api_token": None,
+        "windquest_location": None,
     }.items():
         monkeypatch.setattr(SETTINGS, name, value)
     return SETTINGS

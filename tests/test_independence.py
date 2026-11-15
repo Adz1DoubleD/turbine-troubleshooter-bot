@@ -51,10 +51,10 @@ def menu_callbacks(block):
     ]
 
 
-@pytest.mark.parametrize("weather, shown", [(None, False), (object(), True)])
+@pytest.mark.parametrize("buoy, shown", [(None, False), ("BUOY1", True)])
 @pytest.mark.asyncio
-async def test_weather_button_only_when_supplied(monkeypatch, weather, shown):
-    monkeypatch.setattr(SETTINGS, "weather_button", weather)
+async def test_weather_button_only_when_configured(monkeypatch, buoy, shown):
+    monkeypatch.setattr(SETTINGS, "cefas_buoy", buoy)
     context = SimpleNamespace(
         bot_data={"is_troubleshooter": True, "codes": {}, "parts": []},
         user_data={"is_admin": False},

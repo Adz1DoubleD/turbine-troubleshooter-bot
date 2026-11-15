@@ -4,19 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "troubleshooter-bot"
-version = "0.1.1"
+version = "0.2.0"
 description = "Telegram troubleshooter bot: fault codes, spare parts and reference content behind approval-based access."
 requires-python = ">=3.12"
 dependencies = [
     "python-telegram-bot>=22,<23",
     "aiomysql>=0.3,<0.4",
     "sentry-sdk>=2,<3",
+    "aiohttp>=3.9,<4",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest==9.2.0",
     "pytest-asyncio==1.4.1.post1",
+    "freezegun==1.5.5",
     "ruff==0.17.4",
     "pre_commit==4.7.0",
 ]
