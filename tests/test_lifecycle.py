@@ -38,9 +38,10 @@ async def test_start_loads_its_own_data_and_shares_it(monkeypatch, fake_app):
     assert app is fake_app
     assert app.bot_data["is_troubleshooter"] is True
     assert host.bot_data["codes"] is app.bot_data["codes"] == {"E1": {}}
-    assert host.bot_data["troubleshooter_approved"] is app.bot_data[
-        "troubleshooter_approved"
-    ]
+    assert (
+        host.bot_data["troubleshooter_approved"]
+        is app.bot_data["troubleshooter_approved"]
+    )
     assert "is_troubleshooter" not in host.bot_data
     assert SETTINGS.name == "Site"
     fake_app.updater.start_polling.assert_awaited_once()
