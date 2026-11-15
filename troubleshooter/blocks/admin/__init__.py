@@ -1,0 +1,112 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+
+from troubleshooter.db import db_export, db_tables
+from troubleshooter.helpers import error_kb, is_owner
+from troubleshooter.settings import SETTINGS
+
+from ...tools import user_is_admin
+
+
+async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not user_is_admin(context):
+        await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
+        return
+
+    table = query.data.split(":", 1)[1]
+    chat_id = update.effective_chat.id
+    rows = await db_tables(table)
+    if not rows:
+        text = f"Unknown table: {table}" if rows is None else f"{table} is empty."
+        await context.bot.send_message(chat_id, text, reply_markup=error_kb())
+        return
+
+    await context.bot.send_document(
+        chat_id=chat_id,
+        document=db_export(rows),
+        filename=f"{table}_{datetime.now():%Y%m%d_%H%M}.csv",
+        caption=(
+            f"📤 *{table.capitalize()} table exported*\n\n"
+            f"{len(rows)} rows · {len(rows[0])} columns"
+        ),
+        parse_mode="Markdown",
+        reply_markup=error_kb(),
+    )
+
+
+def local_now():
+    return datetime.now(ZoneInfo(SETTINGS.timezone)).replace(tzinfo=None)
+
+
+async def handle_block(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, status: str | None = None
+):
+    query = update.callback_query
+    is_admin = user_is_admin(context)
+    if not is_admin:
+        if query:
+            await query.answer(
+                "⚠️ Unauthorized: Admin access required.", show_alert=True
+            )
+        return
+
+    text = status or "⚙️ *Admin Panel*\n\nSelect an option below:"
+
+    user = update.effective_user
+
+    kb = [
+        [InlineKeyboardButton("➕ Add Code", callback_data="troubleshooter:code_add")],
+        [InlineKeyboardButton("🔩 Add Part", callback_data="troubleshooter:part_add")],
+        [
+            InlineKeyboardButton(
+                "👤 View Users", callback_data="troubleshooter:user_list"
+            )
+        ],
+        [InlineKeyboardButton("📤 Export Codes", callback_data="export:codes")],
+        [InlineKeyboardButton("📤 Export Spare Parts", callback_data="export:parts")],
+        [InlineKeyboardButton("📤 Export IO Boards", callback_data="export:io_boards")],
+    ]
+
+    if user and is_owner(user.id):
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    "⚙️ Manage Admins", callback_data="troubleshooter:admin_list"
+                )
+            ]
+        )
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    "🔑 Manage Access", callback_data="troubleshooter:access_list"
+                )
+            ]
+        )
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    "📢 Broadcast", callback_data="troubleshooter:broadcast"
+                )
+            ]
+        )
+
+    kb.append([InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")])
+
+    if query:
+        await query.edit_message_text(
+            text=text,
+            reply_markup=InlineKeyboardMarkup(kb),
+            parse_mode="Markdown",
+        )
+    else:
+        await context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=context.user_data.get("last_msg_id"),
+            text=text,
+            reply_markup=InlineKeyboardMarkup(kb),
+            parse_mode="Markdown",
+        )

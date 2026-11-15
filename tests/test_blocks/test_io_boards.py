@@ -1,0 +1,59 @@
+from types import SimpleNamespace
+
+import pytest
+
+from troubleshooter.blocks import io_boards
+
+
+def make_update(data):
+    edits = []
+
+    async def edit_message_text(text, **kwargs):
+        edits.append({"text": text, **kwargs})
+
+    query = SimpleNamespace(data=data, edit_message_text=edit_message_text)
+    return SimpleNamespace(callback_query=query), edits
+
+
+def button_labels(markup):
+    return [b.text for row in markup.inline_keyboard for b in row]
+
+
+def callbacks(markup):
+    return [b.callback_data for row in markup.inline_keyboard for b in row]
+
+
+def test_io_board_menu_uses_names():
+    labels = button_labels(io_boards.board_menu())
+
+    assert "IO Board 1" in labels
+    assert "IO Board 2" in labels
+
+
+@pytest.mark.asyncio
+async def test_io_board_shows_can_line():
+    update, edits = make_update("troubleshooter:ioboard:io1")
+    context = SimpleNamespace(
+        bot_data={
+            "io_boards": {
+                "io1": [{"section": "X1", "connector": "1", "tdi_text": "24V"}]
+            }
+        },
+        user_data={},
+    )
+
+    await io_boards.button_board(update, context)
+
+    assert "*IO Board 1*" in edits[0]["text"]
+    assert "_Node 1_" in edits[0]["text"]
+
+
+@pytest.mark.asyncio
+async def test_io_board_not_found_has_back_button():
+    update, edits = make_update("troubleshooter:ioboard:io9")
+    context = SimpleNamespace(bot_data={"io_boards": {}}, user_data={})
+
+    await io_boards.button_board(update, context)
+
+    assert "not found" in edits[0]["text"]
+    assert callbacks(edits[0]["reply_markup"]) == ["troubleshooter:ioboard"]
