@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -28,7 +29,7 @@ from .blocks.admin import codes as admin_codes
 from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
 from .blocks.user import LOCKED_MARKUP, LOCKED_TEXT
-from .settings import SETTINGS, setup
+from .settings import ENV_VARS, SETTINGS, setup
 from .tools import (
     get_troubleshooter_content,
     send_notification_troubleshooter,
@@ -432,6 +433,16 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_troubleshooter_bot(share_with=None, **options):
     global application
     setup(**options)
+    missing = [
+        ENV_VARS[name] for name in ("token", "owner_id") if not vars(SETTINGS)[name]
+    ]
+    if not (os.environ.get("TROUBLESHOOTER_DB_URL") or os.environ.get("JAWSDB_URL")):
+        missing.append("TROUBLESHOOTER_DB_URL")
+    if missing:
+        raise ValueError(f"Troubleshooter needs these settings: {', '.join(missing)}")
+    if not SETTINGS.alerts_chat_id:
+        SETTINGS.alerts_chat_id = SETTINGS.owner_id
+
     application = Application.builder().token(SETTINGS.token).build()
     application.bot_data["is_troubleshooter"] = True
 

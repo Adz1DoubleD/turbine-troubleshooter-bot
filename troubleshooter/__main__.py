@@ -15,10 +15,14 @@ from troubleshooter import (
 async def main():
     load_dotenv()
     sentry_sdk.init(dsn=os.environ.get("TROUBLESHOOTER_SENTRY_DSN"))
-    await start_troubleshooter_bot(
-        content=example_content,
-        files_dir=Path(os.environ.get("TROUBLESHOOTER_FILES_DIR", "media")),
-    )
+    try:
+        await start_troubleshooter_bot(
+            content=example_content,
+            files_dir=Path(os.environ.get("TROUBLESHOOTER_FILES_DIR", "media")),
+        )
+    except ValueError as e:
+        print(f"❌ {e}. Add them to .env (see .env.example).")
+        return
     try:
         await asyncio.Event().wait()
     finally:

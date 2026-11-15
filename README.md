@@ -34,7 +34,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `wtg_prefix` | `TROUBLESHOOTER_WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
 | `token` | `TROUBLESHOOTER_BOT_TOKEN` | Telegram bot token |
 | `owner_id` | `TROUBLESHOOTER_OWNER_ID` | Telegram ID of the owner (approves access and admins) |
-| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Chat for new-user, access-request and change notifications |
+| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Chat for new-user, access-request and change notifications. Defaults to the owner |
 | `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Work Weather |
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
@@ -73,12 +73,12 @@ On Windows:
 - If `python` says "Python was not found" (the Microsoft Store shortcut), create the venv with the launcher instead: `py -3.13 -m venv .venv`.
 - If `activate` says "running scripts is disabled", skip it and call the venv's Python directly: `.venv\Scripts\python -m pip install -e ".[dev]"` and `.venv\Scripts\python -m troubleshooter`.
 
-In `.env`, set:
+In `.env`, set these three (the bot refuses to start and lists any that are missing):
 - `TROUBLESHOOTER_BOT_TOKEN`: your test bot's token.
 - `TROUBLESHOOTER_OWNER_ID`: your Telegram user ID (message [@userinfobot](https://t.me/userinfobot) to find it).
-- `TROUBLESHOOTER_ALERTS_CHAT_ID`: where access requests, feedback and change notices go. Use your own user ID while testing.
+- `TROUBLESHOOTER_DB_URL`: your MySQL database.
 
-Everything else is optional. Then:
+Everything else is optional. Access requests, feedback and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
 
 ```bash
 python -m troubleshooter
