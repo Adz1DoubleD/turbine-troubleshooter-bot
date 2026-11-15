@@ -53,6 +53,30 @@ MySQL, via `TROUBLESHOOTER_DB_URL` (falls back to `JAWSDB_URL`), e.g. `mysql://u
 
 The menus, turbine map, IO boards and part-search hints are loaded from the `content` table: one row per item (`MODULES_MAP`, `WTG_MAP`, `IO_BOARDS`, `PART_ACCESSORIES`), stored as JSON text. Documents and photos are referenced as `file:<path relative to files_dir>`. See [`troubleshooter/example_content.py`](troubleshooter/example_content.py) for the shape.
 
+## Run it yourself
+
+You need Python 3.12+, MySQL (Docker is easiest) and your own test bot from [@BotFather](https://t.me/BotFather). Your copy uses its own bot and database, so it never touches anyone else's.
+
+```bash
+git clone https://github.com/Adz1DoubleD/troubleshooter-bot
+cd troubleshooter-bot
+python -m venv .venv
+.venv\Scripts\activate            # Mac/Linux: source .venv/bin/activate
+pip install -e ".[dev]"
+
+docker run -d --name ts-db -p 3306:3306 -e MYSQL_ROOT_PASSWORD=dev -e MYSQL_DATABASE=ts mysql:8
+
+cp .env.example .env               # Windows: copy .env.example .env
+```
+
+In `.env`, set `TROUBLESHOOTER_BOT_TOKEN` to your test bot's token and `TROUBLESHOOTER_OWNER_ID` to your Telegram user ID (message [@userinfobot](https://t.me/userinfobot) to find it). Everything else is optional. Then:
+
+```bash
+python -m troubleshooter
+```
+
+Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and while the database has no content the menus use the made-up [`example_content.py`](troubleshooter/example_content.py). Add codes and parts from **Admin Panel → Add Code / Add Part**. Stop with Ctrl+C.
+
 ## Development
 
 ```bash
