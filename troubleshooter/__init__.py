@@ -333,6 +333,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif admin and data.startswith("troubleshooter:access_revoke:"):
         await admin_users.button_access_revoke(update, context)
 
+    elif admin and data.startswith("troubleshooter:notify_users"):
+        await admin_menu.button_notify(update, context)
+
     elif admin and data == "troubleshooter:admin_menu":
         await admin_menu.handle_block(update, context)
 

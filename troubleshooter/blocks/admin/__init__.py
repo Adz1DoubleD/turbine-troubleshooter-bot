@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import db_export, db_tables
+from troubleshooter.db import db_export, db_tables, setting_toggle
 from troubleshooter.helpers import error_kb, is_owner
 from troubleshooter.settings import SETTINGS
 
@@ -35,6 +35,42 @@ async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
         parse_mode="Markdown",
         reply_markup=error_kb(),
+    )
+
+
+NOTIFY_LABELS = {"added": "➕ Added", "edited": "✏️ Edited", "deleted": "🗑️ Deleted"}
+
+
+async def button_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_owner(query.from_user.id):
+        await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
+        return
+
+    verb = query.data.removeprefix("troubleshooter:notify_users").lstrip(":")
+    if verb in NOTIFY_LABELS:
+        await setting_toggle(f"notify_{verb}")
+
+    kb = [
+        [
+            InlineKeyboardButton(
+                f"{'✅' if int(SETTINGS.notify_settings.get(f'notify_{v}', 1)) else '❌'}"
+                f" {label}",
+                callback_data=f"troubleshooter:notify_users:{v}",
+            )
+        ]
+        for v, label in NOTIFY_LABELS.items()
+    ]
+    kb.append(
+        [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:admin_menu")]
+    )
+
+    await query.edit_message_text(
+        "🔔 *Notify Users*\n\n"
+        "When a code or part is added, edited or deleted, users are told if it's ✅. "
+        "If it's ❌, only admins are told.",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(kb),
     )
 
 
@@ -90,6 +126,13 @@ async def handle_block(
             [
                 InlineKeyboardButton(
                     "📢 Broadcast", callback_data="troubleshooter:broadcast"
+                )
+            ]
+        )
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    "🔔 Notify Users", callback_data="troubleshooter:notify_users"
                 )
             ]
         )

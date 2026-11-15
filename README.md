@@ -40,13 +40,14 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
 | `files_dir` | — | Folder that `file:` references in the content resolve against |
-| `notify_settings` | — | Dict with `troubleshooter_notify_added/edited/deleted` toggles |
 | `content` | — | Fallback content when the database has none (see below) |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL` (falls back to `JAWSDB_URL`), e.g. `mysql://user:pass@host:3306/db`. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, and `content`.
+MySQL, via `TROUBLESHOOTER_DB_URL` (falls back to `JAWSDB_URL`), e.g. `mysql://user:pass@host:3306/db`. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, and `settings`.
+
+`settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
 
 ## Content
 

@@ -239,9 +239,7 @@ async def send_notification_troubleshooter(
             user_markup = alert_markup()
             to_alerts, to_users = True, True
 
-            if not int(
-                SETTINGS.notify_settings.get(f"troubleshooter_notify_{verb}", 1)
-            ):
+            if not int(SETTINGS.notify_settings.get(f"notify_{verb}", 1)):
                 audience = "admins"
 
         case _:
