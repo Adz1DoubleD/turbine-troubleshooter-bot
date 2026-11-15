@@ -260,6 +260,20 @@ async def init_troubleshooter_db(application):
                 for r in await cur.fetchall()
             ]
 
+            await cur.execute("SHOW TABLES LIKE 'settings'")
+            if not await cur.fetchone():
+                print("🔄 Creating Troubleshooter Settings table...")
+                await cur.execute("""
+                    CREATE TABLE settings (
+                        name VARCHAR(64) PRIMARY KEY,
+                        value TINYINT NOT NULL DEFAULT 1
+                    )
+                """)
+            await cur.execute("SELECT name, value FROM settings")
+            SETTINGS.notify_settings = {
+                r["name"]: int(r["value"]) for r in await cur.fetchall()
+            }
+
         application.bot_data["codes"] = codes
         application.bot_data["io_boards"] = io_boards
         application.bot_data["troubleshooter_admins"] = admins
@@ -452,6 +466,19 @@ async def user_notifications_toggle(user_id):
         )
         row = await cur.fetchone()
         return int(row["notifications_enabled"]) if row else None
+
+
+async def setting_toggle(name):
+    async with db_session() as cur:
+        await cur.execute(
+            "INSERT INTO settings (name, value) VALUES (%s, 0) "
+            "ON DUPLICATE KEY UPDATE value = 1 - value",
+            (name,),
+        )
+        await cur.execute("SELECT value FROM settings WHERE name = %s", (name,))
+        row = await cur.fetchone()
+    SETTINGS.notify_settings[name] = int(row["value"]) if row else 1
+    return SETTINGS.notify_settings[name]
 
 
 async def user_notifications_get(user_id):

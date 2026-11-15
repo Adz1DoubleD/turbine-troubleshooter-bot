@@ -502,7 +502,7 @@ async def test_code_change_notify_setting(
     )
     monkeypatch.setitem(
         SETTINGS.notify_settings,
-        f"troubleshooter_notify_{action.split('_')[1]}",
+        f"notify_{action.split('_')[1]}",
         enabled,
     )
 
@@ -549,7 +549,7 @@ async def test_opted_out_admin_still_skipped_when_admins_only(sent, users, monke
             },
         ]
     )
-    monkeypatch.setitem(SETTINGS.notify_settings, "troubleshooter_notify_added", 0)
+    monkeypatch.setitem(SETTINGS.notify_settings, "notify_added", 0)
 
     editor = SimpleNamespace(id=5, username="editor", full_name="Ed Itor")
     await notify.send_notification_troubleshooter(editor, "code_added", "E101")
@@ -689,7 +689,7 @@ async def test_part_change_setting_off_admins_only(sent, users, monkeypatch):
             {"user_id": 4, "username": "bob", "is_admin": 0},
         ]
     )
-    monkeypatch.setitem(SETTINGS.notify_settings, "troubleshooter_notify_added", 0)
+    monkeypatch.setitem(SETTINGS.notify_settings, "notify_added", 0)
     editor = SimpleNamespace(id=5, username="editor", full_name="Ed Itor")
 
     await notify.send_notification_troubleshooter(
@@ -817,7 +817,7 @@ async def test_part_edited_follows_edited_setting(sent, users, monkeypatch):
             {"user_id": 4, "username": "bob", "is_admin": 0},
         ]
     )
-    monkeypatch.setitem(SETTINGS.notify_settings, "troubleshooter_notify_edited", 0)
+    monkeypatch.setitem(SETTINGS.notify_settings, "notify_edited", 0)
     editor = SimpleNamespace(id=5, username="editor", full_name="Ed Itor")
 
     await notify.send_notification_troubleshooter(
