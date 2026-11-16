@@ -74,10 +74,49 @@ async def test_admin_panel_owner_only_buttons(user_id, owner_buttons):
     await admin.handle_block(update, context)
 
     shown = labels(calls["edits"][0]["reply_markup"])
-    assert ("⚙️ Manage Admins" in shown) is owner_buttons
     assert ("📢 Broadcast" in shown) is owner_buttons
     assert "➕ Add Code" in shown
     assert "🔩 Add Part" in shown
+    assert "👥 Users" in shown
+    assert "📤 Export" in shown
+    assert not any("Manage" in label for label in shown)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id,label", [(OWNER, "👥 Users (⏳ 2 pending)"), (OTHER, "👥 Users")]
+)
+async def test_admin_panel_shows_pending_count_to_owner(user_id, label):
+    update, calls = make_update("troubleshooter:admin_menu", user_id=user_id)
+    context, _ = make_context(
+        bot_data={
+            "pending_access_requests": {7: "@a"},
+            "pending_admin_requests": {8: "@b"},
+        }
+    )
+
+    await admin.handle_block(update, context)
+
+    assert label in labels(calls["edits"][0]["reply_markup"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "user_id,pending,label",
+    [
+        (OWNER, {7: {}, 8: {}}, "📝 Suggestions (2)"),
+        (OWNER, {}, "📝 Suggestions"),
+        (OTHER, {7: {}}, None),
+    ],
+)
+async def test_admin_panel_suggestions_button(user_id, pending, label):
+    update, calls = make_update("troubleshooter:admin_menu", user_id=user_id)
+    context, _ = make_context(bot_data={"pending_suggestions": pending})
+
+    await admin.handle_block(update, context)
+
+    shown = [s for s in labels(calls["edits"][0]["reply_markup"]) if "Suggestions" in s]
+    assert shown == ([label] if label else [])
 
 
 @pytest.mark.asyncio

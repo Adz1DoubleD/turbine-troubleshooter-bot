@@ -1,7 +1,9 @@
+import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from troubleshooter.db import (
+    request_add,
     user_notifications_get,
     user_notifications_toggle,
 )
@@ -34,11 +36,6 @@ async def button_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 callback_data="troubleshooter:notifications:toggle",
             )
         ],
-        [
-            InlineKeyboardButton(
-                "💬 Send Feedback", callback_data="troubleshooter:feedback"
-            )
-        ],
     ]
     if not admin:
         kb.append(
@@ -62,50 +59,6 @@ async def button_alert_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer("🔔 Notifications on" if enabled else "🔕 Notifications off")
 
 
-async def button_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    context.user_data["state"] = "troubleshooter:feedback"
-    context.user_data["last_msg_id"] = query.message.message_id
-    await query.edit_message_text(
-        "💬 *Send Feedback*\n\nType your message and it will be sent to the admin:",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "❌ Cancel", callback_data="troubleshooter:user_menu"
-                    )
-                ]
-            ]
-        ),
-    )
-
-
-async def handle_feedback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
-):
-    user = update.effective_user
-    name = f"@{user.username}" if user.username else user.full_name
-    await context.bot.send_message(
-        chat_id=SETTINGS.alerts_chat_id,
-        text=(
-            f"💬 *Feedback for Troubleshooter Bot*\n\n"
-            f"From: {escape_markdown(name)}\n\n{escape_markdown(text)}"
-        ),
-        parse_mode="Markdown",
-    )
-    context.user_data["state"] = None
-    block = await handle_block(context)
-    await context.bot.edit_message_text(
-        chat_id=update.effective_chat.id,
-        message_id=context.user_data.get("last_msg_id"),
-        text=f"✅ *Feedback sent!*\n\n{block['text']}",
-        reply_markup=block["reply_markup"],
-        parse_mode="Markdown",
-    )
-
-
 LOCKED_TEXT = (
     "🔒 *{name} Bot*\n\nAccess is by approval. Tap below to ask the admin for access."
 )
@@ -120,6 +73,14 @@ LOCKED_MARKUP = InlineKeyboardMarkup(
 )
 
 
+async def save_request(user_id, kind, name):
+    try:
+        await request_add(user_id, kind, name)
+    except Exception as e:
+        print(f"❌ [DB] Failed to save {kind} request: {e}")
+        sentry_sdk.capture_exception(e)
+
+
 async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user = query.from_user
@@ -130,6 +91,7 @@ async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TY
 
     name = f"@{user.username}" if user.username else user.full_name
     pending[user.id] = name
+    await save_request(user.id, "access", name)
 
     kb = InlineKeyboardMarkup(
         [
@@ -169,6 +131,7 @@ async def button_request_admin(update: Update, context: ContextTypes.DEFAULT_TYP
 
     name = f"@{user.username}" if user.username else user.full_name
     pending[user.id] = name
+    await save_request(user.id, "admin", name)
 
     kb = InlineKeyboardMarkup(
         [

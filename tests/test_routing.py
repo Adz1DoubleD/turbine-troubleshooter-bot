@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 import troubleshooter
-from troubleshooter.blocks import admin, codes, io_boards, parts, user, wtg
+from troubleshooter.blocks import admin, codes, io_boards, parts, suggest, user, wtg
 from troubleshooter.blocks.admin import broadcast as admin_broadcast
 from troubleshooter.blocks.admin import codes as admin_codes
 from troubleshooter.blocks.admin import parts as admin_parts
@@ -118,7 +118,10 @@ async def test_submenu_item_backs_to_parent(monkeypatch):
         ("troubleshooter:user_menu", user, "button_menu"),
         ("troubleshooter:notifications:toggle", user, "button_menu"),
         ("troubleshooter:notifications:alert", user, "button_alert_toggle"),
-        ("troubleshooter:feedback", user, "button_feedback"),
+        ("troubleshooter:suggest", suggest, "handle_button"),
+        ("troubleshooter:suggest:where:0", suggest, "handle_button"),
+        ("troubleshooter:suggestions", suggest, "handle_button"),
+        ("troubleshooter:suggestion_ok:7", suggest, "handle_button"),
         ("admin:request", user, "button_request_admin"),
         ("admin:approve:9", admin_users, "button_admin_approve"),
         ("admin:deny:9", admin_users, "button_admin_deny"),
@@ -173,12 +176,20 @@ async def test_buttons_for_everyone(monkeypatch, data, module, name):
             "button_code_delete_confirm",
         ),
         ("troubleshooter:code_delete:E1", admin_codes, "button_code_delete"),
-        ("troubleshooter:admin_list", admin_users, "button_admin_list"),
         ("troubleshooter:user_list", admin_users, "button_users_list"),
-        ("troubleshooter:admin_revoke:7", admin_users, "button_admin_revoke"),
-        ("troubleshooter:access_list", admin_users, "button_access_list"),
-        ("troubleshooter:access_revoke:7", admin_users, "button_access_revoke"),
+        ("troubleshooter:user_list:login:2", admin_users, "button_users_list"),
+        ("troubleshooter:user:7", admin_users, "button_user_card"),
+        (
+            "troubleshooter:user_act:admin_add:7",
+            admin_users,
+            "button_user_action",
+        ),
+        ("troubleshooter:user_do:admin_add:7", admin_users, "button_user_do"),
+        ("troubleshooter:pending", admin_users, "button_pending"),
+        ("troubleshooter:pending:2", admin_users, "button_pending"),
+        ("troubleshooter:user_search", admin_users, "button_user_search"),
         ("troubleshooter:broadcast", admin_broadcast, "button_broadcast"),
+        ("troubleshooter:export_menu", admin, "button_export_menu"),
         ("export:codes", admin, "button_export"),
     ],
 )
@@ -199,10 +210,12 @@ async def test_admin_buttons_only_for_admins(monkeypatch, data, module, name, is
         ("troubleshooter:code_search", codes, "handle_search", False),
         ("troubleshooter:parts_search", parts, "handle_search", False),
         ("troubleshooter:wtg_search", wtg, "handle_search", False),
-        ("troubleshooter:feedback", user, "handle_feedback", False),
+        ("troubleshooter:suggest:title", suggest, "handle_text", False),
+        ("troubleshooter:suggest:body", suggest, "handle_text", False),
         ("troubleshooter:broadcast", admin_broadcast, "handle_broadcast", False),
         ("troubleshooter:code_add:code", admin_codes, "handle_code_add", True),
         ("troubleshooter:part_add:part_no", admin_parts, "handle_part_add", True),
+        ("troubleshooter:user_search", admin_users, "handle_user_search", True),
         (
             "troubleshooter:part_await_edit:description:7",
             admin_parts,

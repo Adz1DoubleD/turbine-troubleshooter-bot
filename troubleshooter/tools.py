@@ -130,12 +130,10 @@ def find_parts(query, parts, limit=8):
 
 async def set_user_roles(context: ContextTypes.DEFAULT_TYPE, user_id):
     uid = int(user_id)
-    is_admin = uid in context.bot_data.get("troubleshooter_admins", {})
+    is_admin = is_owner(uid) or uid in context.bot_data.get("troubleshooter_admins", {})
     context.user_data["is_admin"] = is_admin
-    context.user_data["is_approved"] = (
-        is_admin
-        or is_owner(uid)
-        or uid in context.bot_data.get("troubleshooter_approved", set())
+    context.user_data["is_approved"] = is_admin or uid in context.bot_data.get(
+        "troubleshooter_approved", set()
     )
 
 

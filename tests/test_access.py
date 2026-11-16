@@ -18,6 +18,14 @@ def owner(monkeypatch):
     monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
 
 
+@pytest.fixture(autouse=True)
+def no_db_requests(monkeypatch):
+    saved = AsyncMock()
+    monkeypatch.setattr(user, "request_add", saved)
+    monkeypatch.setattr(admin_users, "request_remove", AsyncMock())
+    return saved
+
+
 def make_context(approved=()):
     return SimpleNamespace(
         user_data={},
@@ -104,6 +112,20 @@ async def test_unapproved_user_can_request_access(monkeypatch):
     handled.assert_awaited_once()
 
 
+@pytest.mark.parametrize("approved", [True, False])
+@pytest.mark.asyncio
+async def test_files_only_reach_suggestions_for_approved_users(monkeypatch, approved):
+    handled = AsyncMock()
+    monkeypatch.setattr(troubleshooter.suggest, "handle_file", handled)
+    update = SimpleNamespace(effective_user=SimpleNamespace(id=STRANGER))
+
+    await troubleshooter.file_handler(
+        update, make_context({STRANGER} if approved else ())
+    )
+
+    assert handled.await_count == (1 if approved else 0)
+
+
 @pytest.mark.asyncio
 async def test_unapproved_user_text_is_ignored(monkeypatch):
     handled = AsyncMock()
@@ -116,12 +138,14 @@ async def test_unapproved_user_text_is_ignored(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_request_access_notifies_owner_once():
+async def test_request_access_notifies_owner_once(no_db_requests):
     context = make_context()
     update, query = make_query("troubleshooter:access_request")
 
     await user.button_request_access(update, context)
     await user.button_request_access(update, context)
+
+    no_db_requests.assert_awaited_once_with(STRANGER, "access", "@someone")
 
     context.bot.send_message.assert_awaited_once()
     sent = context.bot.send_message.await_args.kwargs
@@ -195,60 +219,87 @@ async def test_startup_loads_approved_users(monkeypatch, make_cursor, patch_sess
     assert app.bot_data["troubleshooter_approved"] == {5, 6}
 
 
-USERS = [
-    {"user_id": 1, "username": "zed", "is_approved": 1, "is_admin": 0},
-    {"user_id": 2, "username": "amy", "is_approved": 1, "is_admin": 0},
-    {"user_id": 3, "username": "boss", "is_approved": 1, "is_admin": 1},
-    {"user_id": 4, "username": "new", "is_approved": 0, "is_admin": 0},
-]
+@pytest.mark.asyncio
+async def test_startup_loads_saved_requests(monkeypatch, make_cursor, patch_session):
+    monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
+    cur = make_cursor()
+
+    async def fetchone():
+        sql = cur.calls[-1][0]
+        return {"t": sql.split("'")[1]} if sql.startswith("SHOW TABLES") else None
+
+    async def fetchall():
+        if cur.calls[-1][0] == "SELECT user_id, kind, name FROM requests":
+            return [
+                {"user_id": 5, "kind": "access", "name": "@five"},
+                {"user_id": 6, "kind": "admin", "name": None},
+                {"user_id": 7, "kind": "bogus", "name": "@x"},
+            ]
+        return []
+
+    cur.fetchone = AsyncMock(side_effect=fetchone)
+    cur.fetchall = AsyncMock(side_effect=fetchall)
+    patch_session(db, cur)
+    app = SimpleNamespace(bot_data={})
+
+    await db.init_troubleshooter_db(app)
+
+    assert app.bot_data["pending_access_requests"] == {5: "@five"}
+    assert app.bot_data["pending_admin_requests"] == {6: "6"}
+    assert not any("CREATE TABLE requests" in c[0] for c in cur.calls)
 
 
 @pytest.mark.asyncio
-async def test_access_list_shows_approved_non_admins(monkeypatch):
-    monkeypatch.setattr(admin_users, "users_get", AsyncMock(return_value=USERS))
-    update, query = make_query("troubleshooter:access_list", user_id=OWNER)
+async def test_requests_table_created_when_missing(make_cursor, patch_session):
+    cur = make_cursor()
+    patch_session(db, cur)
 
-    await admin_users.button_access_list(update, make_context())
+    await db.init_troubleshooter_db(SimpleNamespace(bot_data={}))
 
-    markup = query.edit_message_text.await_args.kwargs["reply_markup"]
-    assert callbacks(markup) == [
-        "troubleshooter:access_revoke:2",
-        "troubleshooter:access_revoke:1",
-        "troubleshooter:admin_menu",
-    ]
+    assert any("CREATE TABLE requests" in c[0] for c in cur.calls)
 
 
 @pytest.mark.asyncio
-async def test_revoke_removes_access_and_tells_user(monkeypatch):
-    revoke = AsyncMock(return_value=True)
-    notify = AsyncMock()
-    monkeypatch.setattr(admin_users, "user_revoke", revoke)
-    monkeypatch.setattr(admin_users, "send_notification_troubleshooter", notify)
-    monkeypatch.setattr(admin_users, "users_get", AsyncMock(return_value=[]))
-    context = make_context(approved={STRANGER})
-    update, query = make_query(f"troubleshooter:access_revoke:{STRANGER}", OWNER)
+async def test_user_get(make_cursor, patch_session):
+    cur = make_cursor(
+        fetchone=[
+            {"user_id": "7", "username": "x", "is_admin": 0, "is_approved": 1},
+            None,
+        ]
+    )
+    patch_session(db, cur)
 
-    await admin_users.button_access_revoke(update, context)
+    found = await db.user_get(7)
+    missing = await db.user_get(8)
 
-    revoke.assert_awaited_once_with(STRANGER)
-    assert STRANGER not in context.bot_data["troubleshooter_approved"]
-    notify.assert_awaited_once_with(action="access_revoked", target_id=STRANGER)
-    assert "Access removed" in query.edit_message_text.await_args.args[0]
+    assert found["user_id"] == 7 and found["is_approved"] == 1
+    assert missing is None
+    assert cur.calls[0][0].endswith("FROM users WHERE user_id = %s")
 
 
-@pytest.mark.parametrize("handler", ["button_access_list", "button_access_revoke"])
 @pytest.mark.asyncio
-async def test_only_owner_can_manage_access(monkeypatch, handler):
-    revoke = AsyncMock()
-    monkeypatch.setattr(admin_users, "user_revoke", revoke)
-    context = make_context(approved={STRANGER})
-    update, query = make_query(f"troubleshooter:access_revoke:{STRANGER}", 555)
+async def test_request_add_and_remove(make_cursor, patch_session):
+    cur = make_cursor(rowcount=1)
+    patch_session(db, cur)
 
-    await getattr(admin_users, handler)(update, context)
+    await db.request_add(7, "access", "@x")
+    assert await db.request_remove(7) is True
 
-    revoke.assert_not_awaited()
-    assert STRANGER in context.bot_data["troubleshooter_approved"]
-    assert "Unauthorized" in query.answer.await_args.args[0]
+    assert cur.calls[0][1] == (7, "access", "@x")
+    assert cur.calls[1] == ("DELETE FROM requests WHERE user_id = %s", (7,))
+
+
+@pytest.mark.asyncio
+async def test_request_still_sent_when_db_save_fails(monkeypatch, no_db_requests):
+    no_db_requests.side_effect = RuntimeError("offline")
+    monkeypatch.setattr(user.sentry_sdk, "capture_exception", lambda e: None)
+    context = make_context()
+    update, _ = make_query("troubleshooter:access_request")
+
+    await user.button_request_access(update, context)
+
+    context.bot.send_message.assert_awaited_once()
+    assert context.bot_data["pending_access_requests"] == {STRANGER: "@someone"}
 
 
 @pytest.mark.asyncio

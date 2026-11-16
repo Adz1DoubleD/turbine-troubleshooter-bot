@@ -139,10 +139,11 @@ async def test_broadcast_choose_lists_users_with_admin_badge(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_broadcast_single_user_sets_int_audience(monkeypatch):
-    async def fake_users_get():
-        return [{"user_id": 4, "username": "bob_smith", "is_admin": 0}]
+    async def fake_user_get(user_id):
+        assert user_id == 4
+        return {"user_id": 4, "username": "bob_smith", "is_admin": 0}
 
-    monkeypatch.setattr(broadcast, "users_get", fake_users_get)
+    monkeypatch.setattr(broadcast, "user_get", fake_user_get)
     update, calls = make_update("troubleshooter:broadcast:user:4")
     context, _ = make_context()
 
@@ -197,3 +198,23 @@ async def test_handle_broadcast_ignores_non_owner(monkeypatch):
     await broadcast.handle_broadcast(update, context, "sneaky")
 
     assert bot_edits == []
+
+
+@pytest.mark.asyncio
+async def test_broadcast_choose_pages_users(monkeypatch):
+    async def fake_users_get():
+        return [
+            {"user_id": i, "username": f"u{i:02}", "is_admin": 0} for i in range(45)
+        ]
+
+    monkeypatch.setattr(broadcast, "users_get", fake_users_get)
+    update, calls = make_update("troubleshooter:broadcast:choose:2")
+    context, _ = make_context()
+
+    await broadcast.button_broadcast(update, context)
+
+    edit = calls["edits"][0]
+    picks = [c for c in callbacks(edit["reply_markup"]) if ":user:" in c]
+    assert picks == [f"troubleshooter:broadcast:user:{i}" for i in range(40, 45)]
+    assert "Page 3 of 3" in edit["text"]
+    assert "troubleshooter:broadcast:choose:1" in callbacks(edit["reply_markup"])

@@ -2,6 +2,21 @@ name: Feature request
 description: Suggest something new or a change to how the bot works
 labels: [enhancement]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        **Features, not content.** This repo holds the bot's code only. A new menu item, document, photo, torque table or reference note is *content*: it belongs to whoever runs your bot and never comes through GitHub. Suggest it from the bot instead: **📝 Suggest Content** on the main menu.
+
+        Don't paste real fault codes, part numbers, turbine details or documents here. Use made-up examples.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of idea is it?
+      options:
+        - It makes the bot do something new (a feature)
+        - It shows information or documents (content - use 📝 Suggest Content in the bot instead)
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:
@@ -13,6 +28,6 @@ body:
     id: idea
     attributes:
       label: What would help
-      description: How you'd like it to work.
+      description: How you'd like it to work. For a new button, say where it goes and what happens when it's tapped.
     validations:
       required: true

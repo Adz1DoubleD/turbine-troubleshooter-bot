@@ -154,3 +154,30 @@ async def test_stop_before_start_only_closes_db(fake_app):
     await troubleshooter.stop_troubleshooter_bot()
 
     troubleshooter.close_db.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["channel_post", "edited_channel_post"])
+async def test_channel_posts_reach_no_message_handler(monkeypatch, fake_app, kind):
+    from datetime import datetime
+
+    from telegram import Chat, Message, Update
+    from telegram.ext import MessageHandler
+
+    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    await troubleshooter.start_troubleshooter_bot()
+    post = Message(
+        message_id=1,
+        date=datetime.now(),
+        chat=Chat(id=-100, type=Chat.CHANNEL),
+        text="📝 Content Suggestion",
+    )
+    update = Update(update_id=1, **{kind: post})
+
+    handlers = [
+        c.args[0]
+        for c in fake_app.add_handler.call_args_list
+        if isinstance(c.args[0], MessageHandler)
+    ]
+    assert len(handlers) == 2
+    assert not any(h.check_update(update) for h in handlers)
