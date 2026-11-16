@@ -23,7 +23,7 @@ from troubleshooter.helpers import (
 
 from . import weather
 from .blocks import admin as admin_menu
-from .blocks import codes, handle_block, io_boards, parts, user, wtg
+from .blocks import codes, handle_block, io_boards, parts, suggest, user, wtg
 from .blocks.admin import broadcast as admin_broadcast
 from .blocks.admin import codes as admin_codes
 from .blocks.admin import parts as admin_parts
@@ -138,6 +138,15 @@ async def text_handler(update: Update, context):
     if not context.user_data["is_approved"]:
         return
     await handle_text_input(update, context)
+
+
+async def file_handler(update: Update, context):
+    if update.effective_user is None or context.user_data is None:
+        return
+    await set_user_roles(context, update.effective_user.id)
+    if not context.user_data["is_approved"]:
+        return
+    await suggest.handle_file(update, context)
 
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -272,8 +281,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data in ("troubleshooter:user_menu", "troubleshooter:notifications:toggle"):
         await user.button_menu(update, context)
 
-    elif data == "troubleshooter:feedback":
-        await user.button_feedback(update, context)
+    elif data.startswith("troubleshooter:suggest"):
+        await suggest.handle_button(update, context)
 
     elif data == "admin:request":
         await user.button_request_admin(update, context)
@@ -428,8 +437,8 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif state == "troubleshooter:parts_search":
         await parts.handle_search(update, context, text)
 
-    elif state == "troubleshooter:feedback":
-        await user.handle_feedback(update, context, text)
+    elif state.startswith("troubleshooter:suggest:"):
+        await suggest.handle_text(update, context, text)
 
     elif admin and state == "troubleshooter:user_search":
         await admin_users.handle_user_search(update, context, text)
@@ -462,6 +471,7 @@ async def start_troubleshooter_bot(share_with=None, **options):
         "io_boards": {},
         "troubleshooter_admins": {},
         "troubleshooter_approved": set(),
+        "pending_suggestions": {},
     }
     for key, default in shared.items():
         value = application.bot_data.setdefault(key, default)
@@ -472,8 +482,14 @@ async def start_troubleshooter_bot(share_with=None, **options):
     application.add_handler(CallbackQueryHandler(callback_handler))
     application.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND & ~filters.UpdateType.CHANNEL_POST,
+            filters.TEXT & ~filters.COMMAND & ~filters.UpdateType.CHANNEL_POSTS,
             text_handler,
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            (filters.Document.ALL | filters.PHOTO) & ~filters.UpdateType.CHANNEL_POSTS,
+            file_handler,
         )
     )
     application.add_error_handler(error_handler)

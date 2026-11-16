@@ -75,7 +75,7 @@ async def test_user_menu_shows_current_state(monkeypatch, enabled, status, butto
     assert status in calls["edits"][0]["text"]
     labels = button_labels(calls["edits"][0]["reply_markup"])
     assert button in labels
-    assert "💬 Send Feedback" in labels
+    assert not any("Feedback" in label or "Suggest" in label for label in labels)
 
 
 @pytest.mark.asyncio
@@ -143,42 +143,7 @@ async def test_alert_toggle_updates_buttons(monkeypatch, new_state, toast):
 
 
 @pytest.mark.asyncio
-async def test_feedback_button_sets_state():
-    update, calls = make_query_update("troubleshooter:feedback")
-    context = SimpleNamespace(bot_data={}, user_data={})
-
-    await user.button_feedback(update, context)
-
-    assert context.user_data["state"] == "troubleshooter:feedback"
-    assert context.user_data["last_msg_id"] == 55
-    assert "Send Feedback" in calls["edits"][0]["text"]
-    assert callbacks(calls["edits"][0]["reply_markup"]) == ["troubleshooter:user_menu"]
-
-
 @pytest.mark.asyncio
-async def test_feedback_message_goes_to_alerts(monkeypatch):
-    monkeypatch.setattr(SETTINGS, "alerts_chat_id", -100)
-    bot, record = bot_recorder()
-    update = SimpleNamespace(
-        effective_user=SimpleNamespace(id=5, username="ed_itor", full_name="Ed"),
-        effective_chat=SimpleNamespace(id=1),
-    )
-    context = SimpleNamespace(
-        bot=bot,
-        user_data={"state": "troubleshooter:feedback", "last_msg_id": 55},
-        bot_data={"codes": {}, "parts": []},
-    )
-
-    await user.handle_feedback(update, context, "search is_broken")
-
-    assert record["sent"][0]["chat_id"] == -100
-    assert "@ed\\_itor" in record["sent"][0]["text"]
-    assert "is\\_broken" in record["sent"][0]["text"]
-    assert context.user_data["state"] is None
-    assert record["edits"][0]["message_id"] == 55
-    assert "Feedback sent" in record["edits"][0]["text"]
-
-
 @pytest.mark.asyncio
 async def test_request_admin_sends_request_to_alerts(monkeypatch):
     monkeypatch.setattr(SETTINGS, "alerts_chat_id", -100)

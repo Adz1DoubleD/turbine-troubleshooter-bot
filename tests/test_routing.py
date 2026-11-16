@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 
 import troubleshooter
-from troubleshooter.blocks import admin, codes, io_boards, parts, user, wtg
+from troubleshooter.blocks import admin, codes, io_boards, parts, suggest, user, wtg
 from troubleshooter.blocks.admin import broadcast as admin_broadcast
 from troubleshooter.blocks.admin import codes as admin_codes
 from troubleshooter.blocks.admin import parts as admin_parts
@@ -118,7 +118,10 @@ async def test_submenu_item_backs_to_parent(monkeypatch):
         ("troubleshooter:user_menu", user, "button_menu"),
         ("troubleshooter:notifications:toggle", user, "button_menu"),
         ("troubleshooter:notifications:alert", user, "button_alert_toggle"),
-        ("troubleshooter:feedback", user, "button_feedback"),
+        ("troubleshooter:suggest", suggest, "handle_button"),
+        ("troubleshooter:suggest:where:0", suggest, "handle_button"),
+        ("troubleshooter:suggestions", suggest, "handle_button"),
+        ("troubleshooter:suggestion_ok:7", suggest, "handle_button"),
         ("admin:request", user, "button_request_admin"),
         ("admin:approve:9", admin_users, "button_admin_approve"),
         ("admin:deny:9", admin_users, "button_admin_deny"),
@@ -207,7 +210,8 @@ async def test_admin_buttons_only_for_admins(monkeypatch, data, module, name, is
         ("troubleshooter:code_search", codes, "handle_search", False),
         ("troubleshooter:parts_search", parts, "handle_search", False),
         ("troubleshooter:wtg_search", wtg, "handle_search", False),
-        ("troubleshooter:feedback", user, "handle_feedback", False),
+        ("troubleshooter:suggest:title", suggest, "handle_text", False),
+        ("troubleshooter:suggest:body", suggest, "handle_text", False),
         ("troubleshooter:broadcast", admin_broadcast, "handle_broadcast", False),
         ("troubleshooter:code_add:code", admin_codes, "handle_code_add", True),
         ("troubleshooter:part_add:part_no", admin_parts, "handle_part_add", True),

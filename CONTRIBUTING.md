@@ -20,7 +20,7 @@ Tests mock the database and Telegram, so they need no `.env`, network or MySQL.
 Before writing a new button, check which kind it is:
 
 - **A feature** makes the bot do something new: a search, an export, a new admin screen. That's code, and a pull request is welcome.
-- **Content** shows information: a new menu item, a document, a photo, a torque table, a procedure. That lives in each host's database, not in this repo. Don't open a pull request for it; ask whoever runs your bot to add it.
+- **Content** shows information: a new menu item, a document, a photo, a torque table, a procedure. Content belongs to whoever hosts the bot: menu text lives in their database and documents in their files folder, never in this repo. Don't open a pull request for it; suggest it from the bot instead (**📝 Suggest Content** on the main menu), and the bot's owner approves it.
 
 If a feature needs example data to demonstrate it, add made-up entries to `example_content.py`.
 

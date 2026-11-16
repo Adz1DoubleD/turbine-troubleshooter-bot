@@ -285,15 +285,15 @@ async def test_database_url_is_read_when_connecting(monkeypatch):
         calls.append(kwargs)
         return object()
 
-    monkeypatch.setattr(ts.aiomysql, "create_pool", create_pool)
+    monkeypatch.setattr(ts.core.aiomysql, "create_pool", create_pool)
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
 
     monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@ts-host:3306/tsdb")
-    monkeypatch.setattr(ts, "_pool", None)
+    monkeypatch.setattr(ts.core, "_pool", None)
     await ts.get_db_pool()
 
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
-    monkeypatch.setattr(ts, "_pool", None)
+    monkeypatch.setattr(ts.core, "_pool", None)
     await ts.get_db_pool()
 
     assert [(c["host"], c["db"]) for c in calls] == [
@@ -404,7 +404,7 @@ def test_missing_file_is_reported(monkeypatch, tmp_path):
     (tmp_path / "pdf" / "there.pdf").write_bytes(b"%PDF")
     monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
     reported = MagicMock()
-    monkeypatch.setattr(ts.sentry_sdk, "capture_message", reported)
+    monkeypatch.setattr(ts.content.sentry_sdk, "capture_message", reported)
 
     ts.content_from_json('["file:pdf/there.pdf", "file:pdf/gone.pdf"]')
 
@@ -422,7 +422,7 @@ async def test_no_content_anywhere_gives_empty_menus(
 
     monkeypatch.setattr(SETTINGS, "content", None)
     reported = MagicMock()
-    monkeypatch.setattr(ts.sentry_sdk, "capture_message", reported)
+    monkeypatch.setattr(ts.schema.sentry_sdk, "capture_message", reported)
     cur = make_cursor(
         fetchone=[{"t": "content"}, {"t": "codes"}, {"t": "users"}, {"t": "parts"}],
         fetchall=[

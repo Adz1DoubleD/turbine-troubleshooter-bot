@@ -1,3 +1,4 @@
+import sys
 from unittest.mock import AsyncMock
 
 import pytest
@@ -78,7 +79,15 @@ def make_cursor():
 def patch_session(monkeypatch):
     def _patch(module, cursor):
         session = FakeSession(cursor)
-        monkeypatch.setattr(module, "db_session", session)
+        targets = [module]
+        if module.__name__.startswith("troubleshooter.db"):
+            targets = [
+                m
+                for name, m in sys.modules.items()
+                if name.startswith("troubleshooter.db") and hasattr(m, "db_session")
+            ]
+        for target in targets:
+            monkeypatch.setattr(target, "db_session", session)
         return cursor
 
     return _patch

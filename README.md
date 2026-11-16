@@ -45,7 +45,16 @@ The settings below are read from the environment; any keyword passed to `start_t
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL` (falls back to `JAWSDB_URL`), e.g. `mysql://user:pass@host:3306/db`. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `settings`, and `requests` (access and admin requests waiting for the owner).
+MySQL, via `TROUBLESHOOTER_DB_URL` (falls back to `JAWSDB_URL`), e.g. `mysql://user:pass@host:3306/db`. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `settings`, `requests` (access and admin requests waiting for the owner) and `suggestions` (content suggestions waiting for the owner).
+
+### Content suggestions
+
+Approved users can suggest a note, a PDF or photo, or a file with text, from **📝 Suggest Content** on the main menu. Text sent with a file is shown as its caption, so it's limited to Telegram's 1024 characters. It waits in **Admin Panel → 📝 Suggestions** until the owner approves or rejects it. Nothing reaches other users before that.
+
+- **Text** goes live as soon as it's approved: the bot writes it into the `content` table.
+- **A PDF or photo** adds its menu item straight away, pointing at a `file:` path in `files_dir`, and the bot sends the owner the file with the exact path to save it as. Until the file is uploaded, the item says the document isn't available. Files go in the host's files folder, as with any other document.
+
+PDFs and photos can only be sent to the troubleshooter bot itself, up to 20 MB. A host showing the menus through `share_with` takes text suggestions only.
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
 
@@ -76,7 +85,7 @@ In `.env`, set these three (the bot refuses to start and lists any that are miss
 - `TROUBLESHOOTER_OWNER_ID`: your Telegram user ID (message [@userinfobot](https://t.me/userinfobot) to find it).
 - `TROUBLESHOOTER_DB_URL`: your MySQL database.
 
-Everything else is optional. Access requests, feedback and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
+Everything else is optional. Access requests, content suggestions and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
 
 ```bash
 python -m troubleshooter

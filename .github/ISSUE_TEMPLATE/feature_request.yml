@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Features, not content.** This repo holds the bot's code only. A new menu item, document, photo, torque table or reference note is *content*: whoever runs your bot adds it to their own database, and it never comes through GitHub. Ask them instead.
+        **Features, not content.** This repo holds the bot's code only. A new menu item, document, photo, torque table or reference note is *content*: it belongs to whoever runs your bot and never comes through GitHub. Suggest it from the bot instead: **📝 Suggest Content** on the main menu.
 
         Don't paste real fault codes, part numbers, turbine details or documents here. Use made-up examples.
   - type: dropdown
@@ -14,7 +14,7 @@ body:
       label: What kind of idea is it?
       options:
         - It makes the bot do something new (a feature)
-        - It shows information or documents (content - ask whoever runs your bot instead)
+        - It shows information or documents (content - use 📝 Suggest Content in the bot instead)
     validations:
       required: true
   - type: textarea
