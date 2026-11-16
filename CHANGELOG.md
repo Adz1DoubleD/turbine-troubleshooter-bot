@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.2...v1.1.3) (2026-11-16)
+
+
+### Bug Fixes
+
+* enhance callback handling and user interaction ([855acae](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/855acae120e35449a3a452185ff41bdd34349a0c))
+
 ## [1.1.2](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.1...v1.1.2) (2026-11-16)
 
 
