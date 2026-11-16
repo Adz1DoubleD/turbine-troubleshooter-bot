@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.1...v1.1.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* remove PART_ACCESSORIES from content structure and update related tests ([a306096](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/a3060964caffc93950dc544627440fb0a78962cb))
+
 ## [1.1.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.0...v1.1.1) (2026-11-16)
 
 
