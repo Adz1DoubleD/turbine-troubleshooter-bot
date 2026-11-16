@@ -20,34 +20,32 @@ async def init_troubleshooter_db(application):
         async with db_session() as cur:
             await cur.execute("SHOW TABLES LIKE 'content'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Content table...")
                 await cur.execute("""
                     CREATE TABLE content (
                         name VARCHAR(64) PRIMARY KEY,
                         data MEDIUMTEXT NOT NULL
                     ) DEFAULT CHARSET=utf8mb4
                 """)
+
             await cur.execute("SELECT name, data FROM content")
-            stored = {
-                r["name"]: content_from_json(r["data"]) for r in await cur.fetchall()
-            }
+            rows = await cur.fetchall()
+
+            stored = {r["name"]: content_from_json(r["data"]) for r in rows}
+
+            content_names = list(stored)
+
             if CONTENT_ITEMS <= stored.keys():
                 SETTINGS.content = SimpleNamespace(**stored)
-                print(
-                    f"✅ Troubleshooter content loaded from database ({len(stored)} items)."
-                )
             elif SETTINGS.content is None:
-                print("❌ Troubleshooter content missing from database - menus empty.")
                 sentry_sdk.capture_message(
                     "Troubleshooter content missing from database", level="error"
                 )
                 SETTINGS.content = SimpleNamespace(
-                    MODULES_MAP={}, WTG_MAP={}, IO_BOARDS={}, PART_ACCESSORIES=()
+                    MODULES_MAP={}, WTG_MAP={}, IO_BOARDS={}
                 )
 
             await cur.execute("SHOW TABLES LIKE 'codes'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Codes table...")
                 await cur.execute("""
                     CREATE TABLE codes (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,7 +60,6 @@ async def init_troubleshooter_db(application):
 
             await cur.execute("SHOW TABLES LIKE 'users'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Users table...")
                 await cur.execute("""
                     CREATE TABLE users (
                         user_id BIGINT PRIMARY KEY,
@@ -76,7 +73,6 @@ async def init_troubleshooter_db(application):
 
             await cur.execute("SHOW TABLES LIKE 'parts'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Parts table...")
                 await cur.execute("""
                     CREATE TABLE parts (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,9 +88,6 @@ async def init_troubleshooter_db(application):
             for table_name in SETTINGS.content.IO_BOARDS.keys():
                 await cur.execute(f"SHOW TABLES LIKE '{table_name}'")
                 if not await cur.fetchone():
-                    print(
-                        f"🔄 Creating Troubleshooter IO board table '{table_name}'..."
-                    )
                     await cur.execute(f"""
                         CREATE TABLE `{table_name}` (
                             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -108,6 +101,7 @@ async def init_troubleshooter_db(application):
                 "SELECT id, code, advice, parts, added_by, added_at, edits FROM codes"
             )
             f_records = await cur.fetchall()
+
             for record in f_records:
                 clean_code = str(record["code"]).strip()
                 codes[clean_code] = {
@@ -138,6 +132,7 @@ async def init_troubleshooter_db(application):
 
             await cur.execute("SELECT user_id, username FROM users WHERE is_admin = 1")
             records = await cur.fetchall()
+
             for record in records:
                 user_id = int(record["user_id"])
                 username = record.get("username")
@@ -165,13 +160,13 @@ async def init_troubleshooter_db(application):
 
             await cur.execute("SHOW TABLES LIKE 'settings'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Settings table...")
                 await cur.execute("""
                     CREATE TABLE settings (
                         name VARCHAR(64) PRIMARY KEY,
                         value TINYINT NOT NULL DEFAULT 1
                     )
                 """)
+
             await cur.execute("SELECT name, value FROM settings")
             SETTINGS.notify_settings = {
                 r["name"]: int(r["value"]) for r in await cur.fetchall()
@@ -179,7 +174,6 @@ async def init_troubleshooter_db(application):
 
             await cur.execute("SHOW TABLES LIKE 'requests'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Requests table...")
                 await cur.execute("""
                     CREATE TABLE requests (
                         user_id BIGINT PRIMARY KEY,
@@ -188,6 +182,7 @@ async def init_troubleshooter_db(application):
                         requested_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+
             await cur.execute("SELECT user_id, kind, name FROM requests")
             for r in await cur.fetchall():
                 if r["kind"] in requests:
@@ -196,7 +191,6 @@ async def init_troubleshooter_db(application):
 
             await cur.execute("SHOW TABLES LIKE 'suggestions'")
             if not await cur.fetchone():
-                print("🔄 Creating Troubleshooter Suggestions table...")
                 await cur.execute("""
                     CREATE TABLE suggestions (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -210,6 +204,7 @@ async def init_troubleshooter_db(application):
                         created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+
             await cur.execute(
                 "SELECT id, user_id, name, location, title, body, file_id, file_kind "
                 "FROM suggestions ORDER BY id"
@@ -227,9 +222,13 @@ async def init_troubleshooter_db(application):
         application.bot_data["pending_suggestions"] = suggestions
 
         print(
-            f"✅ Troubleshooter tables verified: {len(codes)} codes, "
-            f"{len(io_boards)} boards, {len(parts)} parts, {len(admins)} admins "
-            f"and {len(approved)} approved users loaded into RAM."
+            f"✅ Troubleshooter database initialised:\n"
+            f"   Content: {', '.join(content_names) if content_names else 'None'}\n"
+            f"   Codes: {len(codes)}\n"
+            f"   IO Boards: {len(io_boards)}\n"
+            f"   Parts: {len(parts)}\n"
+            f"   Admins: {len(admins)}\n"
+            f"   Approved Users: {len(approved)}"
         )
 
     except Exception as e:

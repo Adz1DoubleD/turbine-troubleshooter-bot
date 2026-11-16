@@ -6,7 +6,14 @@ from datetime import datetime
 from ..settings import SETTINGS
 from .core import db_session
 
-EXPORT_TABLES = ("codes", "parts", "users", "io_boards")
+EXPORT_TABLES = (
+    "codes",
+    "parts",
+    "users",
+    "io_boards",
+    "modules_map",
+    "wtg_map",
+)
 
 
 def db_export(rows):
@@ -19,45 +26,108 @@ def db_export(rows):
                 headers.append(k)
 
     buf = io.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=headers, extrasaction="ignore")
+    writer = csv.DictWriter(
+        buf,
+        fieldnames=headers,
+        extrasaction="ignore",
+    )
     writer.writeheader()
+
     for r in rows:
         line = {}
+
         for k in headers:
             v = r.get(k)
+
             if isinstance(v, datetime):
                 v = v.strftime("%Y-%m-%d %H:%M")
             elif isinstance(v, (list, dict)):
                 v = json.dumps(v, ensure_ascii=False, default=str)
             elif v is None:
                 v = ""
+
             line[k] = v
+
         writer.writerow(line)
 
     bio = io.BytesIO(buf.getvalue().encode("utf-8-sig"))
     buf.close()
+
     return bio
 
 
 async def db_tables(table):
     if table not in EXPORT_TABLES:
         return None
+
     async with db_session() as cur:
+        if table in ("modules_map", "wtg_map"):
+            content_name = {
+                "modules_map": "MODULES_MAP",
+                "wtg_map": "WTG_MAP",
+            }[table]
+
+            await cur.execute(
+                "SELECT `data` FROM `content` WHERE `name` = %s LIMIT 1",
+                (content_name,),
+            )
+
+            rows = await cur.fetchall()
+
+            if not rows:
+                return None
+
+            data = rows[0]["data"]
+
+            if isinstance(data, bytes):
+                data = data.decode("utf-8")
+
+            if isinstance(data, str):
+                data = json.loads(data)
+
+            if not isinstance(data, dict):
+                return None
+
+            result = []
+
+            for name, details in data.items():
+                row = {"name": name}
+
+                if isinstance(details, dict):
+                    row.update(details)
+                    row["name"] = name
+                else:
+                    row["value"] = details
+
+                result.append(row)
+
+            return result
+
         await cur.execute("SHOW TABLES")
         names = {next(iter(r.values())) for r in await cur.fetchall()}
 
         if table == "io_boards":
             merged = []
+
             for board in SETTINGS.content.IO_BOARDS:
                 if board not in names:
                     continue
+
                 await cur.execute(f"SELECT * FROM `{board}`")
+
                 for r in await cur.fetchall():
-                    merged.append({"board": board, **r})
+                    merged.append(
+                        {
+                            "board": board,
+                            **r,
+                        }
+                    )
+
             return merged
 
         if table not in names:
             return None
 
         await cur.execute(f"SELECT * FROM `{table}`")
+
         return await cur.fetchall()

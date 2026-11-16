@@ -64,3 +64,17 @@ def setup(**options):
             setattr(SETTINGS, name, value)
     for name, value in options.items():
         setattr(SETTINGS, name, value)
+
+
+SKIPPED_WORDS = [
+    "bracket",
+    "support",
+    "hose",
+    "pipe",
+    "cover",
+    "plate",
+    "cable",
+    "seal",
+    "kit",
+    "fitting",
+]

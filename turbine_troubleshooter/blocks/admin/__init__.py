@@ -17,7 +17,7 @@ async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
         return
 
-    table = query.data.split(":", 1)[1]
+    table = query.data.split(":", 2)[2]
     chat_id = update.effective_chat.id
     rows = await db_tables(table)
     if not rows:
@@ -43,6 +43,8 @@ EXPORT_LABELS = {
     "parts": "Spare Parts",
     "io_boards": "IO Boards",
     "users": "Users",
+    "modules_map": "Modules",
+    "wtg_map": "WTG Data",
 }
 
 
@@ -53,7 +55,11 @@ async def button_export_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     kb = [
-        [InlineKeyboardButton(f"📤 {label}", callback_data=f"export:{table}")]
+        [
+            InlineKeyboardButton(
+                f"📤 {label}", callback_data=f"troubleshooter:export:{table}"
+            )
+        ]
         for table, label in EXPORT_LABELS.items()
     ]
     kb.append(

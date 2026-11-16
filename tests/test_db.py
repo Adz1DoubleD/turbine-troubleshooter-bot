@@ -331,7 +331,6 @@ FULL_CONTENT = {
     },
     "WTG_MAP": {"WTA01": 1},
     "IO_BOARDS": {"io1": "IO Board 1"},
-    "PART_ACCESSORIES": ["bolt"],
 }
 
 

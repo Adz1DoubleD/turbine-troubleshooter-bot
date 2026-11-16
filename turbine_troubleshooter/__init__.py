@@ -363,7 +363,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif admin and data == "troubleshooter:export_menu":
         await admin_menu.button_export_menu(update, context)
 
-    elif admin and data.startswith("export:"):
+    elif admin and data.startswith("troubleshooter:export:"):
         await admin_menu.button_export(update, context)
 
     elif admin and data.startswith("troubleshooter:notify_users"):
@@ -497,7 +497,7 @@ async def start_troubleshooter_bot(share_with=None, **options):
     await application.initialize()
     await application.start()
     await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-    print("🚀 Troubleshooting Bot initialized and polling")
+    print("🚀 Troubleshooting Bot initialised and polling")
     return application
 
 

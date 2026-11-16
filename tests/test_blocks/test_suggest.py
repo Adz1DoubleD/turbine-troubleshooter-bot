@@ -38,7 +38,6 @@ def content(monkeypatch):
             MODULES_MAP=deepcopy(MODULES),
             WTG_MAP={"WTA01": {"serial": 1, "ip": "192.0.2.1"}},
             IO_BOARDS={},
-            PART_ACCESSORIES=("kit",),
         ),
     )
     return SETTINGS.content
@@ -135,9 +134,7 @@ async def test_content_save_writes_every_item(monkeypatch, make_cursor, patch_se
     monkeypatch.setattr(
         SETTINGS,
         "content",
-        SimpleNamespace(
-            MODULES_MAP=deepcopy(MODULES), WTG_MAP={}, IO_BOARDS={}, PART_ACCESSORIES=()
-        ),
+        SimpleNamespace(MODULES_MAP=deepcopy(MODULES), WTG_MAP={}, IO_BOARDS={}),
     )
     cur = make_cursor()
     patch_session(db, cur)
@@ -145,7 +142,7 @@ async def test_content_save_writes_every_item(monkeypatch, make_cursor, patch_se
     await db.content_save()
 
     saved = {c[1][0]: json.loads(c[1][1]) for c in cur.calls}
-    assert set(saved) == {"MODULES_MAP", "WTG_MAP", "IO_BOARDS", "PART_ACCESSORIES"}
+    assert set(saved) == {"MODULES_MAP", "WTG_MAP", "IO_BOARDS"}
     assert saved["MODULES_MAP"]["Torque"]["menu"]["Charts"]["menu"]["T5"] == {
         "text": "",
         "document": "file:pdf/T5.pdf",

@@ -226,7 +226,7 @@ async def test_users_list_shows_badges_and_stats(registered):
     assert "🔒 ID 3" in shown
     assert "👑 @boss" in shown
     assert "troubleshooter:user:2" in callbacks(edit)
-    assert "export:users" not in callbacks(edit)
+    assert "troubleshooter:export:users" not in callbacks(edit)
 
 
 @pytest.mark.asyncio

@@ -6,7 +6,7 @@ import sentry_sdk
 from ..settings import SETTINGS
 from .core import db_session
 
-CONTENT_ITEMS = {"MODULES_MAP", "WTG_MAP", "IO_BOARDS", "PART_ACCESSORIES"}
+CONTENT_ITEMS = {"MODULES_MAP", "WTG_MAP", "IO_BOARDS"}
 FILE_PREFIX = "file:"
 
 

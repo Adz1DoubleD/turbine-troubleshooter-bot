@@ -11,7 +11,7 @@ from telegram.ext import ContextTypes
 import turbine_troubleshooter
 from turbine_troubleshooter.db import users_get
 from turbine_troubleshooter.helpers import escape_markdown, is_local, is_owner
-from turbine_troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.settings import SETTINGS, SKIPPED_WORDS
 
 
 def find_wtg(text):
@@ -112,9 +112,7 @@ def find_parts(query, parts, limit=8):
         hits = sum(w in hay for w in words)
         if hits == len(words):
             score = 300 + sum(w in desc for w in words) * 40 - len(desc) / 10
-            score -= 50 * sum(
-                a in desc and a not in q for a in SETTINGS.content.PART_ACCESSORIES
-            )
+            score -= 50 * sum(a in desc and a not in q for a in SKIPPED_WORDS)
         elif hits:
             score = 100 * hits / len(words) + sum(w in desc for w in words) * 10
         else:

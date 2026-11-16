@@ -3,7 +3,6 @@ IO_BOARDS = {
     "io2": {"name": "IO Board 2", "can": "Node 2"},
 }
 
-PART_ACCESSORIES = ("bracket", "seal", "kit", "fitting")
 
 WTG_MAP = {
     "WTA01": {"serial": 1000001, "ip": "192.0.2.11"},

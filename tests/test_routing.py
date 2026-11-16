@@ -200,7 +200,7 @@ async def test_buttons_for_everyone(monkeypatch, data, module, name):
         ("troubleshooter:user_search", admin_users, "button_user_search"),
         ("troubleshooter:broadcast", admin_broadcast, "button_broadcast"),
         ("troubleshooter:export_menu", admin, "button_export_menu"),
-        ("export:codes", admin, "button_export"),
+        ("troubleshooter:export:codes", admin, "button_export"),
     ],
 )
 @pytest.mark.parametrize("is_admin", [True, False])

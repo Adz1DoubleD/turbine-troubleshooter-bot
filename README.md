@@ -68,7 +68,7 @@ PDFs and photos can only be sent to the troubleshooter bot itself, up to 20 MB. 
 
 ## Content
 
-The menus, turbine map, IO boards and part-search hints are loaded from the `content` table: one row per item (`MODULES_MAP`, `WTG_MAP`, `IO_BOARDS`, `PART_ACCESSORIES`), stored as JSON text. Documents and photos are referenced as `file:<path relative to files_dir>`. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
+The menus, turbine map, IO boards and part-search hints are loaded from the `content` table: one row per item (`MODULES_MAP`, `WTG_MAP`, `IO_BOARDS`), stored as JSON text. Documents and photos are referenced as `file:<path relative to files_dir>`. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
 
 ## Create your Telegram bot
 
