@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.0...v1.1.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* publish callback navigation update ([78ae291](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/78ae2914757d96417a140c12bc60e2a34c6d596f))
+
 ## [1.1.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.0...v1.1.0) (2026-11-16)
 
 
