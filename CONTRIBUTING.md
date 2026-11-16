@@ -11,7 +11,12 @@ Thanks for helping. To get a copy running, follow [Run it yourself](README.md#ru
    pre-commit run --all-files
    pytest
    ```
-4. Open a pull request saying what changed and why. CI runs the same checks and must pass before merging.
+4. Start each commit message with a type, which decides the next version:
+   - `fix: ...` for a bug fix (1.0.0 → 1.0.1)
+   - `feat: ...` for something new (1.0.0 → 1.1.0)
+   - `feat!: ...` or `fix!: ...` for a change hosts must act on (1.0.0 → 2.0.0)
+   - `docs:`, `test:`, `ci:`, `chore:` or `refactor:` for anything that doesn't need a release
+5. Open a pull request saying what changed and why. CI runs the same checks and must pass before merging.
 
 Tests mock the database and Telegram, so they need no `.env`, network or MySQL.
 
@@ -50,4 +55,10 @@ If a feature needs example data to demonstrate it, add made-up entries to `examp
 
 ## Releases
 
-The maintainer bumps `version` in `pyproject.toml`, merges, and pushes a `vX.Y.Z` tag on `main`. The tag runs the publish workflow, which checks the tag matches `version`, runs the tests, and uploads the release to [PyPI](https://pypi.org/project/turbine-troubleshooter-bot/). A version number can only be published once. Hosts pin a version range, so nothing reaches a live bot until a host moves to the new release.
+Releases are prepared by [release-please](https://github.com/googleapis/release-please):
+
+1. Every merge to `main` updates a "chore(main): release X.Y.Z" pull request. It works out the next version from the commit types since the last release, bumps `version` in `pyproject.toml` and writes `CHANGELOG.md`.
+2. When it's time to release, the maintainer merges that pull request. The workflow can't trigger CI on its own pull requests, so the maintainer merges it past the required check; it only changes the version and changelog.
+3. The merge tags `vX.Y.Z`, creates the GitHub release, runs the tests, builds, and waits for the maintainer to approve the `pypi` deployment before uploading to [PyPI](https://pypi.org/project/turbine-troubleshooter-bot/).
+
+A version number can only be published once. Pushing a `vX.Y.Z` tag by hand also publishes, as long as it matches `version`. Hosts pin a version, so nothing reaches a live bot until a host moves to the new release.
