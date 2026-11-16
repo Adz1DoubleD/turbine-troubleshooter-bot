@@ -25,3 +25,4 @@ repos:
           python -c "import sys; print('Content files must not be committed:', *sys.argv[1:], sep=chr(10)); sys.exit(1)"
         language: system
         files: (?i)\.(pdf|png|jpe?g|gif|webp|docx?|xlsx?|pptx?|csv|json|sql|txt|db|sqlite3?)$
+        exclude: ^\.github/
