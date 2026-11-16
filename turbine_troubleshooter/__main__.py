@@ -5,7 +5,7 @@ from pathlib import Path
 import sentry_sdk
 from dotenv import load_dotenv
 
-from troubleshooter import (
+from turbine_troubleshooter import (
     example_content,
     start_troubleshooter_bot,
     stop_troubleshooter_bot,

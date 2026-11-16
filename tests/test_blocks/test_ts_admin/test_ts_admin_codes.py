@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter.blocks.admin as admin
-from troubleshooter.blocks.admin import codes as admin_codes
+import turbine_troubleshooter.blocks.admin as admin
+from turbine_troubleshooter.blocks.admin import codes as admin_codes
 
 CODE = {
     "id": 2,

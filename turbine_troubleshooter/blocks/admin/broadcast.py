@@ -2,8 +2,8 @@ import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import user_get, users_get
-from troubleshooter.helpers import escape_markdown, is_owner
+from turbine_troubleshooter.db import user_get, users_get
+from turbine_troubleshooter.helpers import escape_markdown, is_owner
 
 from ...tools import send_notification_troubleshooter
 from . import handle_block

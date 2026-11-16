@@ -4,9 +4,9 @@ from zoneinfo import ZoneInfo
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import db_export, db_tables, setting_toggle
-from troubleshooter.helpers import error_kb, is_owner
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.db import db_export, db_tables, setting_toggle
+from turbine_troubleshooter.helpers import error_kb, is_owner
+from turbine_troubleshooter.settings import SETTINGS
 
 from ...tools import user_is_admin
 

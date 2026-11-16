@@ -1,7 +1,7 @@
 import pytest
 from freezegun import freeze_time
 
-import troubleshooter.weather as wq
+import turbine_troubleshooter.weather as wq
 
 FROZEN = "2026-10-22 18:00:00"
 

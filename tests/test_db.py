@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter.db as ts
+import turbine_troubleshooter.db as ts
 
 
 @pytest.mark.asyncio
@@ -333,7 +333,7 @@ async def test_content_is_loaded_from_the_database(
 ):
     from pathlib import Path
 
-    from troubleshooter.settings import SETTINGS
+    from turbine_troubleshooter.settings import SETTINGS
 
     monkeypatch.setattr(SETTINGS, "files_dir", Path("/media"))
     cur = make_cursor(
@@ -365,7 +365,7 @@ async def test_content_is_loaded_from_the_database(
 async def test_content_falls_back_to_setup_when_table_incomplete(
     monkeypatch, make_cursor, patch_session, rows
 ):
-    from troubleshooter.settings import SETTINGS
+    from turbine_troubleshooter.settings import SETTINGS
 
     original = SETTINGS.content
     monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
@@ -383,7 +383,7 @@ async def test_content_falls_back_to_setup_when_table_incomplete(
 def test_content_from_json_resolves_only_file_references(monkeypatch):
     from pathlib import Path
 
-    from troubleshooter.settings import SETTINGS
+    from turbine_troubleshooter.settings import SETTINGS
 
     monkeypatch.setattr(SETTINGS, "files_dir", "/media")
     data = '{"a": "file:images/m.png", "b": ["plain text", "file:pdf/x.pdf"], "c": 3}'
@@ -398,7 +398,7 @@ def test_content_from_json_resolves_only_file_references(monkeypatch):
 def test_missing_file_is_reported(monkeypatch, tmp_path):
     from unittest.mock import MagicMock
 
-    from troubleshooter.settings import SETTINGS
+    from turbine_troubleshooter.settings import SETTINGS
 
     (tmp_path / "pdf").mkdir()
     (tmp_path / "pdf" / "there.pdf").write_bytes(b"%PDF")
@@ -418,7 +418,7 @@ async def test_no_content_anywhere_gives_empty_menus(
 ):
     from unittest.mock import MagicMock
 
-    from troubleshooter.settings import SETTINGS
+    from turbine_troubleshooter.settings import SETTINGS
 
     monkeypatch.setattr(SETTINGS, "content", None)
     reported = MagicMock()

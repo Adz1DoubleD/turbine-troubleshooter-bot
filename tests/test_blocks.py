@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter.blocks as blocks
+import turbine_troubleshooter.blocks as blocks
 
 
 def button_labels(markup):

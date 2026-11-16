@@ -3,9 +3,9 @@ from types import SimpleNamespace
 import pytest
 from telegram.error import Forbidden, RetryAfter
 
-import troubleshooter as tb
-import troubleshooter.tools as notify
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter as tb
+import turbine_troubleshooter.tools as notify
+from turbine_troubleshooter.settings import SETTINGS
 
 
 @pytest.fixture(autouse=True)

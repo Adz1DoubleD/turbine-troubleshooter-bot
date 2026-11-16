@@ -6,7 +6,7 @@ import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.settings import SETTINGS
 
 ERROR_REPLY = "⚠️ Something went wrong. It's been logged."
 

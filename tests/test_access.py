@@ -3,11 +3,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import troubleshooter
-import troubleshooter.db as db
-from troubleshooter.blocks import user
-from troubleshooter.blocks.admin import users as admin_users
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter
+import turbine_troubleshooter.db as db
+from turbine_troubleshooter.blocks import user
+from turbine_troubleshooter.blocks.admin import users as admin_users
+from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 999
 STRANGER = 123
@@ -54,16 +54,18 @@ def callbacks(markup):
 
 @pytest.mark.asyncio
 async def test_start_shows_request_access_to_unapproved_user(monkeypatch):
-    monkeypatch.setattr(troubleshooter, "user_add", AsyncMock(return_value=False))
+    monkeypatch.setattr(
+        turbine_troubleshooter, "user_add", AsyncMock(return_value=False)
+    )
     block = AsyncMock()
-    monkeypatch.setattr(troubleshooter, "handle_block", block)
+    monkeypatch.setattr(turbine_troubleshooter, "handle_block", block)
     message = SimpleNamespace(delete=AsyncMock(), reply_text=AsyncMock())
     update = SimpleNamespace(
         message=message,
         effective_user=SimpleNamespace(id=STRANGER, username="someone"),
     )
 
-    await troubleshooter.command_handler(update, make_context())
+    await turbine_troubleshooter.command_handler(update, make_context())
 
     block.assert_not_awaited()
     text = message.reply_text.await_args.args[0]
@@ -79,10 +81,10 @@ async def test_start_shows_request_access_to_unapproved_user(monkeypatch):
 @pytest.mark.asyncio
 async def test_unapproved_user_buttons_show_lock_screen(monkeypatch, data):
     handled = AsyncMock()
-    monkeypatch.setattr(troubleshooter, "handle_button", handled)
+    monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     update, query = make_query(data)
 
-    await troubleshooter.callback_handler(update, make_context())
+    await turbine_troubleshooter.callback_handler(update, make_context())
 
     handled.assert_not_awaited()
     assert "Access is by approval" in query.edit_message_text.await_args.args[0]
@@ -93,10 +95,10 @@ async def test_unapproved_user_buttons_show_lock_screen(monkeypatch, data):
 async def test_approved_user_and_owner_get_through(monkeypatch, approved, owner_id):
     monkeypatch.setattr(SETTINGS, "owner_id", str(owner_id))
     handled = AsyncMock()
-    monkeypatch.setattr(troubleshooter, "handle_button", handled)
+    monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     update, _ = make_query("troubleshooter:code_search")
 
-    await troubleshooter.callback_handler(update, make_context(approved))
+    await turbine_troubleshooter.callback_handler(update, make_context(approved))
 
     handled.assert_awaited_once()
 
@@ -104,10 +106,10 @@ async def test_approved_user_and_owner_get_through(monkeypatch, approved, owner_
 @pytest.mark.asyncio
 async def test_unapproved_user_can_request_access(monkeypatch):
     handled = AsyncMock()
-    monkeypatch.setattr(troubleshooter, "handle_button", handled)
+    monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     update, _ = make_query("troubleshooter:access_request")
 
-    await troubleshooter.callback_handler(update, make_context())
+    await turbine_troubleshooter.callback_handler(update, make_context())
 
     handled.assert_awaited_once()
 
@@ -116,10 +118,10 @@ async def test_unapproved_user_can_request_access(monkeypatch):
 @pytest.mark.asyncio
 async def test_files_only_reach_suggestions_for_approved_users(monkeypatch, approved):
     handled = AsyncMock()
-    monkeypatch.setattr(troubleshooter.suggest, "handle_file", handled)
+    monkeypatch.setattr(turbine_troubleshooter.suggest, "handle_file", handled)
     update = SimpleNamespace(effective_user=SimpleNamespace(id=STRANGER))
 
-    await troubleshooter.file_handler(
+    await turbine_troubleshooter.file_handler(
         update, make_context({STRANGER} if approved else ())
     )
 
@@ -129,10 +131,10 @@ async def test_files_only_reach_suggestions_for_approved_users(monkeypatch, appr
 @pytest.mark.asyncio
 async def test_unapproved_user_text_is_ignored(monkeypatch):
     handled = AsyncMock()
-    monkeypatch.setattr(troubleshooter, "handle_text_input", handled)
+    monkeypatch.setattr(turbine_troubleshooter, "handle_text_input", handled)
     update = SimpleNamespace(effective_user=SimpleNamespace(id=STRANGER))
 
-    await troubleshooter.text_handler(update, make_context())
+    await turbine_troubleshooter.text_handler(update, make_context())
 
     handled.assert_not_awaited()
 
@@ -305,12 +307,12 @@ async def test_request_still_sent_when_db_save_fails(monkeypatch, no_db_requests
 @pytest.mark.asyncio
 async def test_revoked_user_is_locked_out_straight_away(monkeypatch):
     handled = AsyncMock()
-    monkeypatch.setattr(troubleshooter, "handle_button", handled)
+    monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     context = make_context(approved={STRANGER})
     context.bot_data["troubleshooter_approved"].discard(STRANGER)
     update, query = make_query("troubleshooter:code_search")
 
-    await troubleshooter.callback_handler(update, context)
+    await turbine_troubleshooter.callback_handler(update, context)
 
     handled.assert_not_awaited()
     assert "Access is by approval" in query.edit_message_text.await_args.args[0]
@@ -319,7 +321,7 @@ async def test_revoked_user_is_locked_out_straight_away(monkeypatch):
 @pytest.mark.parametrize("rowcount, expected", [(1, True), (0, False)])
 @pytest.mark.asyncio
 async def test_user_revoke(make_cursor, patch_session, rowcount, expected):
-    import troubleshooter.db as ts
+    import turbine_troubleshooter.db as ts
 
     cur = make_cursor(rowcount=rowcount)
     patch_session(ts, cur)

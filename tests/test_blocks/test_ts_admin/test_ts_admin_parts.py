@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter.blocks.admin as admin
-from troubleshooter.blocks.admin import parts
+import turbine_troubleshooter.blocks.admin as admin
+from turbine_troubleshooter.blocks.admin import parts
 
 OWNER = 123
 OTHER = 456

@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from troubleshooter.blocks import user
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.blocks import user
+from turbine_troubleshooter.settings import SETTINGS
 
 
 def make_query_update(data, user_id=123, username="tester"):

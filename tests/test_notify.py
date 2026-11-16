@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import troubleshooter
-import troubleshooter.db as db
-from troubleshooter.blocks import admin as admin_menu
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter
+import turbine_troubleshooter.db as db
+from turbine_troubleshooter.blocks import admin as admin_menu
+from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 999
 ADMIN = 5
@@ -122,6 +122,6 @@ async def test_notify_routes_for_admins(monkeypatch):
         bot_data={"is_troubleshooter": True},
     )
 
-    await troubleshooter.handle_button(update, context)
+    await turbine_troubleshooter.handle_button(update, context)
 
     called.assert_awaited_once()

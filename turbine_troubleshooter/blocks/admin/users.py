@@ -6,7 +6,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import (
+from turbine_troubleshooter.db import (
     admin_add,
     admin_remove,
     request_remove,
@@ -15,8 +15,8 @@ from troubleshooter.db import (
     user_revoke,
     users_get,
 )
-from troubleshooter.helpers import error_kb, escape_markdown, is_owner
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner
+from turbine_troubleshooter.settings import SETTINGS
 
 from ...tools import send_notification_troubleshooter, user_is_admin
 

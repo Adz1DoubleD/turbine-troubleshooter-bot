@@ -6,7 +6,7 @@ import aiohttp
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.settings import SETTINGS
 
 WINDQUEST_URL = "https://api.weatherquest.co.uk/API/WindQuest/API-Forecast"
 CEFAS_RESULTS_URL = (

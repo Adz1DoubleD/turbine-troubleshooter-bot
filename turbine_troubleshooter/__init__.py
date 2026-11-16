@@ -13,8 +13,8 @@ from telegram.ext import (
     filters,
 )
 
-from troubleshooter.db import close_db, init_troubleshooter_db, user_add
-from troubleshooter.helpers import (
+from turbine_troubleshooter.db import close_db, init_troubleshooter_db, user_add
+from turbine_troubleshooter.helpers import (
     close_message,
     error_handler,
     error_handler_noise_filter,
