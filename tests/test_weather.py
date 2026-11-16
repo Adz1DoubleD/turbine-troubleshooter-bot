@@ -310,7 +310,7 @@ async def test_no_weather_data_message(monkeypatch):
     monkeypatch.setattr(wq, "get_cefas_data", nothing)
     monkeypatch.setattr(wq, "get_windquest_data", no_wind)
 
-    text, image = await wq.get_work_weather_data()
+    text, image = await wq.get_weather_data()
 
     assert "No weather data available" in text
     assert image is None
@@ -326,14 +326,14 @@ def buttons(block):
 
 @pytest.mark.parametrize("buoy", [None, "BUOY1"])
 @pytest.mark.asyncio
-async def test_work_weather_block_keyboard(monkeypatch, buoy):
+async def test_weather_block_keyboard(monkeypatch, buoy):
     async def data(**k):
         return "WEATHER", None
 
-    monkeypatch.setattr(wq, "get_work_weather_data", data)
+    monkeypatch.setattr(wq, "get_weather_data", data)
     monkeypatch.setattr(wq.SETTINGS, "cefas_buoy", buoy)
 
-    block = await wq.work_weather_block()
+    block = await wq.weather_block()
 
     expected = [("📅 View Tomorrow", "troubleshooter:weather:tomorrow")]
     if buoy:
@@ -349,13 +349,13 @@ async def test_work_weather_block_keyboard(monkeypatch, buoy):
 
 
 @pytest.mark.asyncio
-async def test_work_weather_block_for_host_bot(monkeypatch):
+async def test_weather_block_for_host_bot(monkeypatch):
     async def data(**k):
         return "WEATHER", None
 
-    monkeypatch.setattr(wq, "get_work_weather_data", data)
+    monkeypatch.setattr(wq, "get_weather_data", data)
 
-    block = await wq.work_weather_block(
+    block = await wq.weather_block(
         is_tomorrow=True, base="weather:work", back=None, close=True
     )
 
@@ -384,7 +384,7 @@ async def test_handle_button_sends_block(monkeypatch, data, tomorrow):
         seen["tomorrow"] = is_tomorrow
         return {"text": "W", "image": None, "reply_markup": None}
 
-    monkeypatch.setattr(wq, "work_weather_block", block)
+    monkeypatch.setattr(wq, "weather_block", block)
     query = SimpleNamespace(
         data=data, message=SimpleNamespace(text="old"), edit_message_text=AsyncMock()
     )

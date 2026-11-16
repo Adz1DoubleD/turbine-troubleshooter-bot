@@ -368,25 +368,25 @@ async def get_windquest_service() -> bool:
     return bool(data) and not data.get("error") and bool(data.get("Forecast"))
 
 
-async def get_work_weather_data(tomorrow: bool = False, brief: bool = False):
+async def get_weather_data(tomorrow: bool = False, brief: bool = False):
     sea, image = await get_cefas_data(brief=brief, tomorrow=tomorrow)
     wind = await get_windquest_data(tomorrow=tomorrow)
 
     parts = [p for p in (sea, wind) if p]
     if not parts:
-        return "🌊 *Work Weather*\n └ ⚠️ No weather data available right now.\n", None
+        return "🌊 *Weather*\n └ ⚠️ No weather data available right now.\n", None
 
     return "\n".join(parts) + "\n", image
 
 
-async def work_weather_block(
+async def weather_block(
     is_tomorrow=False,
     brief=False,
     base="troubleshooter:weather",
     back=("🔙 Back", "back:troubleshooter"),
     close=False,
 ):
-    text, image = await get_work_weather_data(tomorrow=is_tomorrow, brief=brief)
+    text, image = await get_weather_data(tomorrow=is_tomorrow, brief=brief)
 
     today, tomorrow = base, f"{base}:tomorrow"
     rows = [
@@ -458,5 +458,5 @@ async def send_block(query, block):
 
 async def handle_button(update, context):
     query = update.callback_query
-    block = await work_weather_block(is_tomorrow=query.data.endswith(":tomorrow"))
+    block = await weather_block(is_tomorrow=query.data.endswith(":tomorrow"))
     await send_block(query, block)
