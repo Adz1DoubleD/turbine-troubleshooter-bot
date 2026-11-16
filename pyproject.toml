@@ -3,11 +3,25 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "troubleshooter-bot"
-version = "0.6.0"
-description = "Telegram troubleshooter bot: fault codes, spare parts and reference content behind approval-based access."
+name = "turbine-troubleshooter-bot"
+version = "1.0.0"
+description = "Telegram bot for wind turbine technicians: fault codes, spare parts and reference content behind approval-based access."
+readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
+authors = [{ name = "Adz1DoubleD" }]
+keywords = ["telegram", "bot", "wind turbine", "troubleshooting", "maintenance"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Manufacturing",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Communications :: Chat",
+]
 dependencies = [
     "python-telegram-bot>=22,<23",
     "aiomysql[rsa]>=0.3,<0.4",
@@ -25,8 +39,13 @@ dev = [
     "pre_commit==4.7.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot"
+Issues = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues"
+Changelog = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/releases"
+
 [tool.setuptools.packages.find]
-include = ["troubleshooter*"]
+include = ["turbine_troubleshooter*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

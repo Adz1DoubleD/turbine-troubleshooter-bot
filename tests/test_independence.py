@@ -4,11 +4,11 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter
-from troubleshooter.blocks import handle_block
-from troubleshooter.settings import SETTINGS, setup
+import turbine_troubleshooter
+from turbine_troubleshooter.blocks import handle_block
+from turbine_troubleshooter.settings import SETTINGS, setup
 
-PACKAGE = pathlib.Path(troubleshooter.__file__).parent
+PACKAGE = pathlib.Path(turbine_troubleshooter.__file__).parent
 MAIN_BOT_MODULES = {"bot", "config", "services", "media", "main"}
 
 

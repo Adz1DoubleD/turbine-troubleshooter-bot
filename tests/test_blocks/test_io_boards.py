@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from troubleshooter.blocks import io_boards
+from turbine_troubleshooter.blocks import io_boards
 
 
 def make_update(data):

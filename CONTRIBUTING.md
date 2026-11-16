@@ -26,9 +26,9 @@ If a feature needs example data to demonstrate it, add made-up entries to `examp
 
 ## Adding a button
 
-1. **The handler** goes in `troubleshooter/blocks/` (or `blocks/admin/` for admin screens). It edits the current message rather than sending a new one, and gives every screen a 🔙 Back button.
+1. **The handler** goes in `turbine_troubleshooter/blocks/` (or `blocks/admin/` for admin screens). It edits the current message rather than sending a new one, and gives every screen a 🔙 Back button.
 2. **The callback data** starts with `troubleshooter:` and stays under Telegram's 64-byte limit, IDs included.
-3. **The route** goes in `handle_button` in `troubleshooter/__init__.py`. Admin screens go behind `admin and ...`; owner-only actions also check `is_owner()` inside the handler, because admins pass the route.
+3. **The route** goes in `handle_button` in `turbine_troubleshooter/__init__.py`. Admin screens go behind `admin and ...`; owner-only actions also check `is_owner()` inside the handler, because admins pass the route.
 4. **Typed input**: set `context.user_data["state"]` and `last_msg_id`, then add the state to `handle_text_input`.
 5. **Lists that grow** (users, codes, parts, requests) are paged, because Telegram rejects a message with more than about 100 buttons.
 6. **Changes that remove access or delete data** ask for confirmation first.
@@ -50,4 +50,4 @@ If a feature needs example data to demonstrate it, add made-up entries to `examp
 
 ## Releases
 
-The maintainer bumps `version` in `pyproject.toml`, merges, and tags `vX.Y.Z`. Hosts install a tag, so nothing reaches a live bot until a host moves to the new tag.
+The maintainer bumps `version` in `pyproject.toml`, merges, and pushes a `vX.Y.Z` tag on `main`. The tag runs the publish workflow, which checks the tag matches `version`, runs the tests, and uploads the release to [PyPI](https://pypi.org/project/turbine-troubleshooter-bot/). A version number can only be published once. Hosts pin a version range, so nothing reaches a live bot until a host moves to the new release.

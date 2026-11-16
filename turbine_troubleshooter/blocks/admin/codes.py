@@ -1,11 +1,11 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import (
+from turbine_troubleshooter.db import (
     delete_entry,
     fault_code_add,
 )
-from troubleshooter.helpers import escape_markdown
+from turbine_troubleshooter.helpers import escape_markdown
 
 from ...tools import send_notification_troubleshooter, user_is_admin
 from . import handle_block, local_now

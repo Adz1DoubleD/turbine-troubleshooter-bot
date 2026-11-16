@@ -6,8 +6,8 @@ import pytest
 from telegram import Update
 from telegram.error import BadRequest
 
-import troubleshooter.helpers as helpers
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter.helpers as helpers
+from turbine_troubleshooter.settings import SETTINGS
 
 
 def crashed_update(error):

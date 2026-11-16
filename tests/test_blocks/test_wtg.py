@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from troubleshooter.blocks import wtg
+from turbine_troubleshooter.blocks import wtg
 
 
 def callbacks(markup):

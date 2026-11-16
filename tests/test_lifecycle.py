@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-import troubleshooter
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter
+from turbine_troubleshooter.settings import SETTINGS
 
 
 @pytest.fixture
@@ -19,9 +19,9 @@ def fake_app(monkeypatch):
     app.updater.stop = AsyncMock()
     builder = MagicMock()
     builder.token.return_value.build.return_value = app
-    monkeypatch.setattr(troubleshooter.Application, "builder", lambda: builder)
-    monkeypatch.setattr(troubleshooter, "close_db", AsyncMock())
-    monkeypatch.setattr(troubleshooter, "application", None)
+    monkeypatch.setattr(turbine_troubleshooter.Application, "builder", lambda: builder)
+    monkeypatch.setattr(turbine_troubleshooter, "close_db", AsyncMock())
+    monkeypatch.setattr(turbine_troubleshooter, "application", None)
     monkeypatch.setattr(SETTINGS, "owner_id", "42")
     monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@db-host:3306/ts")
     app.builder = builder
@@ -38,7 +38,7 @@ async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
         monkeypatch.delenv(var, raising=False)
 
     with pytest.raises(ValueError) as error:
-        await troubleshooter.start_troubleshooter_bot()
+        await turbine_troubleshooter.start_troubleshooter_bot()
 
     assert str(error.value) == (
         "Troubleshooter needs these settings: TROUBLESHOOTER_BOT_TOKEN, "
@@ -49,29 +49,29 @@ async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
 
 @pytest.mark.asyncio
 async def test_main_db_url_counts_as_database(monkeypatch, fake_app):
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/main")
 
-    assert await troubleshooter.start_troubleshooter_bot() is fake_app
+    assert await turbine_troubleshooter.start_troubleshooter_bot() is fake_app
 
 
 @pytest.mark.asyncio
 async def test_alerts_go_to_owner_when_unset(monkeypatch, fake_app):
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
     monkeypatch.setattr(SETTINGS, "alerts_chat_id", None)
     monkeypatch.delenv("TROUBLESHOOTER_ALERTS_CHAT_ID", raising=False)
 
-    await troubleshooter.start_troubleshooter_bot()
+    await turbine_troubleshooter.start_troubleshooter_bot()
 
     assert SETTINGS.alerts_chat_id == "42"
 
 
 @pytest.mark.asyncio
 async def test_alerts_chat_kept_when_set(monkeypatch, fake_app):
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
 
-    await troubleshooter.start_troubleshooter_bot(alerts_chat_id="-100")
+    await turbine_troubleshooter.start_troubleshooter_bot(alerts_chat_id="-100")
 
     assert SETTINGS.alerts_chat_id == "-100"
 
@@ -80,7 +80,7 @@ async def test_alerts_chat_kept_when_set(monkeypatch, fake_app):
 async def test_standalone_prints_missing_settings_without_traceback(
     monkeypatch, capsys
 ):
-    import troubleshooter.__main__ as standalone
+    import turbine_troubleshooter.__main__ as standalone
 
     monkeypatch.setattr(standalone, "load_dotenv", lambda: None)
     monkeypatch.setattr(standalone.sentry_sdk, "init", lambda **kwargs: None)
@@ -104,10 +104,12 @@ async def test_start_loads_its_own_data_and_shares_it(monkeypatch, fake_app):
     async def load(app):
         app.bot_data["codes"] = {"E1": {}}
 
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", load)
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", load)
     host = SimpleNamespace(bot_data={})
 
-    app = await troubleshooter.start_troubleshooter_bot(share_with=host, name="Site")
+    app = await turbine_troubleshooter.start_troubleshooter_bot(
+        share_with=host, name="Site"
+    )
 
     assert app is fake_app
     assert app.bot_data["is_troubleshooter"] is True
@@ -123,9 +125,9 @@ async def test_start_loads_its_own_data_and_shares_it(monkeypatch, fake_app):
 
 @pytest.mark.asyncio
 async def test_start_without_host_fills_defaults_when_db_fails(monkeypatch, fake_app):
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
 
-    app = await troubleshooter.start_troubleshooter_bot()
+    app = await turbine_troubleshooter.start_troubleshooter_bot()
 
     assert app.bot_data["codes"] == {}
     assert app.bot_data["parts"] == []
@@ -134,26 +136,26 @@ async def test_start_without_host_fills_defaults_when_db_fails(monkeypatch, fake
 
 @pytest.mark.asyncio
 async def test_stop_shuts_down_and_closes_db(monkeypatch, fake_app):
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
-    await troubleshooter.start_troubleshooter_bot()
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
+    await turbine_troubleshooter.start_troubleshooter_bot()
     fake_app.updater.running = True
     fake_app.running = True
     fake_app._initialized = True
 
-    await troubleshooter.stop_troubleshooter_bot()
+    await turbine_troubleshooter.stop_troubleshooter_bot()
 
     fake_app.updater.stop.assert_awaited_once()
     fake_app.stop.assert_awaited_once()
     fake_app.shutdown.assert_awaited_once()
-    troubleshooter.close_db.assert_awaited_once()
-    assert troubleshooter.application is None
+    turbine_troubleshooter.close_db.assert_awaited_once()
+    assert turbine_troubleshooter.application is None
 
 
 @pytest.mark.asyncio
 async def test_stop_before_start_only_closes_db(fake_app):
-    await troubleshooter.stop_troubleshooter_bot()
+    await turbine_troubleshooter.stop_troubleshooter_bot()
 
-    troubleshooter.close_db.assert_awaited_once()
+    turbine_troubleshooter.close_db.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -164,8 +166,8 @@ async def test_channel_posts_reach_no_message_handler(monkeypatch, fake_app, kin
     from telegram import Chat, Message, Update
     from telegram.ext import MessageHandler
 
-    monkeypatch.setattr(troubleshooter, "init_troubleshooter_db", AsyncMock())
-    await troubleshooter.start_troubleshooter_bot()
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
+    await turbine_troubleshooter.start_troubleshooter_bot()
     post = Message(
         message_id=1,
         date=datetime.now(),

@@ -6,7 +6,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
-import troubleshooter
+import turbine_troubleshooter
 
 from ..db import content_save, suggestion_add, suggestion_remove
 from ..helpers import escape_markdown, is_owner
@@ -84,9 +84,12 @@ def shown_name(user):
 
 
 def file_bot(context):
-    if context.bot_data.get("is_troubleshooter") or troubleshooter.application is None:
+    if (
+        context.bot_data.get("is_troubleshooter")
+        or turbine_troubleshooter.application is None
+    ):
         return context.bot
-    return troubleshooter.application.bot
+    return turbine_troubleshooter.application.bot
 
 
 async def send_file(bot, chat_id, s, caption=None):

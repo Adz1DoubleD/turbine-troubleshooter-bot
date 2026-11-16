@@ -3,8 +3,8 @@ from datetime import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import get_neighbours
-from troubleshooter.helpers import escape_markdown
+from turbine_troubleshooter.db import get_neighbours
+from turbine_troubleshooter.helpers import escape_markdown
 
 from ..tools import find_codes
 

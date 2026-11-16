@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from troubleshooter import example_content
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter import example_content
+from turbine_troubleshooter.settings import SETTINGS
 
 NOISE_FILTERS = [
     "httpx.ReadError",
@@ -80,11 +80,12 @@ def patch_session(monkeypatch):
     def _patch(module, cursor):
         session = FakeSession(cursor)
         targets = [module]
-        if module.__name__.startswith("troubleshooter.db"):
+        if module.__name__.startswith("turbine_troubleshooter.db"):
             targets = [
                 m
                 for name, m in sys.modules.items()
-                if name.startswith("troubleshooter.db") and hasattr(m, "db_session")
+                if name.startswith("turbine_troubleshooter.db")
+                and hasattr(m, "db_session")
             ]
         for target in targets:
             monkeypatch.setattr(target, "db_session", session)

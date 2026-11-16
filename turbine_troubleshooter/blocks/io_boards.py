@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.settings import SETTINGS
 
 
 async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -2,17 +2,27 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter
-from troubleshooter.blocks import admin, codes, io_boards, parts, suggest, user, wtg
-from troubleshooter.blocks.admin import broadcast as admin_broadcast
-from troubleshooter.blocks.admin import codes as admin_codes
-from troubleshooter.blocks.admin import parts as admin_parts
-from troubleshooter.blocks.admin import users as admin_users
+import turbine_troubleshooter
+from turbine_troubleshooter.blocks import (
+    admin,
+    codes,
+    io_boards,
+    parts,
+    suggest,
+    user,
+    wtg,
+)
+from turbine_troubleshooter.blocks.admin import broadcast as admin_broadcast
+from turbine_troubleshooter.blocks.admin import codes as admin_codes
+from turbine_troubleshooter.blocks.admin import parts as admin_parts
+from turbine_troubleshooter.blocks.admin import users as admin_users
 
 
 @pytest.fixture(autouse=True)
 def no_content(monkeypatch):
-    monkeypatch.setattr(troubleshooter, "get_troubleshooter_content", lambda: {})
+    monkeypatch.setattr(
+        turbine_troubleshooter, "get_troubleshooter_content", lambda: {}
+    )
 
 
 def make_update(data, user_id=123):
@@ -80,12 +90,12 @@ SAMPLE_CONTENT = {
 @pytest.mark.asyncio
 async def test_submenu_lists_items_and_backs_to_main(monkeypatch):
     monkeypatch.setattr(
-        troubleshooter, "get_troubleshooter_content", lambda: SAMPLE_CONTENT
+        turbine_troubleshooter, "get_troubleshooter_content", lambda: SAMPLE_CONTENT
     )
     update, edits = make_update("troubleshooter:torque")
     update.callback_query.message = SimpleNamespace(text="menu")
 
-    await troubleshooter.handle_button(
+    await turbine_troubleshooter.handle_button(
         update, SimpleNamespace(bot_data={}, user_data={})
     )
 
@@ -99,11 +109,11 @@ async def test_submenu_lists_items_and_backs_to_main(monkeypatch):
 @pytest.mark.asyncio
 async def test_submenu_item_backs_to_parent(monkeypatch):
     monkeypatch.setattr(
-        troubleshooter, "get_troubleshooter_content", lambda: SAMPLE_CONTENT
+        turbine_troubleshooter, "get_troubleshooter_content", lambda: SAMPLE_CONTENT
     )
     update, edits = make_update("troubleshooter:torque:hub")
 
-    await troubleshooter.handle_button(
+    await turbine_troubleshooter.handle_button(
         update, SimpleNamespace(bot_data={}, user_data={})
     )
 
@@ -139,7 +149,7 @@ async def test_buttons_for_everyone(monkeypatch, data, module, name):
     called = record(monkeypatch, module, name)
     update, _ = make_update(data)
 
-    await troubleshooter.handle_button(update, make_context(is_admin=False))
+    await turbine_troubleshooter.handle_button(update, make_context(is_admin=False))
 
     assert len(called) == 1
 
@@ -198,7 +208,7 @@ async def test_admin_buttons_only_for_admins(monkeypatch, data, module, name, is
     called = record(monkeypatch, module, name)
     update, _ = make_update(data)
 
-    await troubleshooter.handle_button(update, make_context(is_admin))
+    await turbine_troubleshooter.handle_button(update, make_context(is_admin))
 
     assert len(called) == (1 if is_admin else 0)
 
@@ -229,7 +239,7 @@ async def test_text_routing(monkeypatch, state, module, name, admin_only, is_adm
     called = record(monkeypatch, module, name)
     update = make_text_update(" New text ")
 
-    await troubleshooter.handle_text_input(
+    await turbine_troubleshooter.handle_text_input(
         update, make_context(is_admin, {"state": state})
     )
 
@@ -252,7 +262,9 @@ async def test_code_edit_text_updates_buffer(monkeypatch):
         },
     )
 
-    await troubleshooter.handle_text_input(make_text_update("new advice"), context)
+    await turbine_troubleshooter.handle_text_input(
+        make_text_update("new advice"), context
+    )
 
     assert context.user_data["code_edit_buffer"]["advice"] == "new advice"
     assert context.user_data["state"] is None

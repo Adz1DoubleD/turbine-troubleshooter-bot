@@ -8,10 +8,10 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import Forbidden, RetryAfter
 from telegram.ext import ContextTypes
 
-import troubleshooter
-from troubleshooter.db import users_get
-from troubleshooter.helpers import escape_markdown, is_local, is_owner
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter
+from turbine_troubleshooter.db import users_get
+from turbine_troubleshooter.helpers import escape_markdown, is_local, is_owner
+from turbine_troubleshooter.settings import SETTINGS
 
 
 def find_wtg(text):
@@ -167,10 +167,10 @@ async def send_notification_troubleshooter(
     target_id=None,
     audience="all",
 ):
-    if troubleshooter.application is None:
+    if turbine_troubleshooter.application is None:
         return 0, 0, []
 
-    bot = troubleshooter.application.bot
+    bot = turbine_troubleshooter.application.bot
 
     name = (
         escape_markdown(f"@{user.username}" if user.username else user.full_name)

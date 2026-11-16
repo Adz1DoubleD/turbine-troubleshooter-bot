@@ -1,6 +1,6 @@
 import pytest
 
-from troubleshooter.settings import ENV_VARS, NOISE_FILTERS, SETTINGS, setup
+from turbine_troubleshooter.settings import ENV_VARS, NOISE_FILTERS, SETTINGS, setup
 
 
 @pytest.fixture(autouse=True)

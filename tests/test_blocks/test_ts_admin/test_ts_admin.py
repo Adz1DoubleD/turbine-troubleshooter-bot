@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import troubleshooter.blocks.admin as admin
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter.blocks.admin as admin
+from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 123
 OTHER = 456

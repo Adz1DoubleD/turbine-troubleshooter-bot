@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from troubleshooter.blocks import parts
+from turbine_troubleshooter.blocks import parts
 
 PART = {
     "id": 7,

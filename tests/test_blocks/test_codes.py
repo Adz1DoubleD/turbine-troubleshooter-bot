@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from troubleshooter.blocks import codes
+from turbine_troubleshooter.blocks import codes
 
 CODE = {
     "id": 2,

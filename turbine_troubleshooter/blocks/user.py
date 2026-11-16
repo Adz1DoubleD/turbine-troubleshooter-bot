@@ -2,13 +2,13 @@ import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from troubleshooter.db import (
+from turbine_troubleshooter.db import (
     request_add,
     user_notifications_get,
     user_notifications_toggle,
 )
-from troubleshooter.helpers import escape_markdown
-from troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.helpers import escape_markdown
+from turbine_troubleshooter.settings import SETTINGS
 
 from ..tools import alert_markup
 from . import handle_block

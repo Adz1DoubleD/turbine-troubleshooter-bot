@@ -1,15 +1,23 @@
-# troubleshooter-bot
+# turbine-troubleshooter-bot
 
 A Telegram bot for field technicians: search fault codes and spare parts, look up turbine info and IO board pin-outs, and browse reference content (text, documents, photos). Access is by approval, with admins who can add and edit codes and parts.
 
 It is a Python package that a host application installs and starts, or that runs on its own. All site-specific content and documents are supplied by the host at runtime; nothing private lives in this repo.
+
+## Install
+
+```bash
+pip install turbine-troubleshooter-bot
+```
+
+The package installs as `turbine-troubleshooter-bot` and imports as `turbine_troubleshooter`.
 
 ## Use
 
 Inside a host application:
 
 ```python
-from troubleshooter import start_troubleshooter_bot, stop_troubleshooter_bot
+from turbine_troubleshooter import start_troubleshooter_bot, stop_troubleshooter_bot
 
 await start_troubleshooter_bot(share_with=main_application, files_dir=Path("media"))
 ...
@@ -21,7 +29,7 @@ await stop_troubleshooter_bot()
 On its own (reads a `.env` in the current folder):
 
 ```bash
-python -m troubleshooter
+python -m turbine_troubleshooter
 ```
 
 Standalone also uses `TROUBLESHOOTER_FILES_DIR` (default `media`) and `TROUBLESHOOTER_SENTRY_DSN` (Sentry is off when unset).
@@ -60,7 +68,7 @@ PDFs and photos can only be sent to the troubleshooter bot itself, up to 20 MB. 
 
 ## Content
 
-The menus, turbine map, IO boards and part-search hints are loaded from the `content` table: one row per item (`MODULES_MAP`, `WTG_MAP`, `IO_BOARDS`, `PART_ACCESSORIES`), stored as JSON text. Documents and photos are referenced as `file:<path relative to files_dir>`. See [`troubleshooter/example_content.py`](troubleshooter/example_content.py) for the shape.
+The menus, turbine map, IO boards and part-search hints are loaded from the `content` table: one row per item (`MODULES_MAP`, `WTG_MAP`, `IO_BOARDS`, `PART_ACCESSORIES`), stored as JSON text. Documents and photos are referenced as `file:<path relative to files_dir>`. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
 
 ## Run it yourself
 
@@ -69,8 +77,8 @@ You need Python 3.12+, a MySQL database and your own test bot from [@BotFather](
 Any MySQL works (a local install, or a free hosted one such as JawsDB). The `docker run` line below is the quickest way if you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed; skip it otherwise.
 
 ```bash
-git clone https://github.com/Adz1DoubleD/troubleshooter-bot
-cd troubleshooter-bot
+git clone https://github.com/Adz1DoubleD/turbine-troubleshooter-bot
+cd turbine-troubleshooter-bot
 python -m venv .venv
 .venv\Scripts\activate            # Mac/Linux: source .venv/bin/activate
 pip install -e ".[dev]"
@@ -88,12 +96,12 @@ In `.env`, set these three (the bot refuses to start and lists any that are miss
 Everything else is optional. Access requests, content suggestions and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
 
 ```bash
-python -m troubleshooter
+python -m turbine_troubleshooter
 ```
 
 Run your own copy on its own bot token: a token can only be used by one running bot at a time, so sharing the live one gives "Conflict" errors.
 
-Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and while the database has no content the menus use the made-up [`example_content.py`](troubleshooter/example_content.py). Add codes and parts from **Admin Panel → Add Code / Add Part**. Stop with Ctrl+C.
+Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and while the database has no content the menus use the made-up [`example_content.py`](turbine_troubleshooter/example_content.py). Add codes and parts from **Admin Panel → Add Code / Add Part**. Stop with Ctrl+C.
 
 ## Development
 

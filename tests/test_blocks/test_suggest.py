@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import troubleshooter.db as db
-from troubleshooter.blocks import suggest
-from troubleshooter.settings import SETTINGS
+import turbine_troubleshooter.db as db
+from turbine_troubleshooter.blocks import suggest
+from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 999
 TECH = 5
