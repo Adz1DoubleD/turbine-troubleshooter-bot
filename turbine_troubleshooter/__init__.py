@@ -91,10 +91,10 @@ async def callback_handler(update: Update, context):
     if data == "cancel":
         context.user_data["state"] = None
         await query.answer()
-        await close_message(query, reopen="back:troubleshooter")
+        await close_message(query, reopen="troubleshooter:home")
         return
 
-    if data == "back:troubleshooter":
+    if data == "troubleshooter:home":
         await query.answer()
         context.user_data["state"] = None
         block = await handle_block(context)
@@ -176,7 +176,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             "🔙 Back",
-                            callback_data=item.get("parent") or "back:troubleshooter",
+                            callback_data=item.get("parent") or "troubleshooter:home",
                         )
                     ]
                 )
@@ -204,7 +204,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         "🔙 Back",
-                        callback_data=item.get("parent") or "back:troubleshooter",
+                        callback_data=item.get("parent") or "troubleshooter:home",
                     )
                 ]
             ]
@@ -284,22 +284,22 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("troubleshooter:suggest"):
         await suggest.handle_button(update, context)
 
-    elif data == "admin:request":
+    elif data == "troubleshooter:admin:request":
         await user.button_request_admin(update, context)
 
     elif data == "troubleshooter:access_request":
         await user.button_request_access(update, context)
 
-    elif data.startswith("access:approve:"):
+    elif data.startswith("troubleshooter:access:approve:"):
         await admin_users.button_access_approve(update, context)
 
-    elif data.startswith("access:deny:"):
+    elif data.startswith("troubleshooter:access:deny:"):
         await admin_users.button_access_deny(update, context)
 
-    elif data.startswith("admin:approve:"):
+    elif data.startswith("troubleshooter:admin:approve:"):
         await admin_users.button_admin_approve(update, context)
 
-    elif data.startswith("admin:deny:"):
+    elif data.startswith("troubleshooter:admin:deny:"):
         await admin_users.button_admin_deny(update, context)
 
     elif data == "troubleshooter:notifications:alert":

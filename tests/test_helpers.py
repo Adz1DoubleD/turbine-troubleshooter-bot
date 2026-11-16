@@ -92,4 +92,4 @@ async def test_close_message_fallback_reopens_troubleshooter():
     await helpers.close_message(query)
 
     markup = query.edit_message_text.await_args.kwargs["reply_markup"]
-    assert markup.inline_keyboard[0][0].callback_data == "back:troubleshooter"
+    assert markup.inline_keyboard[0][0].callback_data == "troubleshooter:home"

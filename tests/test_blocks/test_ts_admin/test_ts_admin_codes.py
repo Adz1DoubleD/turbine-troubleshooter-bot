@@ -246,7 +246,7 @@ async def test_add_existing_code_offers_edit_or_remove(db):
     assert callbacks(edit["reply_markup"]) == [
         "troubleshooter:code_edit:14040",
         "troubleshooter:code_confirm_del:14040",
-        "back:troubleshooter",
+        "troubleshooter:home",
     ]
     assert context.user_data["state"] is None
     assert "new_entry" not in context.user_data
@@ -276,7 +276,7 @@ async def test_delete_confirm_shows_yes_and_no():
     assert record["actions"] == ["typing"]
     assert "`14040`" in calls["edits"][0]["text"]
     assert callbacks(calls["edits"][0]["reply_markup"]) == [
-        "back:troubleshooter",
+        "troubleshooter:home",
         "troubleshooter:code_delete:14040",
     ]
 
@@ -336,7 +336,7 @@ async def test_edit_opens_editor_with_a_copy():
     assert callbacks(edit["reply_markup"]) == [
         "troubleshooter:code_edit_field:advice",
         "troubleshooter:code_edit_field:parts",
-        "back:troubleshooter",
+        "troubleshooter:home",
         "troubleshooter:code_edit_save",
     ]
 

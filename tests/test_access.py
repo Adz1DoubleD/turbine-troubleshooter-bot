@@ -76,7 +76,7 @@ async def test_start_shows_request_access_to_unapproved_user(monkeypatch):
 
 @pytest.mark.parametrize(
     "data",
-    ["troubleshooter:torque", "troubleshooter:code_search", "back:troubleshooter"],
+    ["troubleshooter:torque", "troubleshooter:code_search", "troubleshooter:home"],
 )
 @pytest.mark.asyncio
 async def test_unapproved_user_buttons_show_lock_screen(monkeypatch, data):
@@ -153,8 +153,8 @@ async def test_request_access_notifies_owner_once(no_db_requests):
     sent = context.bot.send_message.await_args.kwargs
     assert "Access Request" in sent["text"]
     assert callbacks(sent["reply_markup"]) == [
-        f"access:deny:{STRANGER}",
-        f"access:approve:{STRANGER}",
+        f"troubleshooter:access:deny:{STRANGER}",
+        f"troubleshooter:access:approve:{STRANGER}",
     ]
     assert "already waiting" in query.answer.await_args.args[0]
 
@@ -165,7 +165,9 @@ async def test_owner_approval_grants_access(monkeypatch):
     monkeypatch.setattr(admin_users, "user_approve", approve)
     context = make_context()
     context.bot_data["pending_access_requests"] = {STRANGER: "@someone"}
-    update, query = make_query(f"access:approve:{STRANGER}", user_id=OWNER)
+    update, query = make_query(
+        f"troubleshooter:access:approve:{STRANGER}", user_id=OWNER
+    )
 
     await admin_users.button_access_approve(update, context)
 
@@ -181,7 +183,9 @@ async def test_only_owner_can_decide_access(monkeypatch, handler):
     approve = AsyncMock()
     monkeypatch.setattr(admin_users, "user_approve", approve)
     context = make_context()
-    update, query = make_query(f"access:approve:{STRANGER}", user_id=STRANGER)
+    update, query = make_query(
+        f"troubleshooter:access:approve:{STRANGER}", user_id=STRANGER
+    )
 
     await getattr(admin_users, handler)(update, context)
 
@@ -195,7 +199,7 @@ async def test_owner_denial_tells_user(monkeypatch):
     approve = AsyncMock()
     monkeypatch.setattr(admin_users, "user_approve", approve)
     context = make_context()
-    update, _ = make_query(f"access:deny:{STRANGER}", user_id=OWNER)
+    update, _ = make_query(f"troubleshooter:access:deny:{STRANGER}", user_id=OWNER)
 
     await admin_users.button_access_deny(update, context)
 

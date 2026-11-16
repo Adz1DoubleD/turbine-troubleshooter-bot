@@ -164,7 +164,7 @@ async def handle_block(
             ]
         )
 
-    kb.append([InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")])
+    kb.append([InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")])
 
     if query:
         await query.edit_message_text(

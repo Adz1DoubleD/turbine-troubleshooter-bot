@@ -342,7 +342,7 @@ async def test_weather_block_keyboard(monkeypatch, buoy):
         )
     expected += [
         ("🔄 Refresh", "troubleshooter:weather"),
-        ("🔙 Back", "back:troubleshooter"),
+        ("🔙 Back", "troubleshooter:home"),
     ]
     assert block["text"] == "WEATHER"
     assert buttons(block) == expected

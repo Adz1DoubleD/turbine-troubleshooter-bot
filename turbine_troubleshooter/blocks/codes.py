@@ -70,7 +70,7 @@ async def code_view(match, admin):
             ]
         )
     keyboard.append(
-        [InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")]
+        [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")]
     )
 
     return text, InlineKeyboardMarkup(keyboard)
@@ -105,7 +105,7 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["state"] = "troubleshooter:code_search"
     context.user_data["last_msg_id"] = query.message.message_id
     kb = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("🔙 Back ", callback_data="back:troubleshooter")]]
+        [[InlineKeyboardButton("🔙 Back ", callback_data="troubleshooter:home")]]
     )
     await query.edit_message_text(
         "🔍 *Fault Code Search*\n\nPlease enter the error code you are looking for:",
@@ -161,7 +161,7 @@ async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text
                     ]
                 )
             keyboard.append(
-                [InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")]
+                [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")]
             )
         else:
             response = f"⚠️ *Code Not Found*\n\nNo results for fault code: `{escape_markdown(text)}`"
@@ -171,7 +171,7 @@ async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text
                         "🔍 Try Again", callback_data="troubleshooter:code_search"
                     )
                 ],
-                [InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")],
+                [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")],
             ]
             if admin:
                 keyboard.insert(

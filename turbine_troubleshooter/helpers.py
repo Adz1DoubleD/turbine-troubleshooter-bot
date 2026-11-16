@@ -36,7 +36,7 @@ def error_kb(block=None):
     return InlineKeyboardMarkup([[InlineKeyboardButton(text, callback_data=callback)]])
 
 
-async def close_message(query, title=None, reopen="back:troubleshooter"):
+async def close_message(query, title=None, reopen="troubleshooter:home"):
     title = title or f"🛠 *{SETTINGS.name} Bot*"
     try:
         await query.message.delete()

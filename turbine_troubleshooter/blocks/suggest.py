@@ -19,7 +19,7 @@ MAX_BODY = 3000
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_CAPTION = 1024
 FILE_FOLDERS = {"document": ("pdf", "pdf"), "photo": ("images", "jpg")}
-TO_MAIN_MENU = InlineKeyboardButton("❌ Cancel", callback_data="back:troubleshooter")
+TO_MAIN_MENU = InlineKeyboardButton("❌ Cancel", callback_data="troubleshooter:home")
 TO_LIST = InlineKeyboardButton(
     "🔙 Suggestions", callback_data="troubleshooter:suggestions"
 )
@@ -343,7 +343,7 @@ async def show_confirm(update, context, draft):
 async def button_send(update, context):
     query = update.callback_query
     draft = context.user_data.pop("suggest", None) or {}
-    back = [[InlineKeyboardButton("🔙 Main Menu", callback_data="back:troubleshooter")]]
+    back = [[InlineKeyboardButton("🔙 Main Menu", callback_data="troubleshooter:home")]]
     if "body" not in draft:
         await edit(query, "⚠️ That suggestion has expired. Please start again.", back)
         return

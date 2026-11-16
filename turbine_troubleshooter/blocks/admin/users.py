@@ -185,7 +185,7 @@ async def deny_request(context, user_id, kind):
 
 def request_target(query):
     parts = query.data.split(":")
-    return int(parts[2]), parts[-1] == "p"
+    return int(parts[3]), parts[-1] == "p"
 
 
 async def lookup_name(context, user_id):
@@ -211,7 +211,7 @@ async def button_decide_request(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer()
     if not is_owner(query.from_user.id):
         return
-    kind, verdict = query.data.split(":")[:2]
+    _, kind, verdict = query.data.split(":")[:3]
     target_id, from_panel = request_target(query)
     name = context.bot_data.get(f"pending_{kind}_requests", {}).get(target_id)
 
@@ -281,9 +281,11 @@ async def show_pending(query, context, status=None, page=None):
         [
             InlineKeyboardButton(
                 f"✅ {name}{' (admin)' if kind == 'admin' else ''}",
-                callback_data=f"{kind}:approve:{uid}:p",
+                callback_data=f"troubleshooter:{kind}:approve:{uid}:p",
             ),
-            InlineKeyboardButton("❌ Deny", callback_data=f"{kind}:deny:{uid}:p"),
+            InlineKeyboardButton(
+                "❌ Deny", callback_data=f"troubleshooter:{kind}:deny:{uid}:p"
+            ),
         ]
         for uid, name, kind in shown
     ]

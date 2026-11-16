@@ -41,7 +41,7 @@ async def button_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         kb.append(
             [InlineKeyboardButton("🙋 Request Admin", callback_data="admin:request")]
         )
-    kb.append([InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")])
+    kb.append([InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")])
 
     await query.edit_message_text(
         f"👤 *User Menu*\n\n"
@@ -96,9 +96,12 @@ async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TY
     kb = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("❌ Deny", callback_data=f"access:deny:{user.id}"),
                 InlineKeyboardButton(
-                    "✅ Approve", callback_data=f"access:approve:{user.id}"
+                    "❌ Deny", callback_data=f"troubleshooter:access:deny:{user.id}"
+                ),
+                InlineKeyboardButton(
+                    "✅ Approve",
+                    callback_data=f"troubleshooter:access:approve:{user.id}",
                 ),
             ]
         ]
@@ -136,9 +139,12 @@ async def button_request_admin(update: Update, context: ContextTypes.DEFAULT_TYP
     kb = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("❌ Deny", callback_data=f"admin:deny:{user.id}"),
                 InlineKeyboardButton(
-                    "✅ Approve", callback_data=f"admin:approve:{user.id}"
+                    "❌ Deny", callback_data=f"troubleshooter:admin:deny:{user.id}"
+                ),
+                InlineKeyboardButton(
+                    "✅ Approve",
+                    callback_data=f"troubleshooter:admin:approve:{user.id}",
                 ),
             ]
         ]

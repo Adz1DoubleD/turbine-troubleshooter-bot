@@ -383,7 +383,7 @@ async def weather_block(
     is_tomorrow=False,
     brief=False,
     base="troubleshooter:weather",
-    back=("🔙 Back", "back:troubleshooter"),
+    back=("🔙 Back", "troubleshooter:home"),
     close=False,
 ):
     text, image = await get_weather_data(tomorrow=is_tomorrow, brief=brief)

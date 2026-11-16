@@ -66,7 +66,7 @@ async def test_handle_search_found_shows_serial_and_ip(monkeypatch):
     assert "`192.0.2.10`" in edits[0]["text"]
     assert callbacks(edits[0]["reply_markup"]) == [
         "troubleshooter:wtg_search",
-        "back:troubleshooter",
+        "troubleshooter:home",
     ]
 
 

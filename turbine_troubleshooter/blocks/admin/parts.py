@@ -55,7 +55,7 @@ async def _show_part(context, chat_id, msg_id, part, status=None):
             InlineKeyboardButton(
                 "🔍 Search Parts", callback_data="troubleshooter:parts_search"
             ),
-            InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter"),
+            InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home"),
         ]
     )
     await context.bot.edit_message_text(

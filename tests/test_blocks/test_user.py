@@ -148,7 +148,7 @@ async def test_alert_toggle_updates_buttons(monkeypatch, new_state, toast):
 async def test_request_admin_sends_request_to_alerts(monkeypatch):
     monkeypatch.setattr(SETTINGS, "alerts_chat_id", -100)
     bot, record = bot_recorder()
-    update, calls = make_query_update("admin:request")
+    update, calls = make_query_update("troubleshooter:admin:request")
     context = SimpleNamespace(
         bot=bot, user_data={"is_admin": False}, bot_data={"is_troubleshooter": True}
     )
@@ -158,8 +158,8 @@ async def test_request_admin_sends_request_to_alerts(monkeypatch):
     assert context.bot_data["pending_admin_requests"] == {123: "@tester"}
     assert record["sent"][0]["chat_id"] == -100
     assert callbacks(record["sent"][0]["reply_markup"]) == [
-        "admin:deny:123",
-        "admin:approve:123",
+        "troubleshooter:admin:deny:123",
+        "troubleshooter:admin:approve:123",
     ]
     assert "sent" in calls["answers"][0]
 
@@ -167,7 +167,7 @@ async def test_request_admin_sends_request_to_alerts(monkeypatch):
 @pytest.mark.asyncio
 async def test_request_admin_already_waiting():
     bot, record = bot_recorder()
-    update, calls = make_query_update("admin:request")
+    update, calls = make_query_update("troubleshooter:admin:request")
     context = SimpleNamespace(
         bot=bot,
         user_data={"is_admin": False},
@@ -186,7 +186,7 @@ async def test_request_admin_already_waiting():
 @pytest.mark.asyncio
 async def test_request_admin_when_already_admin_shows_menu():
     bot, record = bot_recorder()
-    update, calls = make_query_update("admin:request")
+    update, calls = make_query_update("troubleshooter:admin:request")
     context = SimpleNamespace(
         bot=bot,
         user_data={"is_admin": True},

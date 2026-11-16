@@ -88,7 +88,7 @@ async def test_code_view_shows_code_and_paging(neighbours):
         "troubleshooter:code_search:1",
         "troubleshooter:code_search",
         "troubleshooter:code_search:3",
-        "back:troubleshooter",
+        "troubleshooter:home",
     ]
 
 
@@ -220,7 +220,7 @@ async def test_handle_search_suggestions(monkeypatch, is_admin, add_shown):
     assert cbs[0] == "troubleshooter:code_search:2"
     assert "🔧 14040" in labels(edit["reply_markup"])
     assert ("troubleshooter:code_add" in cbs) is add_shown
-    assert cbs[-1] == "back:troubleshooter"
+    assert cbs[-1] == "troubleshooter:home"
 
 
 @pytest.mark.asyncio
@@ -232,10 +232,10 @@ async def test_handle_search_suggestions(monkeypatch, is_admin, add_shown):
             [
                 "troubleshooter:code_search",
                 "troubleshooter:code_add",
-                "back:troubleshooter",
+                "troubleshooter:home",
             ],
         ),
-        (False, ["troubleshooter:code_search", "back:troubleshooter"]),
+        (False, ["troubleshooter:code_search", "troubleshooter:home"]),
     ],
 )
 async def test_handle_search_not_found(monkeypatch, is_admin, expected):

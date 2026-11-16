@@ -1,6 +1,8 @@
 import os
 from types import SimpleNamespace
 
+os.environ.setdefault("PTB_TIMEDELTA", "1")
+
 NOISE_FILTERS = (
     "httpx.ReadError",
     "RemoteProtocolError",

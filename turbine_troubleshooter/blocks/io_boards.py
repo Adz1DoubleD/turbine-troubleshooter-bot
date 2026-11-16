@@ -86,7 +86,7 @@ def board_menu():
         keyboard.append(row)
 
     keyboard.append(
-        [InlineKeyboardButton("🔙 Back ", callback_data="back:troubleshooter")]
+        [InlineKeyboardButton("🔙 Back ", callback_data="troubleshooter:home")]
     )
 
     return InlineKeyboardMarkup(keyboard)

@@ -76,7 +76,7 @@ async def button_code_delete_confirm(
     code_to_del = data.split(":")[-1]
     keyboard = [
         [
-            InlineKeyboardButton("❌ No, Cancel", callback_data="back:troubleshooter"),
+            InlineKeyboardButton("❌ No, Cancel", callback_data="troubleshooter:home"),
             InlineKeyboardButton(
                 "✅ Yes, Delete",
                 callback_data=f"troubleshooter:code_delete:{code_to_del}",
@@ -135,7 +135,7 @@ async def button_code_edit_field(update: Update, context: ContextTypes.DEFAULT_T
         f"Please enter the new details: (Note: Data will be over written, please copy paste anything above if you want to keep it)",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton("🔙 Cancel", callback_data="back:troubleshooter")]]
+            [[InlineKeyboardButton("🔙 Cancel", callback_data="troubleshooter:home")]]
         ),
     )
 
@@ -206,7 +206,7 @@ async def handle_code_add(
                         callback_data=f"troubleshooter:code_confirm_del:{match['code']}",
                     ),
                 ],
-                [InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")],
+                [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")],
             ]
 
             user_data["state"] = None
@@ -251,7 +251,7 @@ async def handle_code_add(
 
     if msg_id and prompt:
         kb = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("🔙 Back ", callback_data="back:troubleshooter")]]
+            [[InlineKeyboardButton("🔙 Back ", callback_data="troubleshooter:home")]]
         )
         await context.bot.edit_message_text(
             chat_id=chat_id,
@@ -295,7 +295,7 @@ async def handle_code_edit(
             )
         ],
         [
-            InlineKeyboardButton("❌ Cancel", callback_data="back:troubleshooter"),
+            InlineKeyboardButton("❌ Cancel", callback_data="troubleshooter:home"),
             InlineKeyboardButton(
                 "✅ Finish & Save", callback_data="troubleshooter:code_edit_save"
             ),

@@ -93,7 +93,7 @@ def labels(edit):
 
 @pytest.mark.asyncio
 async def test_approve_admin_adds_and_messages_target(db):
-    update, calls = make_update("admin:approve:9")
+    update, calls = make_update("troubleshooter:admin:approve:9")
     context = make_context(bot_data={"pending_admin_requests": {9: "@new_bie"}})
 
     await users.button_admin_approve(update, context)
@@ -111,7 +111,7 @@ async def test_approve_admin_without_pending_looks_up_name(db):
     async def get_chat(chat_id):
         return SimpleNamespace(username="looked_up", first_name="Lou")
 
-    update, _ = make_update("admin:approve:9")
+    update, _ = make_update("troubleshooter:admin:approve:9")
     context = make_context()
     context.bot.get_chat = get_chat
 
@@ -126,7 +126,7 @@ async def test_approve_admin_db_failure(monkeypatch):
         raise RuntimeError("offline")
 
     monkeypatch.setattr(users, "admin_add", fake_add)
-    update, calls = make_update("admin:approve:9")
+    update, calls = make_update("troubleshooter:admin:approve:9")
     context = make_context(bot_data={"pending_admin_requests": {9: "@newbie"}})
 
     with pytest.raises(RuntimeError, match="offline"):
@@ -154,7 +154,7 @@ async def test_approve_deny_reject_non_owner(db, handler):
 
 @pytest.mark.asyncio
 async def test_deny_admin_clears_request_and_tells_user(db):
-    update, calls = make_update("admin:deny:9")
+    update, calls = make_update("troubleshooter:admin:deny:9")
     context = make_context(bot_data={"pending_admin_requests": {9: "@newbie"}})
 
     await users.button_admin_deny(update, context)
@@ -486,10 +486,10 @@ async def test_pending_screen_lists_requests(registered):
     assert "@new wants access" in edit["text"]
     assert "@bob wants admin" in edit["text"]
     assert callbacks(edit) == [
-        "access:approve:3:p",
-        "access:deny:3:p",
-        "admin:approve:2:p",
-        "admin:deny:2:p",
+        "troubleshooter:access:approve:3:p",
+        "troubleshooter:access:deny:3:p",
+        "troubleshooter:admin:approve:2:p",
+        "troubleshooter:admin:deny:2:p",
         "troubleshooter:user_list:name:0",
     ]
 
@@ -507,7 +507,7 @@ async def test_pending_screen_owner_only(registered):
 @pytest.mark.asyncio
 async def test_approve_from_pending_returns_to_pending(registered, db):
     context = roles_context(pending={3: "@new"})
-    update, calls = make_update("access:approve:3:p")
+    update, calls = make_update("troubleshooter:access:approve:3:p")
 
     await users.button_access_approve(update, context)
 
@@ -520,7 +520,7 @@ async def test_approve_from_pending_returns_to_pending(registered, db):
 @pytest.mark.asyncio
 async def test_deny_from_pending_returns_to_pending(registered, db):
     context = roles_context(pending={3: "@new"})
-    update, calls = make_update("access:deny:3:p")
+    update, calls = make_update("troubleshooter:access:deny:3:p")
 
     await users.button_access_deny(update, context)
 
@@ -539,7 +539,7 @@ async def test_pending_screen_pages(registered):
 
     edit = calls["edits"][0]
     approves = [c for c in callbacks(edit) if ":approve:" in c]
-    assert approves == [f"access:approve:{i}:p" for i in range(120, 125)]
+    assert approves == [f"troubleshooter:access:approve:{i}:p" for i in range(120, 125)]
     assert "Page 3 of 3" in edit["text"]
     assert "troubleshooter:pending:1" in callbacks(edit)
     assert context.user_data["pending_page"] == 2
@@ -549,7 +549,7 @@ async def test_pending_screen_pages(registered):
 async def test_approve_from_pending_stays_on_page(registered, db):
     context = roles_context(pending={i: f"@p{i}" for i in range(100, 125)})
     context.user_data["pending_page"] = 1
-    update, calls = make_update("access:approve:110:p")
+    update, calls = make_update("troubleshooter:access:approve:110:p")
 
     await users.button_access_approve(update, context)
 

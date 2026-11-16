@@ -102,7 +102,7 @@ async def test_submenu_lists_items_and_backs_to_main(monkeypatch):
     assert "*Torque*" in edits[0]["text"]
     assert callbacks(edits[0]["reply_markup"]) == [
         "troubleshooter:torque:hub",
-        "back:troubleshooter",
+        "troubleshooter:home",
     ]
 
 
@@ -132,12 +132,12 @@ async def test_submenu_item_backs_to_parent(monkeypatch):
         ("troubleshooter:suggest:where:0", suggest, "handle_button"),
         ("troubleshooter:suggestions", suggest, "handle_button"),
         ("troubleshooter:suggestion_ok:7", suggest, "handle_button"),
-        ("admin:request", user, "button_request_admin"),
-        ("admin:approve:9", admin_users, "button_admin_approve"),
-        ("admin:deny:9", admin_users, "button_admin_deny"),
+        ("troubleshooter:admin:request", user, "button_request_admin"),
+        ("troubleshooter:admin:approve:9", admin_users, "button_admin_approve"),
+        ("troubleshooter:admin:deny:9", admin_users, "button_admin_deny"),
         ("troubleshooter:access_request", user, "button_request_access"),
-        ("access:approve:9", admin_users, "button_access_approve"),
-        ("access:deny:9", admin_users, "button_access_deny"),
+        ("troubleshooter:access:approve:9", admin_users, "button_access_approve"),
+        ("troubleshooter:access:deny:9", admin_users, "button_access_deny"),
         ("troubleshooter:parts_search", parts, "button_search"),
         ("troubleshooter:wtg_search", wtg, "button_search"),
         ("troubleshooter:code_search", codes, "button_search"),

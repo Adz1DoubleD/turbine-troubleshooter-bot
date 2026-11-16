@@ -11,7 +11,7 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["state"] = "troubleshooter:parts_search"
     context.user_data["last_msg_id"] = query.message.message_id
     kb = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")]]
+        [[InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")]]
     )
     await query.edit_message_text(
         "🔩 *Spare Parts*\n\nEnter a part name or part number:",
@@ -67,7 +67,7 @@ async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text
         ]
     )
     keyboard.append(
-        [InlineKeyboardButton("🔙 Back", callback_data="back:troubleshooter")]
+        [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")]
     )
     reply_markup = InlineKeyboardMarkup(keyboard)
 
