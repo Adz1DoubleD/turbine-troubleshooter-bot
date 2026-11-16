@@ -88,13 +88,38 @@ async def callback_handler(update: Update, context):
             pass
         return
 
+    await handle_button(update, context)
+
+
+async def text_handler(update: Update, context):
+    if update.effective_user is None or context.user_data is None:
+        return
+    await set_user_roles(context, update.effective_user.id)
+    if not context.user_data["is_approved"]:
+        return
+    await handle_text_input(update, context)
+
+
+async def file_handler(update: Update, context):
+    if update.effective_user is None or context.user_data is None:
+        return
+    await set_user_roles(context, update.effective_user.id)
+    if not context.user_data["is_approved"]:
+        return
+    await suggest.handle_file(update, context)
+
+
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    data = query.data
+
     if data == "cancel":
         context.user_data["state"] = None
         await query.answer()
         await close_message(query, reopen="troubleshooter:home")
         return
 
-    if data == "troubleshooter:home":
+    elif data == "troubleshooter:home":
         await query.answer()
         context.user_data["state"] = None
         block = await handle_block(context)
@@ -124,34 +149,6 @@ async def callback_handler(update: Update, context):
             )
         return
 
-    await handle_button(update, context)
-    try:
-        await query.answer()
-    except BadRequest:
-        pass
-
-
-async def text_handler(update: Update, context):
-    if update.effective_user is None or context.user_data is None:
-        return
-    await set_user_roles(context, update.effective_user.id)
-    if not context.user_data["is_approved"]:
-        return
-    await handle_text_input(update, context)
-
-
-async def file_handler(update: Update, context):
-    if update.effective_user is None or context.user_data is None:
-        return
-    await set_user_roles(context, update.effective_user.id)
-    if not context.user_data["is_approved"]:
-        return
-    await suggest.handle_file(update, context)
-
-
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    data = query.data
     admin = context.user_data.get(
         "is_admin", not context.bot_data.get("is_troubleshooter")
     )
@@ -257,7 +254,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         return
 
-    if data.startswith("troubleshooter:ioboard:"):
+    elif data.startswith("troubleshooter:ioboard:"):
         await io_boards.button_board(update, context)
 
     elif data == "troubleshooter:code_search":

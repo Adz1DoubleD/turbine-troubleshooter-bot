@@ -19,7 +19,7 @@ MAX_BODY = 3000
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_CAPTION = 1024
 FILE_FOLDERS = {"document": ("pdf", "pdf"), "photo": ("images", "jpg")}
-TO_MAIN_MENU = InlineKeyboardButton("❌ Cancel", callback_data="troubleshooter:home")
+TO_MAIN_MENU = InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")
 TO_LIST = InlineKeyboardButton(
     "🔙 Suggestions", callback_data="troubleshooter:suggestions"
 )
