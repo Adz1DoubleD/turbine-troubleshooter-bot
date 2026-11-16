@@ -48,12 +48,17 @@ async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
 
 
 @pytest.mark.asyncio
-async def test_main_db_url_counts_as_database(monkeypatch, fake_app):
-    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
+async def test_host_database_url_does_not_count(monkeypatch, fake_app):
+    init = AsyncMock()
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", init)
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/main")
 
-    assert await turbine_troubleshooter.start_troubleshooter_bot() is fake_app
+    with pytest.raises(ValueError, match="TROUBLESHOOTER_DB_URL"):
+        await turbine_troubleshooter.start_troubleshooter_bot()
+
+    init.assert_not_awaited()
+    fake_app.builder.token.assert_not_called()
 
 
 @pytest.mark.asyncio

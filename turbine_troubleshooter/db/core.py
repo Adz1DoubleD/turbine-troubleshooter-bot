@@ -17,11 +17,10 @@ async def get_db_pool():
     global _pool
     async with _pool_lock:
         if _pool is None:
-            db_url = urlparse(
-                os.environ.get("TROUBLESHOOTER_DB_URL")
-                or os.environ.get("JAWSDB_URL")
-                or ""
-            )
+            url = os.environ.get("TROUBLESHOOTER_DB_URL")
+            if not url:
+                raise RuntimeError("TROUBLESHOOTER_DB_URL is not set")
+            db_url = urlparse(url)
             _pool = await aiomysql.create_pool(
                 host=db_url.hostname,
                 user=db_url.username,

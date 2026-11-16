@@ -53,7 +53,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL` (falls back to `JAWSDB_URL`), e.g. `mysql://user:pass@host:3306/db`. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `settings`, `requests` (access and admin requests waiting for the owner) and `suggestions` (content suggestions waiting for the owner).
+MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `settings`, `requests` (access and admin requests waiting for the owner) and `suggestions` (content suggestions waiting for the owner).
 
 ### Content suggestions
 

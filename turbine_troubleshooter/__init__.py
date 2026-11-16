@@ -454,7 +454,7 @@ async def start_troubleshooter_bot(share_with=None, **options):
     missing = [
         ENV_VARS[name] for name in ("token", "owner_id") if not vars(SETTINGS)[name]
     ]
-    if not (os.environ.get("TROUBLESHOOTER_DB_URL") or os.environ.get("JAWSDB_URL")):
+    if not os.environ.get("TROUBLESHOOTER_DB_URL"):
         missing.append("TROUBLESHOOTER_DB_URL")
     if missing:
         raise ValueError(f"Troubleshooter needs these settings: {', '.join(missing)}")

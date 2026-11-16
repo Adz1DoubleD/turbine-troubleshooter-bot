@@ -1,5 +1,6 @@
 from datetime import datetime
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -287,19 +288,26 @@ async def test_database_url_is_read_when_connecting(monkeypatch):
 
     monkeypatch.setattr(ts.core.aiomysql, "create_pool", create_pool)
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
-
     monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@ts-host:3306/tsdb")
     monkeypatch.setattr(ts.core, "_pool", None)
+
     await ts.get_db_pool()
 
-    monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
+    assert [(c["host"], c["db"]) for c in calls] == [("ts-host", "tsdb")]
+
+
+@pytest.mark.asyncio
+async def test_host_database_is_never_used_as_a_fallback(monkeypatch):
+    create_pool = AsyncMock()
+    monkeypatch.setattr(ts.core.aiomysql, "create_pool", create_pool)
+    monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
+    monkeypatch.delenv("TROUBLESHOOTER_DB_URL", raising=False)
     monkeypatch.setattr(ts.core, "_pool", None)
-    await ts.get_db_pool()
 
-    assert [(c["host"], c["db"]) for c in calls] == [
-        ("ts-host", "tsdb"),
-        ("main-host", "maindb"),
-    ]
+    with pytest.raises(RuntimeError, match="TROUBLESHOOTER_DB_URL is not set"):
+        await ts.get_db_pool()
+
+    create_pool.assert_not_awaited()
 
 
 @pytest.mark.asyncio
