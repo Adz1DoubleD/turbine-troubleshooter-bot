@@ -42,7 +42,7 @@ async def test_button_search_sets_state():
 
     assert context.user_data["state"] == "troubleshooter:wtg_search"
     assert context.user_data["last_msg_id"] == 55
-    assert "WTG Info Lookup" in edits[0]
+    assert "Search WTG Serials" in edits[0]
 
 
 @pytest.mark.asyncio

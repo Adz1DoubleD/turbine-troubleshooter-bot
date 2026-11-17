@@ -87,7 +87,7 @@ async def test_io_boards_and_wtg_info_only_show_when_there_are_some(monkeypatch,
     labels = button_labels(block["reply_markup"])
 
     assert ("🔌 IO Boards" in labels) is have
-    assert ("🔍 Search 1 WTGs" in labels) is have
+    assert ("🔍 Search 1 WTG Serials" in labels) is have
     assert "IO Boards" not in labels
 
 
@@ -151,7 +151,7 @@ async def test_home_menu_layout(monkeypatch, own, admin, bottom):
         ["Alpha", "Bravo"],
         ["Charlie"],
         ["🔌 IO Boards"],
-        ["🔍 Search 2 WTGs"],
+        ["🔍 Search 2 WTG Serials"],
         ["🔍 Search 1 Spare Parts"],
         ["🔍 Search 1 Codes"],
     ]

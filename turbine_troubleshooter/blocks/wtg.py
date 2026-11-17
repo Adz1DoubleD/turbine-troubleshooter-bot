@@ -14,7 +14,7 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     example = f"`{SETTINGS.wtg_prefix}A10` or `A10`" if SETTINGS.wtg_prefix else "`A10`"
     await query.edit_message_text(
-        f"🔢 *WTG Info Lookup*\n\nPlease enter the WTG number (e.g. {example}):",
+        f"🔍 *Search WTG Serials*\n\nPlease enter the WTG number (e.g. {example}):",
         parse_mode="Markdown",
         reply_markup=kb,
     )

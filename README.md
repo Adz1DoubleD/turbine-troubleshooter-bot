@@ -88,9 +88,9 @@ Approved users can tell the admins about anything missing or wrong with **💬 F
 
 ## Content
 
-Turbines live in `wtgs`, one row per turbine with its serial and IP, used by **🔢 WTG Info**. On the first start with this table, the bot copies the `WTG_MAP` row of `content` into it once and leaves that row untouched. On a new database there's nothing to copy, so there are no turbines.
+Turbines live in `wtgs`, one row per turbine with its serial and IP, used by **🔍 Search WTG Serials**. On the first start with this table, the bot copies the `WTG_MAP` row of `content` into it once and leaves that row untouched. On a new database there's nothing to copy, so there are no turbines.
 
-IO board pin-outs live in `io_boards`, one row per pin with its board's ID, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **IO Boards** and **🔢 WTG Info** buttons only appear once there's at least one board or turbine.
+IO board pin-outs live in `io_boards`, one row per pin with its board's ID, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **🔌 IO Boards** and **🔍 Search WTG Serials** buttons only appear once there's at least one board or turbine.
 
 ### Adding turbines and IO boards
 
