@@ -30,6 +30,7 @@ from .blocks.admin import changes as admin_changes
 from .blocks.admin import codes as admin_codes
 from .blocks.admin import content as admin_content
 from .blocks.admin import files as admin_files
+from .blocks.admin import imports as admin_imports
 from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
 from .blocks.user import LOCKED_MARKUP, LOCKED_TEXT
@@ -106,7 +107,9 @@ async def file_handler(update: Update, context):
     if update.effective_user is None or context.user_data is None:
         return
     await set_user_roles(context, update.effective_user.id)
-    if context.user_data.get("is_admin"):
+    if (context.user_data.get("state") or "").startswith("troubleshooter:import:"):
+        await admin_imports.handle_file(update, context)
+    elif context.user_data.get("is_admin"):
         await admin_files.handle_file(update, context)
 
 
@@ -349,6 +352,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("troubleshooter:undo:"):
         await admin_changes.button_undo(update, context)
+
+    elif data.startswith("troubleshooter:import"):
+        await admin_imports.handle_button(update, context)
 
     elif admin and data.startswith("troubleshooter:menu_"):
         await admin_content.handle_button(update, context)

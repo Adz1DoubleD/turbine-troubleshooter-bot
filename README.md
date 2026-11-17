@@ -81,7 +81,48 @@ Undo only works while the item still has the text the admin saved; if it's been 
 
 Turbines live in `wtgs`, one row per turbine with its serial and IP, used by **🔢 WTG Info**. On the first start with this table, the bot copies the `WTG_MAP` row of `content` into it once and leaves that row untouched. On a new database there's nothing to copy, so there are no turbines.
 
-IO board pin-outs live in `io_boards`, one row per pin with its board's key, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **IO Boards** and **🔢 WTG Info** buttons only appear once there's at least one board or turbine.
+IO board pin-outs live in `io_boards`, one row per pin with its board's ID, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **IO Boards** and **🔢 WTG Info** buttons only appear once there's at least one board or turbine.
+
+### Adding turbines and IO boards
+
+Turbines and IO boards aren't edited from the menus. The owner keeps them up to date with a CSV file: **Admin Panel → 📥 Import** in the troubleshooter bot, then **🔢 Turbines** or **📋 IO Boards**. To start from what's there now, use **📤 Export**, edit the file in a spreadsheet, and send it back, saved as *CSV UTF-8*. The bot checks every row first and lists any problems with their row numbers, then shows how many are new, changed and removed before you tap **✅ Import**. An import replaces the whole list, so anything not in the file is removed.
+
+**Turbines** (`wtgs`):
+
+| Column | Meaning |
+|---|---|
+| `name` | The turbine: `TROUBLESHOOTER_WTG_PREFIX`, a row letter and a two-digit number, e.g. `WTA05`. Technicians look it up as `A5` |
+| `serial` | Serial number |
+| `ip` | IP address |
+
+```csv
+name,serial,ip
+WTA01,1000001,192.0.2.11
+WTA02,1000002,192.0.2.12
+WTB01,1000101,192.0.2.21
+```
+
+**IO boards** (`io_boards`), one row per pin, in the order they're shown:
+
+| Column | Meaning |
+|---|---|
+| `board` | The board's short ID, used in its button: letters, numbers or `_`, e.g. `io1` |
+| `board_name` | Name on the board's button and screen |
+| `can_node` | Optional CAN node, shown under the board's name |
+| `section` | Optional heading the pin is grouped under. Leave it blank on every pin for a board without headings; on a board that has some, blank ones go under **General** |
+| `pin` | Pin or terminal label, e.g. `X1:1` |
+| `description` | Optional: what's on that pin |
+
+Every row for a board must have the same `board_name` and `can_node`.
+
+```csv
+board,board_name,can_node,section,pin,description
+io1,IO Board 1,Node 1,Inputs,X1:1,Example signal
+io1,IO Board 1,Node 1,Inputs,X1:2,
+io1,IO Board 1,Node 1,Outputs,X2:1,Example relay
+```
+
+Exports also have `id` and `position` columns; the import ignores them and uses the order of the rows.
 
 The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
 

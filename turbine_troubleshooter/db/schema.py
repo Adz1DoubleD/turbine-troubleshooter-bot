@@ -128,8 +128,8 @@ async def init_troubleshooter_db(application):
                     io_boards[table_name] = [
                         {
                             "section": r.get("section", ""),
-                            "connector": r.get("connector", ""),
-                            "tdi_text": r.get("tdi_text", ""),
+                            "pin": r.get("connector", ""),
+                            "description": r.get("tdi_text", ""),
                         }
                         for r in io_records
                     ]
@@ -293,20 +293,20 @@ async def init_troubleshooter_db(application):
                 )
                 if await cur.fetchone():
                     await cur.execute(
-                        "SELECT board_key, board_name, can_node, section, connector, "
-                        "tdi_text FROM io_boards ORDER BY board_key, sort_order, id"
+                        "SELECT board, board_name, can_node, section, pin, description "
+                        "FROM io_boards ORDER BY board, position, id"
                     )
                     boards, pins = {}, {}
                     for r in await cur.fetchall():
                         boards.setdefault(
-                            r["board_key"],
+                            r["board"],
                             {"name": r["board_name"], "can": r["can_node"] or ""},
                         )
-                        pins.setdefault(r["board_key"], []).append(
+                        pins.setdefault(r["board"], []).append(
                             {
                                 "section": r["section"],
-                                "connector": r["connector"],
-                                "tdi_text": r["tdi_text"],
+                                "pin": r["pin"],
+                                "description": r["description"],
                             }
                         )
                     SETTINGS.content = SimpleNamespace(

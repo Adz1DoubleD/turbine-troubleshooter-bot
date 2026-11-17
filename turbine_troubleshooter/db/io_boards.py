@@ -12,14 +12,14 @@ async def io_boards_migrate(io_boards_json):
             await cur.execute("""
                 CREATE TABLE io_boards (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    board_key VARCHAR(32) NOT NULL,
+                    board VARCHAR(32) NOT NULL,
                     board_name VARCHAR(100) NOT NULL,
                     can_node VARCHAR(100) NULL,
                     section VARCHAR(100) NULL,
-                    connector VARCHAR(100) NULL,
-                    tdi_text TEXT NULL,
-                    sort_order INT NOT NULL DEFAULT 0,
-                    KEY board_order (board_key, sort_order)
+                    pin VARCHAR(100) NULL,
+                    description TEXT NULL,
+                    position INT NOT NULL DEFAULT 0,
+                    KEY board_position (board, position)
                 ) DEFAULT CHARSET=utf8mb4
             """)
 
@@ -35,7 +35,8 @@ async def io_boards_migrate(io_boards_json):
             if not await cur.fetchone():
                 continue
             await cur.execute(
-                f"SELECT section, connector, tdi_text FROM `{key}` ORDER BY id"
+                f"SELECT section, connector AS pin, tdi_text AS description FROM `{key}` "
+                "ORDER BY id"
             )
             info = info if isinstance(info, dict) else {"name": str(info)}
             pins += [
@@ -44,8 +45,8 @@ async def io_boards_migrate(io_boards_json):
                     info.get("name") or key.upper(),
                     info.get("can", ""),
                     r["section"],
-                    r["connector"],
-                    r["tdi_text"],
+                    r["pin"],
+                    r["description"],
                     order,
                 )
                 for order, r in enumerate(await cur.fetchall(), 1)
@@ -55,8 +56,8 @@ async def io_boards_migrate(io_boards_json):
         try:
             for pin in pins:
                 await cur.execute(
-                    "INSERT INTO io_boards (board_key, board_name, can_node, section, "
-                    "connector, tdi_text, sort_order) "
+                    "INSERT INTO io_boards (board, board_name, can_node, section, "
+                    "pin, description, position) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s)",
                     pin,
                 )
@@ -70,3 +71,31 @@ async def io_boards_migrate(io_boards_json):
             raise
 
     return len(pins)
+
+
+async def io_boards_replace(pins):
+    async with db_session() as cur:
+        await cur.execute("START TRANSACTION")
+        try:
+            await cur.execute("DELETE FROM io_boards")
+            orders = {}
+            for p in pins:
+                orders[p["board"]] = orders.get(p["board"], 0) + 1
+                await cur.execute(
+                    "INSERT INTO io_boards (board, board_name, can_node, section, "
+                    "pin, description, position) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        p["board"],
+                        p["board_name"],
+                        p["can_node"],
+                        p["section"],
+                        p["pin"],
+                        p["description"],
+                        orders[p["board"]],
+                    ),
+                )
+            await cur.execute("COMMIT")
+        except Exception:
+            await cur.execute("ROLLBACK")
+            raise

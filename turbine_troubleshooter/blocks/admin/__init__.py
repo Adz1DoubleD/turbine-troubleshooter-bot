@@ -171,6 +171,14 @@ async def handle_block(
                     )
                 ]
             )
+        if context.bot_data.get("is_troubleshooter"):
+            kb.append(
+                [
+                    InlineKeyboardButton(
+                        "📥 Import", callback_data="troubleshooter:import"
+                    )
+                ]
+            )
         kb.append(
             [
                 InlineKeyboardButton(
