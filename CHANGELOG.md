@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.0.0...v2.0.1) (2026-11-17)
+
+
+### Bug Fixes
+
+* hide Suggest Content when the menu is shown inside a host bot ([4028bb2](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/4028bb2c24a819e0a98599e68895295b9c87a664))
+* hide Suggest Content when the menu is shown inside a host bot ([efa8055](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/efa8055dbcb5bd5499a3cc3d671e18b44f5a84cc))
+* make the Request Admin button work ([3d627d6](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/3d627d6f9a0ef28e83dd789107e8b9a1085770d2))
+* make the Request Admin button work ([3e3abfa](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/3e3abfaa580d62418764197b8832fb7eb6624d57))
+
 ## [2.0.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.3...v2.0.0) (2026-11-17)
 
 
