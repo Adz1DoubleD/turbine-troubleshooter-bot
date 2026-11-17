@@ -192,9 +192,9 @@ async def offer_update_note(application):
         or str(SETTINGS.announce_updates).lower() in ("0", "false", "no", "off")
     ):
         return
-    if not await setting_mark(f"offered_{current}"):
-        return
     if not application.bot_data.get("troubleshooter_approved"):
+        return
+    if not await setting_mark(f"offered_{current}"):
         return
     await application.bot.send_message(
         SETTINGS.owner_id,
@@ -238,7 +238,7 @@ async def button_announce(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sent, blocked, _ = await send_notification_troubleshooter(
         query.from_user,
         "broadcast",
-        message=f"What's new in version {current}:\n\n{note}",
+        message=f"What's new in {SETTINGS.name}:\n\n{note}",
     )
     await query.edit_message_text(
         f"📢 Sent the {current} update to {sent} users"
