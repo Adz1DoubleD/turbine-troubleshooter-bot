@@ -44,6 +44,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `owner_id` | `TROUBLESHOOTER_OWNER_ID` | Your Telegram user ID; the owner approves access and admins ([how to find it](#your-telegram-user-id)) |
 | `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for new-user, access-request, suggestion and change notifications. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
 | `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
+| `test_mode` | `TROUBLESHOOTER_TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |

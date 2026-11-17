@@ -10,7 +10,7 @@ from telegram.ext import ContextTypes
 
 import turbine_troubleshooter
 from turbine_troubleshooter.db import users_get
-from turbine_troubleshooter.helpers import escape_markdown, is_local, is_owner
+from turbine_troubleshooter.helpers import escape_markdown, is_owner, is_test_mode
 from turbine_troubleshooter.settings import SETTINGS, SKIPPED_WORDS
 
 
@@ -272,7 +272,7 @@ async def send_notification_troubleshooter(
 
     records = [r for r in records if r.get("is_approved") or r.get("is_admin")]
 
-    if is_local():
+    if is_test_mode():
         records = [r for r in records if is_owner(r["user_id"])]
 
     if audience == "admins":
@@ -284,7 +284,7 @@ async def send_notification_troubleshooter(
         records = [r for r in records if r.get("notifications_enabled", 1)]
 
     skip_user_id = (
-        user.id if user and action != "broadcast" and not is_local() else None
+        user.id if user and action != "broadcast" and not is_test_mode() else None
     )
     success_count = 0
     blocked_count = 0

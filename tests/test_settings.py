@@ -1,5 +1,6 @@
 import pytest
 
+from turbine_troubleshooter.helpers import is_test_mode
 from turbine_troubleshooter.settings import ENV_VARS, NOISE_FILTERS, SETTINGS, setup
 
 
@@ -51,3 +52,32 @@ def test_blank_environment_values_are_ignored(monkeypatch):
 def test_default_noise_filters_cover_network_blips():
     assert "Query is too old" in NOISE_FILTERS
     assert "Timed out" in NOISE_FILTERS
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [("1", True), ("true", True), ("on", True), (True, True)]
+    + [("0", False), ("false", False), ("", False), (False, False), (None, False)],
+)
+def test_test_mode_values(monkeypatch, value, expected):
+    monkeypatch.setattr(SETTINGS, "test_mode", value)
+
+    assert is_test_mode() is expected
+
+
+def test_test_mode_is_off_without_the_variable(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "test_mode", False)
+    monkeypatch.delenv("DYNO", raising=False)
+
+    setup()
+
+    assert is_test_mode() is False
+
+
+def test_test_mode_is_read_from_the_environment(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "test_mode", False)
+    monkeypatch.setenv("TROUBLESHOOTER_TEST_MODE", "1")
+
+    setup()
+
+    assert is_test_mode() is True

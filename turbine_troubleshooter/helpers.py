@@ -1,4 +1,3 @@
-import os
 import re
 import traceback
 
@@ -11,8 +10,8 @@ from turbine_troubleshooter.settings import SETTINGS
 ERROR_REPLY = "⚠️ Something went wrong. It's been logged."
 
 
-def is_local():
-    return "DYNO" not in os.environ
+def is_test_mode():
+    return str(SETTINGS.test_mode).lower() in ("1", "true", "yes", "on")
 
 
 def is_owner(user_id) -> bool:
@@ -76,7 +75,7 @@ async def error_handler(update, context):
                 pass
 
     sentry_sdk.capture_exception(error)
-    if is_local():
+    if is_test_mode():
         traceback.print_exception(error)
 
 
