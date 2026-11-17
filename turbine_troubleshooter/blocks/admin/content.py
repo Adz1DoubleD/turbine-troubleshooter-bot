@@ -64,28 +64,82 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_file_button(update, context)
         return
 
-    if query.data == "troubleshooter:menu_add":
+    if action == "menu_manage":
         context.user_data["state"] = None
-        submenus = sorted(
-            (where(n["id"]), n["id"]) for n in nodes if n["type"] == "submenu"
+        context.user_data.pop("menu_draft", None)
+        here = node["id"] if node else 0
+        up = (
+            InlineKeyboardButton(
+                "🔙 Back",
+                callback_data=f"troubleshooter:menu_manage:{node['parent_id'] or 0}",
+            )
+            if node
+            else TO_PANEL
         )
-        kb = [
-            [
-                InlineKeyboardButton(
-                    "📁 Main menu", callback_data="troubleshooter:menu_add:in:0"
+        if node and node["type"] == "page":
+            files = sum(
+                a["node_id"] == node["id"] for a in SETTINGS.menu["attachments"]
+            )
+            body = node["body"] or ""
+            text = (
+                f"📋 *Edit Menus* · {escape_markdown(where(here))}\n\n📄 Page"
+                + (f" · 📎 {files} file{'s' if files > 1 else ''}" if files else "")
+                + (
+                    f"\n\n{escape_markdown(body[:300])}"
+                    + ("…" if len(body) > 300 else "")
+                    if body
+                    else ""
                 )
+            )
+            kb = [
+                [
+                    InlineKeyboardButton(
+                        "✏️ Edit", callback_data=f"troubleshooter:menu_edit:{here}"
+                    ),
+                    InlineKeyboardButton(
+                        "🗑 Delete", callback_data=f"troubleshooter:menu_del:{here}"
+                    ),
+                ],
+                [up],
             ]
-        ]
-        kb += [
-            [
+        else:
+            items = [
                 InlineKeyboardButton(
-                    f"📁 {label}", callback_data=f"troubleshooter:menu_add:in:{i}"
+                    f"{'📁' if n['type'] == 'submenu' else '📄'} {n['title']}",
+                    callback_data=f"troubleshooter:menu_manage:{n['id']}",
                 )
+                for n in nodes
+                if (n["parent_id"] or 0) == here
             ]
-            for label, i in submenus[:90]
-        ]
-        kb.append([TO_PANEL])
-        text = "📝 *Add Content*\n\nWhere should it go?"
+            text = f"📋 *Edit Menus* · {escape_markdown(where(node and here))}\n\n" + (
+                "Tap an item to change it, or add a new one here."
+                if items
+                else "Nothing here yet."
+            )
+            kb = [items[i : i + 2] for i in range(0, len(items), 2)]
+            kb.append(
+                [
+                    InlineKeyboardButton(
+                        "➕ Add Here",
+                        callback_data=f"troubleshooter:menu_add:in:{here}",
+                    )
+                ]
+                + (
+                    [
+                        InlineKeyboardButton(
+                            "✏️ Rename",
+                            callback_data=f"troubleshooter:menu_edit:{here}",
+                        ),
+                        InlineKeyboardButton(
+                            "🗑 Delete",
+                            callback_data=f"troubleshooter:menu_del:{here}",
+                        ),
+                    ]
+                    if node
+                    else []
+                )
+            )
+            kb.append([up])
 
     elif action == "menu_add" and bits[2] == "in":
         parent = node["id"] if node else None
@@ -103,7 +157,11 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "📁 Submenu", callback_data="troubleshooter:menu_add:type:submenu"
                 ),
             ],
-            [TO_PANEL],
+            [
+                InlineKeyboardButton(
+                    "🔙 Back", callback_data=f"troubleshooter:menu_manage:{parent or 0}"
+                )
+            ],
         ]
 
     elif action == "menu_add" and bits[2] == "type" and "parent" in draft:
@@ -131,7 +189,11 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 InlineKeyboardButton(
                     "👀 Open It", callback_data=f"troubleshooter:menu:{node['id']}"
-                )
+                ),
+                InlineKeyboardButton(
+                    "📋 Edit Menus",
+                    callback_data=f"troubleshooter:menu_manage:{node['id']}",
+                ),
             ],
             [TO_PANEL],
         ]
@@ -172,7 +234,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             [
                 InlineKeyboardButton(
-                    "🔙 Back", callback_data=f"troubleshooter:menu:{node['id']}"
+                    "🔙 Back",
+                    callback_data=f"troubleshooter:menu_manage:{node['id']}",
                 )
             ],
         ]
@@ -191,7 +254,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         kb = [
             [
                 InlineKeyboardButton(
-                    "❌ Cancel", callback_data=f"troubleshooter:menu:{node['id']}"
+                    "❌ Cancel",
+                    callback_data=f"troubleshooter:menu_manage:{node['id']}",
                 )
             ]
         ]
@@ -223,14 +287,19 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 InlineKeyboardButton(
                     "👀 Open It", callback_data=f"troubleshooter:menu:{node['id']}"
-                )
+                ),
+                InlineKeyboardButton(
+                    "📋 Edit Menus",
+                    callback_data=f"troubleshooter:menu_manage:{node['id']}",
+                ),
             ],
             [TO_PANEL],
         ]
 
     elif action == "menu_del" and node:
         back = InlineKeyboardButton(
-            "❌ No, Cancel", callback_data=f"troubleshooter:menu:{node['id']}"
+            "❌ No, Cancel",
+            callback_data=f"troubleshooter:menu_manage:{node['id']}",
         )
         owner = is_owner(user.id)
         if any(n["parent_id"] == node["id"] for n in nodes):
@@ -264,7 +333,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             kb = [
                 [
                     InlineKeyboardButton(
-                        "🔙 Back", callback_data=f"troubleshooter:menu:{node['id']}"
+                        "🔙 Back",
+                        callback_data=f"troubleshooter:menu_manage:{node['id']}",
                     )
                 ]
             ]
@@ -281,9 +351,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         "🔙 Back",
-                        callback_data=f"troubleshooter:menu:{node['parent_id']}"
-                        if node["parent_id"]
-                        else "troubleshooter:home",
+                        callback_data="troubleshooter:menu_manage:"
+                        f"{node['parent_id'] or 0}",
                     )
                 ]
             ]
@@ -308,9 +377,8 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
     msg_id = context.user_data.get("last_msg_id")
     cancel = InlineKeyboardButton(
         "❌ Cancel",
-        callback_data=f"troubleshooter:menu:{node['id']}"
-        if node
-        else "troubleshooter:admin_menu",
+        callback_data="troubleshooter:menu_manage:"
+        f"{node['id'] if node else draft.get('parent') or 0}",
     )
     if "parent" not in draft and not node:
         context.user_data["state"] = None

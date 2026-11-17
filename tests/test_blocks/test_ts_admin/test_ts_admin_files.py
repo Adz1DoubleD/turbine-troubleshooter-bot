@@ -257,7 +257,7 @@ async def test_admin_attaches_a_file_to_a_page_without_one(db):
     user, context = make()
     query = await press("troubleshooter:menu_edit:file:3", user, context)
     assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == [
-        "troubleshooter:menu:3"
+        "troubleshooter:menu_manage:3"
     ]
 
     preview = await upload(user, context)
@@ -288,7 +288,7 @@ async def test_owner_replaces_a_file(db):
     query = await press("troubleshooter:menu_edit:file:4", user, context)
     assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == [
         "troubleshooter:menu_file_rm:4",
-        "troubleshooter:menu:4",
+        "troubleshooter:menu_manage:4",
     ]
 
     await upload(user, context, kind="photo")
@@ -305,7 +305,7 @@ async def test_owner_removes_a_file(db):
 
     query = await press("troubleshooter:menu_file_rm:4", user, context)
     assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == [
-        "troubleshooter:menu:4",
+        "troubleshooter:menu_manage:4",
         "troubleshooter:menu_file_rm:yes:4",
     ]
     await press("troubleshooter:menu_file_rm:yes:4", user, context)

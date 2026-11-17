@@ -63,7 +63,7 @@ MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's 
 
 ### Photos and PDFs on menu pages
 
-In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.
+In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **Admin Panel → 📋 Edit Menus**, then the page, **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.
 
 A new file works in the troubleshooter bot straight away. The bot also sends it to the alerts chat with the path to save it as in `files_dir` (for example `pdf/manual.pdf`), and lists it under **Admin Panel → 📎 Pending Files** until it's there. Hosts show files from `files_dir`, so until it's saved a host shows "This document isn't available right now". On each start the bot marks pending files it finds in `files_dir` as saved.
 
@@ -135,7 +135,7 @@ Exports also have `id` and `position` columns; the import ignores them and uses 
 
 The menus live in `menus`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
 
-Admins add menu items from **Admin Panel → 📝 Add Content**: pick where it goes, then a page (text) or a submenu (more buttons), a title and the text. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. Opening a menu item as an admin shows **✏️ Edit** and **🗑 Delete**, and a submenu also shows **➕ Add Here**. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
+Admins change the menus from **Admin Panel → 📋 Edit Menus**, which shows the menus as a list to browse; the menus themselves show no editing buttons. In any menu, **➕ Add Here** adds a page (text) or a submenu (more buttons) with a title and the text; a submenu also has **✏️ Rename** and **🗑 Delete**, and tapping a page shows its text with **✏️ Edit** and **🗑 Delete**. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
 
 ### Backups
 
@@ -201,7 +201,7 @@ Everything else is optional. Access requests and change notices go to `TROUBLESH
 python -m turbine_troubleshooter
 ```
 
-Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and a new database starts empty: no menus, IO boards or turbines. Add codes, parts and menu items from **Admin Panel → Add Code / Add Part / Add Content**. Stop with Ctrl+C.
+Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and a new database starts empty: no menus, IO boards or turbines. Add codes, parts and menu items from **Admin Panel → Add Code / Add Part / Edit Menus**. Stop with Ctrl+C.
 
 ## Development
 
