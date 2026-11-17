@@ -83,7 +83,7 @@ def shown_name(user):
     return f"@{user.username}" if user.username else user.full_name
 
 
-def file_bot(context):
+def own_bot(context):
     if (
         context.bot_data.get("is_troubleshooter")
         or turbine_troubleshooter.application is None
@@ -488,7 +488,7 @@ async def button_open_file(query, context):
     if not s or not s["file_id"]:
         await show_card(query, context, suggestion_id)
         return
-    bot = file_bot(context)
+    bot = own_bot(context)
     chat_id = query.message.chat_id if bot is context.bot else SETTINGS.owner_id
     await send_file(bot, chat_id, s, caption=html.escape(s["title"]))
     await query.answer("📎 Sent above." if bot is context.bot else "📎 Sent to you.")
@@ -498,7 +498,7 @@ async def finish(context, s, message):
     context.bot_data.get("pending_suggestions", {}).pop(s["id"], None)
     await suggestion_remove(s["id"])
     try:
-        await context.bot.send_message(s["user_id"], message)
+        await own_bot(context).send_message(s["user_id"], message)
     except Exception:
         pass
 
@@ -546,7 +546,7 @@ async def button_approve(query, context):
         f"✅ Added “{html.escape(s['title'])}” to {html.escape(where(s['location']))}."
     )
     if rel:
-        bot = file_bot(context)
+        bot = own_bot(context)
         chat_id = query.message.chat_id if bot is context.bot else SETTINGS.owner_id
         await send_file(
             bot,
