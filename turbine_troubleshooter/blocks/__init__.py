@@ -46,7 +46,7 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
         kb.append(
             [
                 InlineKeyboardButton(
-                    f"🔍 Search {wtg_count} WTGs",
+                    f"🔍 Search {wtg_count} WTG Serials",
                     callback_data="troubleshooter:wtg_search",
                 )
             ]

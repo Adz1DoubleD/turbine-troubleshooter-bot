@@ -156,7 +156,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if not re.fullmatch(rf"{re.escape(prefix)}[A-Z]\d{{2}}", name):
                         errors.append(
                             f"Row {line}: {name or 'no name'} isn't a turbine name "
-                            f"WTG Info can find, like {prefix}A05."
+                            f"Search WTG Serials can find, like {prefix}A05."
                         )
                     elif name in seen:
                         errors.append(
