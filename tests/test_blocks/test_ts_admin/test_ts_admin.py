@@ -101,25 +101,6 @@ async def test_admin_panel_shows_pending_count_to_owner(user_id, label):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "user_id,pending,label",
-    [
-        (OWNER, {7: {}, 8: {}}, "📝 Suggestions (2)"),
-        (OWNER, {}, "📝 Suggestions"),
-        (OTHER, {7: {}}, None),
-    ],
-)
-async def test_admin_panel_suggestions_button(user_id, pending, label):
-    update, calls = make_update("troubleshooter:admin_menu", user_id=user_id)
-    context, _ = make_context(bot_data={"pending_suggestions": pending})
-
-    await admin.handle_block(update, context)
-
-    shown = [s for s in labels(calls["edits"][0]["reply_markup"]) if "Suggestions" in s]
-    assert shown == ([label] if label else [])
-
-
-@pytest.mark.asyncio
 async def test_admin_panel_rejects_non_admin():
     update, calls = make_update("troubleshooter:admin_menu", user_id=OTHER)
     context, _ = make_context(is_admin=False)

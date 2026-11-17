@@ -5,8 +5,6 @@ from .content import (
     CONTENT_ITEMS,
     FILE_PREFIX,
     content_from_json,
-    content_save,
-    content_to_json,
 )
 from .core import (
     close_db,
@@ -34,10 +32,6 @@ from .schema import (
 from .settings import (
     setting_toggle,
 )
-from .suggestions import (
-    suggestion_add,
-    suggestion_remove,
-)
 from .users import (
     admin_add,
     admin_remove,
@@ -57,8 +51,6 @@ __all__ = [
     "CONTENT_ITEMS",
     "FILE_PREFIX",
     "content_from_json",
-    "content_save",
-    "content_to_json",
     "close_db",
     "db_session",
     "delete_entry",
@@ -73,8 +65,6 @@ __all__ = [
     "part_update",
     "init_troubleshooter_db",
     "setting_toggle",
-    "suggestion_add",
-    "suggestion_remove",
     "admin_add",
     "admin_remove",
     "request_add",

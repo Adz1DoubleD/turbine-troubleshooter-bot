@@ -15,11 +15,10 @@ from turbine_troubleshooter.db import (
     user_revoke,
     users_get,
 )
-from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner
+from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner, own_bot
 from turbine_troubleshooter.settings import SETTINGS
 
 from ...tools import send_notification_troubleshooter, user_is_admin
-from ..suggest import own_bot
 
 PAGE_SIZE = 10
 SORTS = ("name", "added", "edits", "login")

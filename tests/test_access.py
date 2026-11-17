@@ -114,20 +114,6 @@ async def test_unapproved_user_can_request_access(monkeypatch):
     handled.assert_awaited_once()
 
 
-@pytest.mark.parametrize("approved", [True, False])
-@pytest.mark.asyncio
-async def test_files_only_reach_suggestions_for_approved_users(monkeypatch, approved):
-    handled = AsyncMock()
-    monkeypatch.setattr(turbine_troubleshooter.suggest, "handle_file", handled)
-    update = SimpleNamespace(effective_user=SimpleNamespace(id=STRANGER))
-
-    await turbine_troubleshooter.file_handler(
-        update, make_context({STRANGER} if approved else ())
-    )
-
-    assert handled.await_count == (1 if approved else 0)
-
-
 @pytest.mark.asyncio
 async def test_unapproved_user_text_is_ignored(monkeypatch):
     handled = AsyncMock()

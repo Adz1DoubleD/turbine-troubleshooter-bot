@@ -15,7 +15,6 @@ async def init_troubleshooter_db(application):
     admins = {}
     parts = []
     requests = {"access": {}, "admin": {}}
-    suggestions = {}
 
     try:
         async with db_session() as cur:
@@ -190,29 +189,6 @@ async def init_troubleshooter_db(application):
                     uid = int(r["user_id"])
                     requests[r["kind"]][uid] = r["name"] or str(uid)
 
-            await cur.execute("SHOW TABLES LIKE 'suggestions'")
-            if not await cur.fetchone():
-                await cur.execute("""
-                    CREATE TABLE suggestions (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        user_id BIGINT NOT NULL,
-                        name VARCHAR(255) DEFAULT NULL,
-                        location TEXT NOT NULL,
-                        title VARCHAR(100) NOT NULL,
-                        body TEXT,
-                        file_id VARCHAR(255) DEFAULT NULL,
-                        file_kind VARCHAR(10) DEFAULT NULL,
-                        created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-
-            await cur.execute(
-                "SELECT id, user_id, name, location, title, body, file_id, file_kind "
-                "FROM suggestions ORDER BY id"
-            )
-            for r in await cur.fetchall():
-                suggestions[int(r["id"])] = {**r, "location": json.loads(r["location"])}
-
         application.bot_data["codes"] = codes
         application.bot_data["io_boards"] = io_boards
         application.bot_data["troubleshooter_admins"] = admins
@@ -220,7 +196,6 @@ async def init_troubleshooter_db(application):
         application.bot_data["parts"] = parts
         application.bot_data["pending_access_requests"] = requests["access"]
         application.bot_data["pending_admin_requests"] = requests["admin"]
-        application.bot_data["pending_suggestions"] = suggestions
 
         print(
             f"✅ Troubleshooter database initialised:\n"

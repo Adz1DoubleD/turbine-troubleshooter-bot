@@ -146,15 +146,6 @@ async def handle_block(
     ]
 
     if owner:
-        waiting = len(context.bot_data.get("pending_suggestions", {}))
-        kb.append(
-            [
-                InlineKeyboardButton(
-                    f"📝 Suggestions ({waiting})" if waiting else "📝 Suggestions",
-                    callback_data="troubleshooter:suggestions",
-                )
-            ]
-        )
         kb.append(
             [
                 InlineKeyboardButton(
