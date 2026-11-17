@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 
+import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import (
@@ -343,6 +344,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("troubleshooter:delreq"):
         await admin_changes.button_delete_requests(update, context)
 
+    elif data.startswith("troubleshooter:announce:"):
+        await admin_broadcast.button_announce(update, context)
+
     elif data.startswith("troubleshooter:undo:"):
         await admin_changes.button_undo(update, context)
 
@@ -552,6 +556,10 @@ async def start_troubleshooter_bot(share_with=None, **options):
 
     await application.initialize()
     await application.start()
+    try:
+        await admin_broadcast.offer_update_note(application)
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
     await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
     print("🚀 Troubleshooting Bot initialised and polling")
     return application

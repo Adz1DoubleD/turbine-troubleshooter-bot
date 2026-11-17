@@ -39,6 +39,7 @@ from .schema import (
     init_troubleshooter_db,
 )
 from .settings import (
+    setting_mark,
     setting_toggle,
 )
 from .users import (
@@ -80,6 +81,7 @@ __all__ = [
     "part_add",
     "part_update",
     "init_troubleshooter_db",
+    "setting_mark",
     "setting_toggle",
     "admin_add",
     "admin_remove",

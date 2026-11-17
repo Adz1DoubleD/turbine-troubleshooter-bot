@@ -116,6 +116,7 @@ def troubleshooter_settings(monkeypatch):
         "windquest_api_token": None,
         "windquest_location": None,
         "test_mode": False,
+        "announce_updates": True,
     }.items():
         monkeypatch.setattr(SETTINGS, name, value)
     return SETTINGS

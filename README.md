@@ -45,6 +45,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for new-user, access-request and change notifications. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
 | `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
 | `test_mode` | `TROUBLESHOOTER_TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
+| `announce_updates` | `TROUBLESHOOTER_ANNOUNCE_UPDATES` | `0` to stop the owner being offered each release's *What's new* note. On by default ([release notes](#release-notes-for-users)) |
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
@@ -84,6 +85,10 @@ The turbine map and IO boards are loaded from the `content` table: one row per i
 The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
 
 Admins add menu items from **Admin Panel → 📝 Add Content**: pick where it goes, then a page (text) or a submenu (more buttons), a title and the text. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. Opening a menu item as an admin shows **✏️ Edit** and **🗑 Delete**, and a submenu also shows **➕ Add Here**. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
+
+## Release notes for users
+
+A release can come with a short, plain-language *What's new* note in [`whats_new.py`](turbine_troubleshooter/whats_new.py). The first time the bot starts on that version, it sends the owner the note with **📢 Send to Everyone** and **❌ Skip**; nothing reaches users until the owner taps Send, and it can only be sent once. The bot doesn't offer it in test mode, or when it has no approved users yet.
 
 ## Create your Telegram bot
 
