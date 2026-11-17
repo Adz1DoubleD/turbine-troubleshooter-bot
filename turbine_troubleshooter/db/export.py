@@ -106,7 +106,7 @@ async def db_tables(table):
         await cur.execute("SHOW TABLES")
         names = {next(iter(r.values())) for r in await cur.fetchall()}
 
-        if table == "io_boards":
+        if table == "io_boards" and "io_boards" not in names:
             merged = []
 
             for board in SETTINGS.content.IO_BOARDS:
