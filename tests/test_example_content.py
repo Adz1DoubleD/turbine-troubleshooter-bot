@@ -1,6 +1,6 @@
 import ipaddress
 
-from turbine_troubleshooter import example_content
+import example_content
 
 DOCUMENTATION_RANGES = [
     ipaddress.ip_network(n)

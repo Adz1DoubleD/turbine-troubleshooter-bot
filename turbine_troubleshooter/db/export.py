@@ -61,6 +61,13 @@ async def db_tables(table):
         return None
 
     async with db_session() as cur:
+        await cur.execute("SHOW TABLES LIKE 'wtgs'")
+        if table == "wtg_map" and await cur.fetchone():
+            await cur.execute(
+                "SELECT wtg AS name, serial, ip FROM wtgs ORDER BY sort_order, wtg"
+            )
+            return await cur.fetchall() or None
+
         if table in ("modules_map", "wtg_map"):
             content_name = {
                 "modules_map": "MODULES_MAP",

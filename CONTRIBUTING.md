@@ -27,7 +27,7 @@ Before writing a new button, check which kind it is:
 - **A feature** makes the bot do something new: a search, an export, a new admin screen. That's code, and a pull request is welcome.
 - **Content** shows information: a new menu item, a document, a photo, a torque table, a procedure. Content belongs to whoever hosts the bot: menu text lives in their database and documents in their files folder, never in this repo. Don't open a pull request for it; ask an admin of the bot you use to add it.
 
-If a feature needs example data to demonstrate it, add made-up entries to `example_content.py`.
+If a test needs example data, add made-up entries to `tests/example_content.py`.
 
 ## Adding a button
 
@@ -41,7 +41,7 @@ If a feature needs example data to demonstrate it, add made-up entries to `examp
 
 ## Rules for this repo
 
-- **No site content in the repo.** Fault codes, parts, turbine maps, IO board pin-outs, documents and photos live in the database and the host's files folder, never in git. CI rejects documents, images, spreadsheets and data files (`.json`, `.sql`, `.txt`, `.csv`, database files). Use made-up data in tests and in `example_content.py`; tests check that it stays small and uses placeholder names and documentation-only IP addresses.
+- **No site content in the repo.** Fault codes, parts, turbine maps, IO board pin-outs, documents and photos live in the database and the host's files folder, never in git. CI rejects documents, images, spreadsheets and data files (`.json`, `.sql`, `.txt`, `.csv`, database files). Use made-up data in tests and in `tests/example_content.py`; tests check that it stays small and uses placeholder names and documentation-only IP addresses.
 - **No imports from a host application.** The package must work on its own; a test fails if it imports `bot`, `config`, `services`, `media` or `main`.
 - **Errors go to Sentry**, never to a Telegram chat. Only catch an exception where there is a real fallback, and report it there with `sentry_sdk.capture_exception`; otherwise let it reach the error handler.
 - **Settings come from `settings.py`.** A new setting gets a default in `SETTINGS`, an environment variable in `ENV_VARS`, a row in the README table and a line in `.env.example`.

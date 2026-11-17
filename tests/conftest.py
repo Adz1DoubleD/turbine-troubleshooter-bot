@@ -2,9 +2,9 @@ import os
 import sys
 from unittest.mock import AsyncMock
 
+import example_content
 import pytest
 
-from turbine_troubleshooter import example_content
 from turbine_troubleshooter.settings import SETTINGS
 
 os.environ.setdefault("PTB_TIMEDELTA", "1")
