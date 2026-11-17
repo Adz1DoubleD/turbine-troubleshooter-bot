@@ -144,6 +144,26 @@ async def test_start_without_host_fills_defaults_when_db_fails(monkeypatch, fake
 
 
 @pytest.mark.asyncio
+async def test_a_failed_update_note_does_not_stop_the_bot(monkeypatch, fake_app):
+    from turbine_troubleshooter.blocks.admin import broadcast
+
+    reported = MagicMock()
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
+    monkeypatch.setattr(
+        broadcast, "offer_update_note", AsyncMock(side_effect=RuntimeError("down"))
+    )
+    monkeypatch.setattr(
+        turbine_troubleshooter.sentry_sdk, "capture_exception", reported
+    )
+
+    app = await turbine_troubleshooter.start_troubleshooter_bot()
+
+    assert app is fake_app
+    assert str(reported.call_args.args[0]) == "down"
+    fake_app.updater.start_polling.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_stop_shuts_down_and_closes_db(monkeypatch, fake_app):
     monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
     await turbine_troubleshooter.start_troubleshooter_bot()

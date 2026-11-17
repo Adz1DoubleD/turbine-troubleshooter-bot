@@ -33,6 +33,7 @@ ENV_VARS = {
     "windquest_api_key": "WINDQUEST_API_KEY",
     "windquest_api_token": "WINDQUEST_API_TOKEN",
     "test_mode": "TROUBLESHOOTER_TEST_MODE",
+    "announce_updates": "TROUBLESHOOTER_ANNOUNCE_UPDATES",
 }
 
 SETTINGS = SimpleNamespace(
@@ -52,6 +53,7 @@ SETTINGS = SimpleNamespace(
     windquest_api_token=None,
     windquest_location=None,
     test_mode=False,
+    announce_updates=True,
 )
 
 

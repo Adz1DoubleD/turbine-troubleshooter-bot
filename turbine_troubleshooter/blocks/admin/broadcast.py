@@ -1,9 +1,13 @@
+from importlib.metadata import PackageNotFoundError, version
+
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from turbine_troubleshooter.db import user_get, users_get
-from turbine_troubleshooter.helpers import escape_markdown, is_owner
+from turbine_troubleshooter.db import setting_mark, user_get, users_get
+from turbine_troubleshooter.helpers import escape_markdown, is_owner, is_test_mode
+from turbine_troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.whats_new import WHATS_NEW
 
 from ...tools import send_notification_troubleshooter
 from . import handle_block
@@ -173,4 +177,70 @@ async def handle_broadcast(
             f"• Blocked: `{blocked}`\n\n"
             f"👤 *Recipients:* {recipients_str}"
         ),
+    )
+
+
+async def offer_update_note(application):
+    try:
+        current = version("turbine-troubleshooter-bot")
+    except PackageNotFoundError:
+        return
+    note = WHATS_NEW.get(current)
+    if (
+        not note
+        or is_test_mode()
+        or str(SETTINGS.announce_updates).lower() in ("0", "false", "no", "off")
+    ):
+        return
+    if not await setting_mark(f"offered_{current}"):
+        return
+    if not application.bot_data.get("troubleshooter_approved"):
+        return
+    await application.bot.send_message(
+        SETTINGS.owner_id,
+        f"📢 *What's new in {escape_markdown(SETTINGS.name)} {current}*\n\n"
+        f"{escape_markdown(note)}\n\nSend this to everyone?",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "📢 Send to Everyone",
+                        callback_data=f"troubleshooter:announce:send:{current}",
+                    ),
+                    InlineKeyboardButton(
+                        "❌ Skip",
+                        callback_data=f"troubleshooter:announce:skip:{current}",
+                    ),
+                ]
+            ]
+        ),
+    )
+
+
+async def button_announce(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_owner(query.from_user.id):
+        await query.answer("⚠️ Only the owner can do that.", show_alert=True)
+        return
+
+    _, _, choice, current = query.data.split(":")
+    note = WHATS_NEW.get(current)
+    if choice != "send" or not note:
+        await query.answer()
+        await query.edit_message_text(f"❌ Skipped. The {current} note wasn't sent.")
+        return
+    if not await setting_mark(f"announced_{current}"):
+        await query.answer("It's already been sent.", show_alert=True)
+        return
+
+    await query.answer("📢 Sending…")
+    sent, blocked, _ = await send_notification_troubleshooter(
+        query.from_user,
+        "broadcast",
+        message=f"What's new in version {current}:\n\n{note}",
+    )
+    await query.edit_message_text(
+        f"📢 Sent the {current} update to {sent} users"
+        + (f". {blocked} have blocked the bot." if blocked else ".")
     )

@@ -61,4 +61,6 @@ Releases are prepared by [release-please](https://github.com/googleapis/release-
 2. When it's time to release, the maintainer merges that pull request. The workflow can't trigger CI on its own pull requests, so the maintainer merges it past the required check; it only changes the version and changelog.
 3. The merge tags `vX.Y.Z`, creates the GitHub release, runs the tests, builds, and waits for the maintainer to approve the `pypi` deployment before uploading to [PyPI](https://pypi.org/project/turbine-troubleshooter-bot/).
 
+If a release changes something users will notice, add a short, plain-language note for its version to `turbine_troubleshooter/whats_new.py` in the same pull request (no code terms; it's broadcast to technicians once the owner approves it).
+
 A version number can only be published once. Pushing a `vX.Y.Z` tag by hand also publishes, as long as it matches `version`. Hosts pin a version, so nothing reaches a live bot until a host moves to the new release.
