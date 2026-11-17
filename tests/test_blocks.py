@@ -29,7 +29,9 @@ SAMPLE_CONTENT = {
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("is_troubleshooter,shown", [(True, True), (False, False)])
-async def test_main_menu_user_menu_button(is_troubleshooter, shown):
+async def test_main_menu_user_buttons_only_in_the_troubleshooter_bot(
+    is_troubleshooter, shown
+):
     context = SimpleNamespace(
         bot_data={"is_troubleshooter": is_troubleshooter, "codes": {}},
         user_data={"is_admin": False},
@@ -39,7 +41,7 @@ async def test_main_menu_user_menu_button(is_troubleshooter, shown):
     labels = button_labels(block["reply_markup"])
 
     assert ("👤 User Menu" in labels) is shown
-    assert "📝 Suggest Content" in labels
+    assert ("📝 Suggest Content" in labels) is shown
     assert "💬 Send Feedback" not in labels
 
 
