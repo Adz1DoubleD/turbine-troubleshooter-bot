@@ -30,9 +30,9 @@ async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
         counts = []
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
             for name, filename in (
-                ("modules_map", "menus.csv"),
+                ("menus", "menus.csv"),
                 ("io_boards", "io_boards.csv"),
-                ("wtg_map", "turbines.csv"),
+                ("wtgs", "wtgs.csv"),
                 ("codes", "codes.csv"),
                 ("parts", "parts.csv"),
             ):
@@ -78,8 +78,8 @@ EXPORT_LABELS = {
     "parts": "Spare Parts",
     "io_boards": "IO Boards",
     "users": "Users",
-    "modules_map": "Menus",
-    "wtg_map": "WTG Data",
+    "menus": "Menus",
+    "wtgs": "Turbines",
 }
 
 

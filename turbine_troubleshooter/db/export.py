@@ -11,8 +11,8 @@ EXPORT_TABLES = (
     "parts",
     "users",
     "io_boards",
-    "modules_map",
-    "wtg_map",
+    "menus",
+    "wtgs",
 )
 
 
@@ -62,18 +62,18 @@ async def db_tables(table):
 
     async with db_session() as cur:
         await cur.execute("SHOW TABLES LIKE 'wtgs'")
-        if table == "wtg_map" and await cur.fetchone():
+        if table == "wtgs" and await cur.fetchone():
             await cur.execute(
                 "SELECT wtg AS name, serial, ip FROM wtgs ORDER BY sort_order, wtg"
             )
             return await cur.fetchall() or None
 
-        if table == "modules_map":
-            await cur.execute("SHOW TABLES LIKE 'menu_nodes'")
+        if table == "menus":
+            await cur.execute("SHOW TABLES LIKE 'menus'")
             if await cur.fetchone():
                 await cur.execute(
                     "SELECT id, parent_id, type, title, body, sort_order "
-                    "FROM menu_nodes ORDER BY sort_order, id"
+                    "FROM menus ORDER BY sort_order, id"
                 )
                 children = {}
                 for n in await cur.fetchall():
@@ -106,10 +106,10 @@ async def db_tables(table):
                     ]
                 return rows or None
 
-        if table in ("modules_map", "wtg_map"):
+        if table in ("menus", "wtgs"):
             content_name = {
-                "modules_map": "MODULES_MAP",
-                "wtg_map": "WTG_MAP",
+                "menus": "MODULES_MAP",
+                "wtgs": "WTG_MAP",
             }[table]
 
             await cur.execute(

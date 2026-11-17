@@ -53,7 +53,7 @@ async def test_menus_export_reads_the_rows_in_menu_order(make_cursor, patch_sess
     cur = patch_session(
         ts,
         make_cursor(
-            fetchone=[{"t": "menu_nodes"}],
+            fetchone=[{"t": "menus"}],
             fetchall=[
                 sorted(NODES, key=lambda n: (n["sort_order"], n["id"])),
                 [
@@ -64,7 +64,7 @@ async def test_menus_export_reads_the_rows_in_menu_order(make_cursor, patch_sess
         ),
     )
 
-    rows = await ts.db_tables("modules_map")
+    rows = await ts.db_tables("menus")
 
     assert [(r["path"], r["files"]) for r in rows] == [
         ("Torque", ""),
@@ -106,9 +106,9 @@ def make(user_id):
 async def test_owner_gets_everything_in_one_zip(monkeypatch):
     monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
     data = {
-        "modules_map": [{"id": 1, "path": "Safety"}],
+        "menus": [{"id": 1, "path": "Safety"}],
         "io_boards": [{"board": "io1", "pin": "X1"}, {"board": "io1", "pin": "X2"}],
-        "wtg_map": [{"name": "WTA01", "serial": "1", "ip": "192.0.2.1"}],
+        "wtgs": [{"name": "WTA01", "serial": "1", "ip": "192.0.2.1"}],
         "codes": None,
         "parts": [{"part_no": "PN1"}],
     }
@@ -130,9 +130,9 @@ async def test_owner_gets_everything_in_one_zip(monkeypatch):
             "io_boards.csv",
             "menus.csv",
             "parts.csv",
-            "turbines.csv",
+            "wtgs.csv",
         ]
-        assert z.read("turbines.csv").decode("utf-8-sig").splitlines() == [
+        assert z.read("wtgs.csv").decode("utf-8-sig").splitlines() == [
             "name,serial,ip",
             "WTA01,1,192.0.2.1",
         ]

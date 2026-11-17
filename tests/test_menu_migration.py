@@ -34,7 +34,7 @@ def migrate_cursor(make_cursor, fetchone=(None, None, None)):
     class Cursor(make_cursor):
         async def _execute(self, *args):
             await super()._execute(*args)
-            if args[0].startswith("INSERT INTO menu_nodes"):
+            if args[0].startswith("INSERT INTO menus"):
                 self.lastrowid += 1
 
     return Cursor(fetchone=list(fetchone), lastrowid=0)
@@ -73,7 +73,7 @@ def menu_from(cur):
                     (i, *row[:5]),
                 )
             )
-            for i, row in enumerate(inserted(cur, "menu_nodes"), 1)
+            for i, row in enumerate(inserted(cur, "menus"), 1)
         ],
         "attachments": [
             {
@@ -124,7 +124,7 @@ async def test_copy_keeps_order_nesting_owner_and_legacy_keys(
 
     await ts.menu_migrate(json.dumps(MADE_UP_MENU))
 
-    rows = inserted(cur, "menu_nodes")
+    rows = inserted(cur, "menus")
     assert [(r[0], r[2], r[4]) for r in rows[:4]] == [
         (None, "Safety", 1),
         (None, "Électrique", 2),
@@ -177,7 +177,7 @@ async def test_new_database_starts_with_empty_menus(make_cursor, patch_session):
 
     assert await ts.menu_migrate(None) == 0
 
-    assert inserted(cur, "menu_nodes") == []
+    assert inserted(cur, "menus") == []
     assert inserted(cur, "settings") == [(ts.MENU_MIGRATED,)]
     assert not any(c[0] == "START TRANSACTION" for c in cur.calls)
 
@@ -262,7 +262,7 @@ async def test_rows_are_used_only_once_the_copy_is_done(
             return {"t": 1}
 
         async def _fetchall(self):
-            return [node] if "FROM menu_nodes" in self.calls[-1][0] else []
+            return [node] if "FROM menus" in self.calls[-1][0] else []
 
     async def nothing_to_copy(_):
         return 0

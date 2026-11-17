@@ -239,7 +239,7 @@ async def init_troubleshooter_db(application):
                 next((r["data"] for r in rows if r["name"] == "MODULES_MAP"), None)
             )
             if migrated:
-                print(f"✅ Troubleshooter menu copied to menu_nodes: {migrated} items")
+                print(f"✅ Troubleshooter menu copied to menus: {migrated} items")
             async with db_session() as cur:
                 await cur.execute(
                     "SELECT value FROM settings WHERE name = %s", (MENU_MIGRATED,)
@@ -247,7 +247,7 @@ async def init_troubleshooter_db(application):
                 if await cur.fetchone():
                     await cur.execute(
                         "SELECT id, parent_id, type, title, body, sort_order, "
-                        "created_by, edits FROM menu_nodes ORDER BY sort_order, id"
+                        "created_by, edits FROM menus ORDER BY sort_order, id"
                     )
                     nodes = [
                         {**n, "edits": json.loads(n["edits"]) if n.get("edits") else []}
