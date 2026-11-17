@@ -11,6 +11,7 @@ from turbine_troubleshooter.blocks.admin import content, files
 from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 1
+ALERTS = "-100"
 ADMIN = 5
 
 
@@ -53,6 +54,7 @@ def menu():
 @pytest.fixture(autouse=True)
 def setup(monkeypatch, tmp_path):
     monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
+    monkeypatch.setattr(SETTINGS, "alerts_chat_id", ALERTS)
     monkeypatch.setattr(SETTINGS, "menu", menu())
     monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
 
@@ -209,7 +211,7 @@ async def test_admin_adds_a_page_with_a_pdf(db):
     assert db.files == [(50, "document", "F1", "U1", "pdf/manual.pdf", ADMIN)]
     assert SETTINGS.menu["attachments"][-1]["status"] == "pending"
     sent = context.bot.send_document.await_args
-    assert sent.args[:2] == (str(OWNER), "F1")
+    assert sent.args[:2] == (ALERTS, "F1")
     assert "`pdf/manual.pdf`" in sent.kwargs["caption"]
 
 
@@ -224,7 +226,7 @@ async def test_photo_takes_the_largest_size_and_a_free_name(db, tmp_path):
     await press("troubleshooter:menu_add:save", user, context)
 
     assert db.files == [(50, "photo", "F1", "U1", "images/manual_2.jpg", ADMIN)]
-    assert context.bot.send_photo.await_args.args[:2] == (str(OWNER), "F1")
+    assert context.bot.send_photo.await_args.args[:2] == (ALERTS, "F1")
 
 
 @pytest.mark.asyncio
@@ -349,7 +351,7 @@ async def test_pending_files_list_and_resend(db):
     ]
 
     query = await press("troubleshooter:menu_files:send:9", user, context)
-    assert context.bot.send_document.await_args.args[:2] == (str(OWNER), "F9")
+    assert context.bot.send_document.await_args.args[:2] == (ALERTS, "F9")
     query.answer.assert_awaited_once_with("📤 Sent.")
 
 

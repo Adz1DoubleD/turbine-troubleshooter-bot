@@ -12,11 +12,13 @@ from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 1
 ADMIN = 5
+ALERTS = "-100"
 
 
 @pytest.fixture(autouse=True)
 def setup(monkeypatch):
     monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
+    monkeypatch.setattr(SETTINGS, "alerts_chat_id", ALERTS)
     monkeypatch.setattr(
         changes, "local_now", lambda: SimpleNamespace(strftime=lambda f: "NOW")
     )
@@ -135,7 +137,7 @@ async def test_admin_code_delete_asks_the_owner(db):
     assert db.requests == [("code", "E1", "E1", ADMIN, "@ann")]
     assert context.bot_data["pending_delete_requests"][9]["label"] == "E1"
     sent = context.bot.send_message.await_args
-    assert sent.args[0] == str(OWNER)
+    assert sent.args[0] == ALERTS
     assert "@ann wants to delete the code: E1" in sent.args[1]
     assert buttons(sent.kwargs["reply_markup"]) == [
         "troubleshooter:delreq:yes:9",
@@ -445,10 +447,8 @@ async def test_undo_refused(db, advice, edits, message):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "alerts,sends", [("1", [("1", True)]), ("-100", [("-100", False), ("1", True)])]
-)
-async def test_undo_reaches_the_owner_once(monkeypatch, alerts, sends):
+@pytest.mark.parametrize("alerts", ["1", "-100"], ids=["no-alerts-chat", "alerts-chat"])
+async def test_undo_goes_to_the_alerts_chat_once(monkeypatch, alerts):
     bot = SimpleNamespace(send_message=AsyncMock())
     monkeypatch.setattr(turbine_troubleshooter, "application", SimpleNamespace(bot=bot))
     monkeypatch.setattr(SETTINGS, "alerts_chat_id", alerts)
@@ -466,9 +466,11 @@ async def test_undo_reaches_the_owner_once(monkeypatch, alerts, sends):
     )
 
     calls = [c.kwargs for c in bot.send_message.await_args_list]
-    assert [(c["chat_id"], "Was:" in c["text"]) for c in calls] == sends
-    owner = [c for c in calls if c["chat_id"] == "1"][0]
-    assert buttons(owner["reply_markup"]) == ["troubleshooter:undo:code:2:0", "cancel"]
+    assert [(c["chat_id"], "Was:" in c["text"]) for c in calls] == [(alerts, True)]
+    assert buttons(calls[0]["reply_markup"]) == [
+        "troubleshooter:undo:code:2:0",
+        "cancel",
+    ]
 
 
 @pytest.mark.asyncio

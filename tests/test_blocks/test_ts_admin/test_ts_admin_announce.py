@@ -24,6 +24,7 @@ def marks(monkeypatch):
         return True
 
     monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
+    monkeypatch.setattr(SETTINGS, "alerts_chat_id", "-100")
     monkeypatch.setattr(broadcast, "setting_mark", mark)
     monkeypatch.setattr(broadcast, "version", lambda name: "9.9.0")
     monkeypatch.setattr(broadcast, "WHATS_NEW", {"9.9.0": "• Something new"})
@@ -50,7 +51,7 @@ async def test_owner_is_offered_the_note_once(marks):
 
     sent = application.bot.send_message.await_args_list
     assert len(sent) == 1
-    assert sent[0].args[0] == str(OWNER)
+    assert sent[0].args[0] == "-100"
     assert "What's new in" in sent[0].args[1] and "9.9.0" in sent[0].args[1]
     assert "Something new" in sent[0].args[1]
     assert buttons(sent[0].kwargs["reply_markup"]) == [
