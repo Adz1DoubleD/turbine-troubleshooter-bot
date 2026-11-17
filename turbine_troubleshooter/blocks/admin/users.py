@@ -101,10 +101,13 @@ async def edit(query, text, kb):
             raise
 
 
-async def tell_user(context, user_id, text, reply_markup=None):
+async def tell_user(context, user_id, text, reply_markup=None, parse_mode=None):
     try:
         await own_bot(context).send_message(
-            user_id, text, reply_markup=reply_markup or error_kb(None)
+            user_id,
+            text,
+            reply_markup=reply_markup or error_kb(None),
+            parse_mode=parse_mode,
         )
     except Exception:
         pass
@@ -123,8 +126,22 @@ async def grant_access(context, user_id):
     await tell_user(
         context,
         user_id,
-        f"✅ You've been given access to the {SETTINGS.name} Bot.\n\n"
-        "Send /start to open it.",
+        f"✅ *You're in!* You now have access to the "
+        f"{escape_markdown(SETTINGS.name)} Bot.\n\n"
+        "• Search fault codes and spare parts\n"
+        "• Browse the menus for guides, photos and PDFs\n"
+        "• Tap 💬 Feedback if something's missing or wrong\n\n"
+        "You'll get a message when something new is added. Turn that off any "
+        "time from 👤 User Menu.",
+        InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("🛠 Open", callback_data="troubleshooter:home"),
+                    InlineKeyboardButton("❌ Close", callback_data="cancel"),
+                ]
+            ]
+        ),
+        parse_mode="Markdown",
     )
 
 
@@ -136,8 +153,10 @@ async def grant_admin(context, user_id, name):
     await tell_user(
         context,
         user_id,
-        f"✅ You've been granted {SETTINGS.name} Bot admin access.\n\n"
-        "You can now add, edit and remove fault codes and spare parts.",
+        f"🛡️ *You're now an admin* of the {escape_markdown(SETTINGS.name)} Bot.\n\n"
+        "You can add and edit fault codes, spare parts and menu pages, including "
+        "photos and PDFs. Changes go live straight away. Deletes need the "
+        "owner's OK first.",
         InlineKeyboardMarkup(
             [
                 [
@@ -148,6 +167,7 @@ async def grant_admin(context, user_id, name):
                 [InlineKeyboardButton("❌ Close", callback_data="cancel")],
             ]
         ),
+        parse_mode="Markdown",
     )
 
 

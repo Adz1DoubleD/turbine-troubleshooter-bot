@@ -321,3 +321,49 @@ async def test_user_revoke(make_cursor, patch_session, rowcount, expected):
         "UPDATE users SET is_approved = 0 WHERE user_id = %s",
         (7,),
     )
+
+
+@pytest.mark.asyncio
+async def test_approved_user_is_welcomed_with_an_open_button(monkeypatch):
+    monkeypatch.setattr(admin_users, "user_approve", AsyncMock())
+    monkeypatch.setattr(SETTINGS, "name", "Site_1")
+    context = make_context()
+
+    await admin_users.grant_access(context, STRANGER)
+
+    sent = context.bot.send_message.await_args
+    assert sent.args[0] == STRANGER
+    assert sent.args[1].startswith(
+        r"✅ *You're in!* You now have access to the Site\_1 Bot."
+    )
+    assert "💬 Feedback" in sent.args[1] and "👤 User Menu" in sent.args[1]
+    assert sent.kwargs["parse_mode"] == "Markdown"
+    assert callbacks(sent.kwargs["reply_markup"]) == ["troubleshooter:home", "cancel"]
+
+
+@pytest.mark.asyncio
+async def test_new_admin_is_told_what_they_can_do(monkeypatch):
+    monkeypatch.setattr(admin_users, "admin_add", AsyncMock())
+    context = make_context()
+
+    await admin_users.grant_admin(context, STRANGER, "@someone")
+
+    sent = context.bot.send_message.await_args
+    assert sent.args[1].startswith("🛡️ *You're now an admin*")
+    assert "menu pages, including photos and PDFs" in sent.args[1]
+    assert "Deletes need the owner's OK first." in sent.args[1]
+    assert sent.kwargs["parse_mode"] == "Markdown"
+    assert callbacks(sent.kwargs["reply_markup"]) == [
+        "troubleshooter:admin_menu",
+        "cancel",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_declines_stay_plain_text(monkeypatch):
+    context = make_context()
+    context.bot_data["pending_access_requests"] = {STRANGER: "@some_one"}
+
+    await admin_users.deny_request(context, STRANGER, "access")
+
+    assert context.bot.send_message.await_args.kwargs["parse_mode"] is None
