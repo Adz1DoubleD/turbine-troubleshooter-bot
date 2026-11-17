@@ -106,7 +106,7 @@ async def test_menus_built_from_rows_match_the_json(
     from_rows = get_troubleshooter_content()
 
     assert count == 10
-    assert len(from_rows) == len(from_json) == 11
+    assert len(from_rows) == len(from_json) == 10
     assert screens(from_rows) == screens(from_json)
     assert all(
         k.startswith("troubleshooter:menu:")
