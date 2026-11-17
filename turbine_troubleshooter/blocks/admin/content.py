@@ -36,8 +36,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if SETTINGS.menu is None:
         await query.answer(
-            "⚠️ Menus can't be changed until they've been copied to the menu "
-            "tables. Check the logs.",
+            "⚠️ The menus couldn't be loaded, so they can't be changed. Check the logs.",
             show_alert=True,
         )
         return

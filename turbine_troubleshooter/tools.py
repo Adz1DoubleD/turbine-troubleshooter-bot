@@ -33,78 +33,36 @@ def get_troubleshooter_content():
         else {}
     )
 
-    if SETTINGS.menu is not None:
-        attached = {}
-        for a in SETTINGS.menu["attachments"]:
-            attached.setdefault(a["node_id"], []).append(a)
+    menu = SETTINGS.menu or {"nodes": [], "attachments": []}
+    attached = {}
+    for a in menu["attachments"]:
+        attached.setdefault(a["node_id"], []).append(a)
 
-        for n in sorted(
-            SETTINGS.menu["nodes"], key=lambda n: (n["sort_order"], n["id"])
-        ):
-            parent = n["parent_id"] and f"troubleshooter:menu:{n['parent_id']}"
-            if n["type"] == "submenu":
-                item = {
-                    "type": "menu",
-                    "title": n["title"],
-                    "items": [],
-                    "parent": parent,
-                }
-            else:
-                files = attached.get(n["id"], [])
-                paths = [Path(SETTINGS.files_dir) / a["path"] for a in files]
-                item = {
-                    "type": files[0]["type"] if files else "text",
-                    "title": n["title"],
-                    "content": n["body"] or "",
-                    "file": (paths[0] if len(paths) == 1 else paths) or None,
-                    "file_ids": [a.get("file_id") for a in files],
-                    "parent": parent,
-                }
-            content[f"troubleshooter:menu:{n['id']}"] = item
-
-        for key, item in list(content.items()):
-            if item.get("parent") in content:
-                content[item["parent"]]["items"].append(key)
-
-        return dict(sorted(content.items(), key=lambda kv: kv[1]["title"].lower()))
-
-    queue = [
-        (None, title, data) for title, data in SETTINGS.content.MODULES_MAP.items()
-    ]
-
-    for parent, title, data in queue:
-        key = f"{parent or 'troubleshooter'}:{re.sub(r'\W+', '_', title.lower()).strip('_')}"
-
-        if isinstance(data, dict) and "menu" in data:
-            content[key] = {
+    for n in sorted(menu["nodes"], key=lambda n: (n["sort_order"], n["id"])):
+        parent = n["parent_id"] and f"troubleshooter:menu:{n['parent_id']}"
+        if n["type"] == "submenu":
+            item = {
                 "type": "menu",
-                "title": title,
+                "title": n["title"],
                 "items": [],
                 "parent": parent,
             }
-            queue += [(key, t, d) for t, d in data["menu"].items()]
         else:
-            if isinstance(data, dict):
-                text = data["text"]
-                if "photo" in data:
-                    media_type, file_obj = "photo", data["photo"]
-                elif "document" in data:
-                    media_type, file_obj = "document", data["document"]
-                else:
-                    media_type, file_obj = "text", None
-            else:
-                text, media_type, file_obj = data, "text", None
-
-            content[key] = {
-                "type": media_type,
-                "title": title,
-                "content": text,
-                "file": file_obj,
+            files = attached.get(n["id"], [])
+            paths = [Path(SETTINGS.files_dir) / a["path"] for a in files]
+            item = {
+                "type": files[0]["type"] if files else "text",
+                "title": n["title"],
+                "content": n["body"] or "",
+                "file": (paths[0] if len(paths) == 1 else paths) or None,
+                "file_ids": [a.get("file_id") for a in files],
                 "parent": parent,
             }
+        content[f"troubleshooter:menu:{n['id']}"] = item
 
-        if parent:
-            content[parent]["items"].append(key)
+    for key, item in list(content.items()):
+        if item.get("parent") in content:
+            content[item["parent"]]["items"].append(key)
 
     return dict(sorted(content.items(), key=lambda kv: kv[1]["title"].lower()))
 

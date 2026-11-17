@@ -1,3 +1,4 @@
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -277,81 +278,103 @@ def test_find_turbine_invalid(text):
     assert notify.find_wtg(text) == (None, None)
 
 
+def node(id, title, parent=None, kind="page", body="", order=1):
+    return {
+        "id": id,
+        "parent_id": parent,
+        "type": kind,
+        "title": title,
+        "body": body,
+        "sort_order": order,
+        "edits": [],
+    }
+
+
 def test_get_troubleshooter_content_builds_entries(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "files_dir", "/media")
     monkeypatch.setattr(
-        SETTINGS.content,
-        "MODULES_MAP",
+        SETTINGS,
+        "menu",
         {
-            "Power Board": "power text",
-            "Fan-Unit Main": {"text": "fan text", "photo": "fan.jpg"},
-            "Wiring": {"text": "wiring text", "document": "wiring.pdf"},
-            "Display": {"text": "display text"},
+            "nodes": [
+                node(1, "Power Board", body="power text"),
+                node(2, "Fan-Unit Main", body="fan text", order=2),
+                node(3, "Wiring", body="wiring text", order=3),
+            ],
+            "attachments": [
+                {"node_id": 2, "type": "photo", "path": "images/fan.jpg"},
+                {
+                    "node_id": 3,
+                    "type": "document",
+                    "path": "pdf/wiring.pdf",
+                    "file_id": "F3",
+                },
+            ],
         },
     )
 
     content = notify.get_troubleshooter_content()
 
-    assert content["troubleshooter:power_board"] == {
+    assert content["troubleshooter:menu:1"] == {
         "type": "text",
         "title": "Power Board",
         "content": "power text",
         "file": None,
+        "file_ids": [],
         "parent": None,
     }
-    assert content["troubleshooter:fan_unit_main"]["type"] == "photo"
-    assert content["troubleshooter:fan_unit_main"]["file"] == "fan.jpg"
-    assert content["troubleshooter:wiring"]["type"] == "document"
-    assert content["troubleshooter:wiring"]["file"] == "wiring.pdf"
-    assert content["troubleshooter:display"]["type"] == "text"
+    assert content["troubleshooter:menu:2"]["type"] == "photo"
+    assert content["troubleshooter:menu:2"]["file"] == Path("/media") / "images/fan.jpg"
+    assert content["troubleshooter:menu:3"]["type"] == "document"
+    assert content["troubleshooter:menu:3"]["file_ids"] == ["F3"]
     assert content["troubleshooter:ioboard"] == {"type": "menu", "title": "IO Boards"}
 
 
 def test_get_troubleshooter_content_builds_submenus(monkeypatch):
     monkeypatch.setattr(
-        SETTINGS.content,
-        "MODULES_MAP",
+        SETTINGS,
+        "menu",
         {
-            "Torque": {
-                "menu": {
-                    "Hub": "hub text",
-                    "T1 Chart": {"text": " ", "document": "t1.pdf"},
-                }
-            },
+            "nodes": [
+                node(1, "Torque", kind="submenu", body=None),
+                node(3, "T1 Chart", parent=1, order=2),
+                node(2, "Hub", parent=1, body="hub text"),
+            ],
+            "attachments": [],
         },
     )
 
     content = notify.get_troubleshooter_content()
 
-    assert content["troubleshooter:torque"] == {
+    assert content["troubleshooter:menu:1"] == {
         "type": "menu",
         "title": "Torque",
-        "items": ["troubleshooter:torque:hub", "troubleshooter:torque:t1_chart"],
+        "items": ["troubleshooter:menu:2", "troubleshooter:menu:3"],
         "parent": None,
     }
-    assert content["troubleshooter:torque:hub"] == {
-        "type": "text",
-        "title": "Hub",
-        "content": "hub text",
-        "file": None,
-        "parent": "troubleshooter:torque",
-    }
-    assert content["troubleshooter:torque:t1_chart"]["type"] == "document"
-    assert content["troubleshooter:torque:t1_chart"]["file"] == "t1.pdf"
-    assert (
-        content["troubleshooter:torque:t1_chart"]["parent"] == "troubleshooter:torque"
-    )
+    assert content["troubleshooter:menu:2"]["parent"] == "troubleshooter:menu:1"
+    assert content["troubleshooter:menu:2"]["content"] == "hub text"
 
 
 def test_get_troubleshooter_content_sorted_by_title(monkeypatch):
     monkeypatch.setattr(
-        SETTINGS.content,
-        "MODULES_MAP",
-        {"zeta": "z", "Alpha": "a", "mid": "m"},
+        SETTINGS,
+        "menu",
+        {
+            "nodes": [node(1, "zeta"), node(2, "Alpha", order=2), node(3, "mid")],
+            "attachments": [],
+        },
     )
 
     titles = [v["title"] for v in notify.get_troubleshooter_content().values()]
 
     assert titles == sorted(titles, key=str.lower)
+
+
+def test_no_menus_loaded_still_shows_io_boards(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "menu", None)
+
+    assert list(notify.get_troubleshooter_content()) == ["troubleshooter:ioboard"]
 
 
 @pytest.mark.asyncio
@@ -570,23 +593,23 @@ async def test_opted_out_admin_still_skipped_when_admins_only(sent, users, monke
 
 def test_get_troubleshooter_content_nested_submenus(monkeypatch):
     monkeypatch.setattr(
-        SETTINGS.content,
-        "MODULES_MAP",
-        {"Service": {"menu": {"Torque": {"menu": {"Hub": "hub text"}}}}},
+        SETTINGS,
+        "menu",
+        {
+            "nodes": [
+                node(1, "Service", kind="submenu", body=None),
+                node(2, "Torque", parent=1, kind="submenu", body=None),
+                node(3, "Hub", parent=2, body="hub text"),
+            ],
+            "attachments": [],
+        },
     )
 
     content = notify.get_troubleshooter_content()
 
-    assert content["troubleshooter:service"]["items"] == [
-        "troubleshooter:service:torque"
-    ]
-    assert (
-        content["troubleshooter:service:torque"]["parent"] == "troubleshooter:service"
-    )
-    assert (
-        content["troubleshooter:service:torque:hub"]["parent"]
-        == "troubleshooter:service:torque"
-    )
+    assert content["troubleshooter:menu:1"]["items"] == ["troubleshooter:menu:2"]
+    assert content["troubleshooter:menu:2"]["parent"] == "troubleshooter:menu:1"
+    assert content["troubleshooter:menu:3"]["parent"] == "troubleshooter:menu:2"
 
 
 CODES = {

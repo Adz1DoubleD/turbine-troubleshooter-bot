@@ -1,7 +1,6 @@
 import csv
 import io
 import re
-from types import SimpleNamespace
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
@@ -72,13 +71,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         rows = draft["rows"]
         if draft["kind"] == "wtgs":
             await wtgs_replace(rows)
-            SETTINGS.content = SimpleNamespace(
-                MODULES_MAP=SETTINGS.content.MODULES_MAP,
-                WTG_MAP={
-                    r["wtg"]: {"serial": r["serial"], "ip": r["ip"]} for r in rows
-                },
-                IO_BOARDS=SETTINGS.content.IO_BOARDS,
-            )
+            SETTINGS.content.WTG_MAP = {
+                r["wtg"]: {"serial": r["serial"], "ip": r["ip"]} for r in rows
+            }
             text = f"✅ Imported {len(rows)} turbines."
         else:
             await io_boards_replace(rows)
@@ -94,11 +89,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         "description": r["description"],
                     }
                 )
-            SETTINGS.content = SimpleNamespace(
-                MODULES_MAP=SETTINGS.content.MODULES_MAP,
-                WTG_MAP=SETTINGS.content.WTG_MAP,
-                IO_BOARDS=boards,
-            )
+            SETTINGS.content.IO_BOARDS = boards
             current = context.bot_data.setdefault("io_boards", {})
             current.clear()
             current.update(pins)

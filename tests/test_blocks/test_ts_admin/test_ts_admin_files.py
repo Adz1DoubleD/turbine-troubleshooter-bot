@@ -502,10 +502,6 @@ async def test_start_marks_files_that_are_now_saved(
                 ]
             return []
 
-    async def nothing(_):
-        return 0
-
-    monkeypatch.setattr(ts.schema, "menu_migrate", nothing)
     cur = patch_session(ts, Cursor())
 
     await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))

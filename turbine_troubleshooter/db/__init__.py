@@ -1,11 +1,6 @@
 from .codes import (
     fault_code_add,
 )
-from .content import (
-    CONTENT_ITEMS,
-    FILE_PREFIX,
-    content_from_json,
-)
 from .core import (
     close_db,
     db_session,
@@ -23,19 +18,18 @@ from .export import (
     db_tables,
 )
 from .io_boards import (
-    IO_BOARDS_MIGRATED,
-    io_boards_migrate,
     io_boards_replace,
 )
 from .menu import (
-    MENU_MIGRATED,
     attachment_add,
     attachment_status,
     attachments_remove,
-    menu_migrate,
     menu_node_add,
     menu_node_delete,
     menu_node_update,
+)
+from .old_content import (
+    old_content_remove,
 )
 from .parts import (
     part_add,
@@ -62,16 +56,11 @@ from .users import (
     users_get,
 )
 from .wtgs import (
-    WTGS_MIGRATED,
-    wtgs_migrate,
     wtgs_replace,
 )
 
 __all__ = [
     "fault_code_add",
-    "CONTENT_ITEMS",
-    "FILE_PREFIX",
-    "content_from_json",
     "close_db",
     "db_session",
     "delete_entry",
@@ -82,17 +71,14 @@ __all__ = [
     "EXPORT_TABLES",
     "db_export",
     "db_tables",
-    "IO_BOARDS_MIGRATED",
-    "io_boards_migrate",
     "io_boards_replace",
-    "MENU_MIGRATED",
     "attachment_add",
     "attachment_status",
     "attachments_remove",
-    "menu_migrate",
     "menu_node_add",
     "menu_node_delete",
     "menu_node_update",
+    "old_content_remove",
     "part_add",
     "part_update",
     "init_troubleshooter_db",
@@ -109,7 +95,5 @@ __all__ = [
     "user_notifications_toggle",
     "user_revoke",
     "users_get",
-    "WTGS_MIGRATED",
-    "wtgs_migrate",
     "wtgs_replace",
 ]
