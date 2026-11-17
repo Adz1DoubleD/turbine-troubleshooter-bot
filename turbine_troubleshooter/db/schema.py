@@ -41,9 +41,6 @@ async def init_troubleshooter_db(application):
             if CONTENT_ITEMS <= stored.keys():
                 SETTINGS.content = SimpleNamespace(**stored)
             elif SETTINGS.content is None:
-                sentry_sdk.capture_message(
-                    "Troubleshooter content missing from database", level="error"
-                )
                 SETTINGS.content = SimpleNamespace(
                     MODULES_MAP={}, WTG_MAP={}, IO_BOARDS={}
                 )

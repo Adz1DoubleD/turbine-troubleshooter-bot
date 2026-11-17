@@ -1,8 +1,8 @@
 # turbine-troubleshooter-bot
 
-A Telegram bot for field technicians: search fault codes and spare parts, look up turbine info and IO board pin-outs, and browse reference content (text, documents, photos). Access is by approval, with admins who can add and edit codes and parts.
+A Telegram bot for field technicians: search fault codes and spare parts, look up turbine info and IO board pin-outs, and browse reference content (text, documents, photos). Access is by approval, with admins who can add and edit codes, parts and menus from inside the bot.
 
-It is a Python package that a host application installs and starts, or that runs on its own. All site-specific content and documents are supplied by the host at runtime; nothing private lives in this repo.
+It is a Python package that a host application installs and starts, or that runs on its own. All site-specific content lives in the host's database and files folder; nothing private lives in this repo.
 
 ## Install
 
