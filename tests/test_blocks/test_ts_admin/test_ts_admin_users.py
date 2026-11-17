@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from turbine_troubleshooter.blocks.admin import users
+from turbine_troubleshooter.blocks.admin import changes, users
 from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 123
@@ -480,7 +480,7 @@ async def test_pending_screen_lists_requests(registered):
     context.bot_data["pending_admin_requests"] = {2: "@bob"}
     update, calls = make_update("troubleshooter:pending")
 
-    await users.button_pending(update, context)
+    await changes.button_pending(update, context)
 
     edit = calls["edits"][0]
     assert "@new wants access" in edit["text"]
@@ -490,7 +490,7 @@ async def test_pending_screen_lists_requests(registered):
         "troubleshooter:access:deny:3:p",
         "troubleshooter:admin:approve:2:p",
         "troubleshooter:admin:deny:2:p",
-        "troubleshooter:user_list:name:0",
+        "troubleshooter:admin_menu",
     ]
 
 
@@ -498,7 +498,7 @@ async def test_pending_screen_lists_requests(registered):
 async def test_pending_screen_owner_only(registered):
     update, calls = make_update("troubleshooter:pending", user_id=OTHER)
 
-    await users.button_pending(update, roles_context(pending={3: "@new"}))
+    await changes.button_pending(update, roles_context(pending={3: "@new"}))
 
     assert calls["edits"] == []
     assert "owner" in calls["answers"][0]
@@ -535,7 +535,7 @@ async def test_pending_screen_pages(registered):
     context = roles_context(pending={i: f"@p{i}" for i in range(100, 125)})
     update, calls = make_update("troubleshooter:pending:2")
 
-    await users.button_pending(update, context)
+    await changes.button_pending(update, context)
 
     edit = calls["edits"][0]
     approves = [c for c in callbacks(edit) if ":approve:" in c]

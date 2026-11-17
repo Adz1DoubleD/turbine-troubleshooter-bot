@@ -84,7 +84,7 @@ async def test_admin_panel_owner_only_buttons(user_id, owner_buttons):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "user_id,label", [(OWNER, "👥 Users (⏳ 2 pending)"), (OTHER, "👥 Users")]
+    "user_id,label", [(OWNER, "📥 Requests (2)"), (OTHER, "👥 Users")]
 )
 async def test_admin_panel_shows_pending_count_to_owner(user_id, label):
     update, calls = make_update("troubleshooter:admin_menu", user_id=user_id)

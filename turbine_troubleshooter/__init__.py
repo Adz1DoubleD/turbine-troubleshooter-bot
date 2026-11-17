@@ -388,7 +388,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await admin_users.button_user_do(update, context)
 
     elif admin and data.startswith("troubleshooter:pending"):
-        await admin_users.button_pending(update, context)
+        await admin_changes.button_pending(update, context)
 
     elif admin and data == "troubleshooter:user_search":
         await admin_users.button_user_search(update, context)

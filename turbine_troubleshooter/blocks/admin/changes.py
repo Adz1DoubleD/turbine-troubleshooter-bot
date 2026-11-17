@@ -1,3 +1,4 @@
+import html
 from types import SimpleNamespace
 
 import sentry_sdk
@@ -18,7 +19,15 @@ from turbine_troubleshooter.settings import SETTINGS
 
 from ...tools import send_notification_troubleshooter
 from . import local_now
-from .users import tell_user
+from .users import (
+    OWNER_ONLY,
+    PAGE_SIZE,
+    edit,
+    nav_row,
+    page_count,
+    pending_requests,
+    tell_user,
+)
 
 KINDS = {"code": "code", "part": "part", "menu": "menu item"}
 
@@ -73,10 +82,10 @@ async def button_delete_requests(update: Update, context: ContextTypes.DEFAULT_T
     pending = context.bot_data.setdefault("pending_delete_requests", {})
     status = ""
     bits = query.data.split(":")
-    if len(bits) == 4:
+    if len(bits) >= 4:
         request = pending.pop(int(bits[3]), None)
         if request is None:
-            status = "ℹ️ That request has already been dealt with.\n\n"
+            status = "ℹ️ That request has already been dealt with."
         else:
             await delete_request_remove(request["id"])
             kind = KINDS[request["kind"]]
@@ -128,9 +137,9 @@ async def button_delete_requests(update: Update, context: ContextTypes.DEFAULT_T
                     elif node:
                         label += " (it has items in it now, so it was kept)"
                 status = (
-                    f"✅ Deleted the {kind}: {escape_markdown(label)}\n\n"
+                    f"✅ Deleted the {kind}: {label}"
                     if done
-                    else f"ℹ️ Not deleted: {escape_markdown(label)}\n\n"
+                    else f"ℹ️ Not deleted: {label}"
                 )
                 told = (
                     f"✅ The owner deleted the {kind} you asked about: {label}"
@@ -138,34 +147,18 @@ async def button_delete_requests(update: Update, context: ContextTypes.DEFAULT_T
                     else f"ℹ️ The {kind} you asked to delete wasn't deleted: {label}"
                 )
             else:
-                status = f"❌ Kept the {kind}: {escape_markdown(label)}\n\n"
+                status = f"❌ Kept the {kind}: {label}"
                 told = f"❌ The owner kept the {kind} you asked to delete: {label}"
             await tell_user(context, request["user_id"], told)
 
-    kb = [
-        [
-            InlineKeyboardButton(
-                f"✅ Delete {r['label'][:30]}",
-                callback_data=f"troubleshooter:delreq:yes:{r['id']}",
-            ),
-            InlineKeyboardButton(
-                "❌ Keep", callback_data=f"troubleshooter:delreq:no:{r['id']}"
-            ),
-        ]
-        for r in list(pending.values())[:20]
-    ]
-    kb.append(
-        [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:admin_menu")]
-    )
-    lines = "\n".join(
-        f"• {KINDS[r['kind']]}: {escape_markdown(r['label'])} "
-        f"({escape_markdown(r['name'] or r['user_id'])})"
-        for r in pending.values()
-    )
+    if len(bits) == 3 or query.data.endswith(":p"):
+        await show_pending(query, context, status=html.escape(status) or None)
+        return
     await query.edit_message_text(
-        f"{status}🗑 *Delete requests*\n\n{lines or 'Nothing waiting.'}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(kb),
+        status,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+        ),
     )
 
 
@@ -266,3 +259,74 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
         )
     )
+
+
+async def show_pending(query, context, status=None, page=None):
+    requests = pending_requests(context) + [
+        (r["id"], r, "delete")
+        for r in context.bot_data.get("pending_delete_requests", {}).values()
+    ]
+    pages = page_count(len(requests))
+    if page is None:
+        page = context.user_data.get("pending_page", 0)
+    page = min(max(page, 0), pages - 1)
+    context.user_data["pending_page"] = page
+    shown = requests[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
+
+    text = f"{status}\n\n" if status else ""
+    text += f"📥 <b>Requests</b> ({len(requests)})\n\n"
+    if not requests:
+        text += "Nothing waiting."
+    else:
+        text += "\n".join(
+            f"• {html.escape(str(r['name'] or r['user_id']))} wants to delete the "
+            f"{KINDS[r['kind']]}: {html.escape(r['label'])}"
+            if kind == "delete"
+            else f"• {html.escape(str(r))} wants "
+            f"{'admin' if kind == 'admin' else 'access'}"
+            for _, r, kind in shown
+        )
+        if pages > 1:
+            text += f"\n\nPage {page + 1} of {pages}"
+
+    kb = [
+        [
+            InlineKeyboardButton(
+                f"✅ Delete {r['label'][:30]}",
+                callback_data=f"troubleshooter:delreq:yes:{uid}:p",
+            ),
+            InlineKeyboardButton(
+                "❌ Keep", callback_data=f"troubleshooter:delreq:no:{uid}:p"
+            ),
+        ]
+        if kind == "delete"
+        else [
+            InlineKeyboardButton(
+                f"✅ {r}{' (admin)' if kind == 'admin' else ''}",
+                callback_data=f"troubleshooter:{kind}:approve:{uid}:p",
+            ),
+            InlineKeyboardButton(
+                "❌ Deny", callback_data=f"troubleshooter:{kind}:deny:{uid}:p"
+            ),
+        ]
+        for uid, r, kind in shown
+    ]
+    kb += nav_row("troubleshooter:pending:", page, pages)
+    kb.append(
+        [
+            InlineKeyboardButton(
+                "🔙 Admin Panel", callback_data="troubleshooter:admin_menu"
+            )
+        ]
+    )
+    await edit(query, text, kb)
+
+
+async def button_pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not is_owner(query.from_user.id):
+        await query.answer(OWNER_ONLY, show_alert=True)
+        return
+    parts = query.data.split(":")
+    page = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
+    await show_pending(query, context, page=page)

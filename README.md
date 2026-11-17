@@ -67,7 +67,7 @@ The same rules cover fault codes, spare parts and menu items:
 | View | ✅ | ✅ | ✅ |
 | Add | ✅ | ✅ Live at once | ❌ |
 | Edit | ✅ | ✅ Live at once; the owner gets the old text with **↩️ Undo** | ❌ |
-| Delete | ✅ | Asks the owner, who approves or keeps it from the message or **Admin Panel → 🗑 Delete Requests** | ❌ |
+| Delete | ✅ | Asks the owner, who approves or keeps it from the message or **Admin Panel → 📥 Requests** (which also lists access and admin requests) | ❌ |
 
 Undo only works while the item still has the text the admin saved; if it's been changed again since, the bot says so. Edits made before this version can't be undone, because their old text wasn't kept.
 

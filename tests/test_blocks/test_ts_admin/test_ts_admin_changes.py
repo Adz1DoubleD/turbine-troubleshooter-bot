@@ -284,18 +284,41 @@ async def test_only_the_owner_decides(db, data):
 
 
 @pytest.mark.asyncio
-async def test_request_list_shows_waiting_items(db):
-    update, context = make("troubleshooter:delreq", OWNER, waiting())
+async def test_one_inbox_lists_every_kind_of_request(db):
+    update, context = make("troubleshooter:pending", OWNER, waiting())
+    context.bot_data["pending_access_requests"] = {3: "@new"}
+
+    await changes.button_pending(update, context)
+
+    args = update.callback_query.edit_message_text.await_args
+    assert "Requests</b> (2)" in args.args[0]
+    assert "• @new wants access" in args.args[0]
+    assert "• @ann wants to delete the code: E1" in args.args[0]
+    assert buttons(args.kwargs["reply_markup"]) == [
+        "troubleshooter:access:approve:3:p",
+        "troubleshooter:access:deny:3:p",
+        "troubleshooter:delreq:yes:9:p",
+        "troubleshooter:delreq:no:9:p",
+        "troubleshooter:admin_menu",
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "data,back_to_inbox",
+    [("troubleshooter:delreq:no:9:p", True), ("troubleshooter:delreq:no:9", False)],
+)
+async def test_decision_returns_to_where_it_was_made(db, data, back_to_inbox):
+    update, context = make(data, OWNER, waiting())
 
     await changes.button_delete_requests(update, context)
 
     args = update.callback_query.edit_message_text.await_args
-    assert "• code: E1 (@ann)" in args.args[0]
-    assert buttons(args.kwargs["reply_markup"]) == [
-        "troubleshooter:delreq:yes:9",
-        "troubleshooter:delreq:no:9",
-        "troubleshooter:admin_menu",
-    ]
+    assert args.args[0].startswith("❌ Kept the code: E1")
+    assert ("Nothing waiting." in args.args[0]) is back_to_inbox
+    assert buttons(args.kwargs["reply_markup"])[-1] == (
+        "troubleshooter:admin_menu" if back_to_inbox else "cancel"
+    )
 
 
 @pytest.mark.asyncio
@@ -449,7 +472,7 @@ async def test_undo_reaches_the_owner_once(monkeypatch, alerts, sends):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("who,shown", [(OWNER, ["🗑 Delete Requests (1)"]), (ADMIN, [])])
+@pytest.mark.parametrize("who,shown", [(OWNER, ["📥 Requests (1)"]), (ADMIN, [])])
 async def test_admin_panel_shows_delete_requests_to_the_owner(who, shown):
     from turbine_troubleshooter.blocks import admin
 
@@ -459,5 +482,5 @@ async def test_admin_panel_shows_delete_requests_to_the_owner(who, shown):
 
     markup = update.callback_query.edit_message_text.await_args.kwargs["reply_markup"]
     assert [
-        b.text for row in markup.inline_keyboard for b in row if "Delete" in b.text
+        b.text for row in markup.inline_keyboard for b in row if "Requests" in b.text
     ] == shown

@@ -13,6 +13,7 @@ from turbine_troubleshooter.blocks import (
     wtg,
 )
 from turbine_troubleshooter.blocks.admin import broadcast as admin_broadcast
+from turbine_troubleshooter.blocks.admin import changes as admin_changes
 from turbine_troubleshooter.blocks.admin import codes as admin_codes
 from turbine_troubleshooter.blocks.admin import parts as admin_parts
 from turbine_troubleshooter.blocks.admin import users as admin_users
@@ -192,8 +193,8 @@ async def test_buttons_for_everyone(monkeypatch, data, module, name):
             "button_user_action",
         ),
         ("troubleshooter:user_do:admin_add:7", admin_users, "button_user_do"),
-        ("troubleshooter:pending", admin_users, "button_pending"),
-        ("troubleshooter:pending:2", admin_users, "button_pending"),
+        ("troubleshooter:pending", admin_changes, "button_pending"),
+        ("troubleshooter:pending:2", admin_changes, "button_pending"),
         ("troubleshooter:user_search", admin_users, "button_user_search"),
         ("troubleshooter:broadcast", admin_broadcast, "button_broadcast"),
         ("troubleshooter:export_menu", admin, "button_export_menu"),
