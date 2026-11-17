@@ -38,20 +38,24 @@ async def send_to_owner(context, attachment):
             f"Save it in the files folder as:\n`{attachment['path']}`",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
-                [
+                (
                     [
-                        InlineKeyboardButton(
-                            "💾 Save to Repo"
-                            if SETTINGS.files_repo and SETTINGS.files_repo_token
-                            else "💾 Save to Files Folder",
-                            callback_data="troubleshooter:menu_files:save:"
-                            f"{attachment['id']}",
-                        )
+                        [
+                            InlineKeyboardButton(
+                                "💾 Save to Repo"
+                                if SETTINGS.files_repo and SETTINGS.files_repo_token
+                                else "💾 Save to Files Folder",
+                                callback_data="troubleshooter:menu_files:save:"
+                                f"{attachment['id']}",
+                            )
+                        ]
                     ]
-                ]
-            )
-            if (SETTINGS.files_repo and SETTINGS.files_repo_token) or SETTINGS.files_dir
-            else None,
+                    if (SETTINGS.files_repo and SETTINGS.files_repo_token)
+                    or SETTINGS.files_dir
+                    else []
+                )
+                + [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+            ),
         )
     except Exception as e:
         sentry_sdk.capture_exception(e)
@@ -307,7 +311,12 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         }.get(status, "Try again later.")
             if query.message.caption is not None:
                 try:
-                    await query.edit_message_caption(caption=reply)
+                    await query.edit_message_caption(
+                        caption=reply,
+                        reply_markup=InlineKeyboardMarkup(
+                            [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+                        ),
+                    )
                 except BadRequest:
                     pass
                 return

@@ -228,7 +228,12 @@ async def button_announce(update: Update, context: ContextTypes.DEFAULT_TYPE):
     note = WHATS_NEW.get(current)
     if choice != "send" or not note:
         await query.answer()
-        await query.edit_message_text(f"❌ Skipped. The {current} note wasn't sent.")
+        await query.edit_message_text(
+            f"❌ Skipped. The {current} note wasn't sent.",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+            ),
+        )
         return
     if not await setting_mark(f"announced_{current}"):
         await query.answer("It's already been sent.", show_alert=True)
@@ -242,5 +247,8 @@ async def button_announce(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await query.edit_message_text(
         f"📢 Sent the {current} update to {sent} users"
-        + (f". {blocked} have blocked the bot." if blocked else ".")
+        + (f". {blocked} have blocked the bot." if blocked else "."),
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+        ),
     )

@@ -133,6 +133,9 @@ async def test_send_broadcasts_once(monkeypatch, marks):
         query.edit_message_text.await_args.args[0]
         == "📢 Sent the 9.9.0 update to 12 users. 2 have blocked the bot."
     )
+    assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == [
+        "cancel"
+    ]
     again.answer.assert_awaited_once_with("It's already been sent.", show_alert=True)
 
 
@@ -148,6 +151,9 @@ async def test_skip_sends_nothing(monkeypatch, marks):
         query.edit_message_text.await_args.args[0]
         == "❌ Skipped. The 9.9.0 note wasn't sent."
     )
+    assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == [
+        "cancel"
+    ]
 
 
 @pytest.mark.asyncio
