@@ -334,7 +334,7 @@ async def test_approved_user_is_welcomed_with_an_open_button(monkeypatch):
     sent = context.bot.send_message.await_args
     assert sent.args[0] == STRANGER
     assert sent.args[1].startswith(
-        "✅ *You're in!* You now have access to the Site\_1 Bot."
+        r"✅ *You're in!* You now have access to the Site\_1 Bot."
     )
     assert "💬 Feedback" in sent.args[1] and "👤 User Menu" in sent.args[1]
     assert sent.kwargs["parse_mode"] == "Markdown"
