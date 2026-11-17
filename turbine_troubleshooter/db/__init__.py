@@ -22,6 +22,10 @@ from .export import (
     db_export,
     db_tables,
 )
+from .io_boards import (
+    IO_BOARDS_MIGRATED,
+    io_boards_migrate,
+)
 from .menu import (
     MENU_MIGRATED,
     attachment_add,
@@ -71,6 +75,8 @@ __all__ = [
     "EXPORT_TABLES",
     "db_export",
     "db_tables",
+    "IO_BOARDS_MIGRATED",
+    "io_boards_migrate",
     "MENU_MIGRATED",
     "attachment_add",
     "attachments_remove",

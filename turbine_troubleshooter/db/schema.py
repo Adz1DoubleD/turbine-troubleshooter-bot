@@ -7,6 +7,7 @@ import sentry_sdk
 from ..settings import SETTINGS
 from .content import CONTENT_ITEMS, content_from_json
 from .core import db_session
+from .io_boards import IO_BOARDS_MIGRATED, io_boards_migrate
 from .menu import MENU_MIGRATED, menu_migrate
 
 
@@ -277,6 +278,45 @@ async def init_troubleshooter_db(application):
                     SETTINGS.menu = {"nodes": nodes, "attachments": attachments}
         except Exception as e:
             print(f"❌ [DB] Troubleshooter menu copy failed: {e}")
+            sentry_sdk.capture_exception(e)
+
+        try:
+            copied = await io_boards_migrate(
+                next((r["data"] for r in rows if r["name"] == "IO_BOARDS"), None)
+            )
+            if copied:
+                print(f"✅ Troubleshooter IO boards copied to io_boards: {copied} pins")
+            async with db_session() as cur:
+                await cur.execute(
+                    "SELECT value FROM settings WHERE name = %s", (IO_BOARDS_MIGRATED,)
+                )
+                if await cur.fetchone():
+                    await cur.execute(
+                        "SELECT board_key, board_name, can_node, section, connector, "
+                        "tdi_text FROM io_boards ORDER BY board_key, sort_order, id"
+                    )
+                    boards, pins = {}, {}
+                    for r in await cur.fetchall():
+                        boards.setdefault(
+                            r["board_key"],
+                            {"name": r["board_name"], "can": r["can_node"] or ""},
+                        )
+                        pins.setdefault(r["board_key"], []).append(
+                            {
+                                "section": r["section"],
+                                "connector": r["connector"],
+                                "tdi_text": r["tdi_text"],
+                            }
+                        )
+                    SETTINGS.content = SimpleNamespace(
+                        MODULES_MAP=SETTINGS.content.MODULES_MAP,
+                        WTG_MAP=SETTINGS.content.WTG_MAP,
+                        IO_BOARDS=boards,
+                    )
+                    io_boards.clear()
+                    io_boards.update(pins)
+        except Exception as e:
+            print(f"❌ [DB] Troubleshooter IO board copy failed: {e}")
             sentry_sdk.capture_exception(e)
 
     except Exception as e:

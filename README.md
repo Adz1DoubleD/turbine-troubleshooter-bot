@@ -55,7 +55,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `menu_nodes` and `attachments` (the menus, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
+MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `content`, `menu_nodes` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
 
@@ -80,7 +80,9 @@ Undo only works while the item still has the text the admin saved; if it's been 
 
 ## Content
 
-The turbine map and IO boards are loaded from the `content` table: one row per item (`WTG_MAP`, `IO_BOARDS`), stored as JSON text. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
+The turbine map is loaded from the `content` table's `WTG_MAP` row, stored as JSON text. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
+
+IO board pin-outs live in `io_boards`, one row per pin with its board's key, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards.
 
 The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
 
