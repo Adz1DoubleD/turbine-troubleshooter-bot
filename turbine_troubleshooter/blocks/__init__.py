@@ -9,9 +9,8 @@ from ..tools import get_troubleshooter_content
 async def handle_block(context: ContextTypes.DEFAULT_TYPE):
     code_count = len(context.bot_data.get("codes", {}))
     part_count = len(context.bot_data.get("parts", []))
-    admin = context.user_data.get(
-        "is_admin", not context.bot_data.get("is_troubleshooter")
-    )
+    is_troubleshooter = context.bot_data.get("is_troubleshooter")
+    admin = context.user_data.get("is_admin", not is_troubleshooter)
 
     text = f"🛠 *{SETTINGS.name} Bot*\n\nSelect a category:"
 
@@ -21,23 +20,34 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
     buttons = []
 
     for cb_data, item in content.items():
-        if item.get("parent"):
+        if item.get("parent") or cb_data == "troubleshooter:ioboard":
             continue
         label = item["title"]
         buttons.append(InlineKeyboardButton(label, callback_data=cb_data))
 
     for i in range(0, len(buttons), 2):
         kb.append(buttons[i : i + 2])
-    if weather.is_enabled() and context.bot_data.get("is_troubleshooter"):
+    if weather.is_enabled() and is_troubleshooter:
         kb.append(
             [InlineKeyboardButton("🌦 Weather", callback_data="troubleshooter:weather")]
         )
 
-    if getattr(SETTINGS.content, "WTG_MAP", None):
+    if "troubleshooter:ioboard" in content:
         kb.append(
             [
                 InlineKeyboardButton(
-                    "🔢 WTG Info", callback_data="troubleshooter:wtg_search"
+                    "🔌 IO Boards", callback_data="troubleshooter:ioboard"
+                )
+            ]
+        )
+
+    wtg_count = len(getattr(SETTINGS.content, "WTG_MAP", None) or {})
+    if wtg_count:
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    f"🔍 Search {wtg_count} WTGs",
+                    callback_data="troubleshooter:wtg_search",
                 )
             ]
         )
@@ -45,7 +55,7 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
     kb.append(
         [
             InlineKeyboardButton(
-                f"🔩 Search {part_count} Spare Parts",
+                f"🔍 Search {part_count} Spare Parts",
                 callback_data="troubleshooter:parts_search",
             )
         ]
@@ -60,25 +70,22 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
         ]
     )
 
-    kb.append(
-        [InlineKeyboardButton("💬 Feedback", callback_data="troubleshooter:feedback")]
+    admin_panel = InlineKeyboardButton(
+        "⚙️ Admin Panel", callback_data="troubleshooter:admin_menu"
     )
-
-    row = []
-    if context.bot_data.get("is_troubleshooter"):
-        row.append(
-            InlineKeyboardButton(
-                "👤 User Menu", callback_data="troubleshooter:user_menu"
-            )
+    if is_troubleshooter:
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    "💬 Feedback", callback_data="troubleshooter:feedback"
+                ),
+                InlineKeyboardButton(
+                    "👤 User Menu", callback_data="troubleshooter:user_menu"
+                ),
+            ]
         )
     if admin:
-        row.append(
-            InlineKeyboardButton(
-                "⚙️ Admin Panel", callback_data="troubleshooter:admin_menu"
-            )
-        )
-    if row:
-        kb.append(row)
+        kb.append([admin_panel])
 
     kb.append([InlineKeyboardButton("❌ Close", callback_data="cancel")])
     return {

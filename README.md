@@ -84,7 +84,7 @@ The same rules cover fault codes, spare parts and menu items:
 
 Undo only works while the item still has the text the admin saved; if it's been changed again since, the bot says so. Edits made before this version can't be undone, because their old text wasn't kept.
 
-Approved users can tell the admins about anything missing or wrong with **💬 Feedback** on the main menu. Their message goes to `TROUBLESHOOTER_ALERTS_CHAT_ID` (or the owner when it isn't set) with their name and Telegram ID; nothing is stored.
+Approved users can tell the admins about anything missing or wrong with **💬 Feedback** on the troubleshooter bot's main menu (a host showing the menus doesn't show it). Their message goes to `TROUBLESHOOTER_ALERTS_CHAT_ID` (or the owner when it isn't set) with their name and Telegram ID; nothing is stored.
 
 ## Content
 
