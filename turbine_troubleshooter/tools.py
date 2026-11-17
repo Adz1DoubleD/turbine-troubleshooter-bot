@@ -290,6 +290,13 @@ async def send_notification_troubleshooter(
             parse_mode, reply_markup = "Markdown", close_markup
             to_alerts, to_users = True, False
 
+        case "feedback":
+            text = f"💬 *Feedback*\n\n{escape_markdown(message)}\n\n• From: {name}"
+            if user:
+                text += f" (ID `{user.id}`)"
+            parse_mode, reply_markup = "Markdown", close_markup
+            to_alerts, to_users = True, False
+
         case _:
             raise ValueError(f"Unknown notification action: {action}")
 

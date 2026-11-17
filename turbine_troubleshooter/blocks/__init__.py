@@ -60,6 +60,10 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
         ]
     )
 
+    kb.append(
+        [InlineKeyboardButton("💬 Feedback", callback_data="troubleshooter:feedback")]
+    )
+
     row = []
     if context.bot_data.get("is_troubleshooter"):
         row.append(
