@@ -28,7 +28,7 @@ async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE):
     board_entries = io_data[board_name]
     sections = {}
     for entry in board_entries:
-        section = entry.get("section", "General")
+        section = entry.get("section") or "General"
         if section not in sections:
             sections[section] = []
         sections[section].append(entry)
@@ -44,15 +44,15 @@ async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for section, entries in sorted(sections.items()):
         response += f"🔹 *{section}*\n"
         for entry in entries:
-            connector = entry.get("connector", "N/A")
-            tdi_text = str(entry.get("tdi_text", "")).strip()
+            pin = entry.get("pin") or "N/A"
+            description = str(entry.get("description") or "").strip()
 
-            if tdi_text and tdi_text.lower() != "nan":
-                if len(tdi_text) > 50:
-                    tdi_text = tdi_text[:47] + "..."
-                response += f"`{connector}` | {tdi_text}\n"
+            if description and description.lower() != "nan":
+                if len(description) > 50:
+                    description = description[:47] + "..."
+                response += f"`{pin}` | {description}\n"
             else:
-                response += f"`{connector}`\n"
+                response += f"`{pin}`\n"
         response += "\n"
 
     if len(response) > 4096:

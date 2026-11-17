@@ -20,13 +20,13 @@ TABLES = {
     "io2": [{"id": 1, "section": "Power", "connector": "P1", "tdi_text": "24V"}],
 }
 COLUMNS = (
-    "board_key",
+    "board",
     "board_name",
     "can_node",
     "section",
-    "connector",
-    "tdi_text",
-    "sort_order",
+    "pin",
+    "description",
+    "position",
 )
 
 
@@ -62,12 +62,19 @@ def mini_db(make_cursor, marked=(), tables=TABLES):
                     {"name": "IO_BOARDS", "data": json.dumps(BOARDS)},
                 ]
             for key, rows in tables.items():
+                if f"FROM `{key}`" in sql and "AS pin" in sql:
+                    return [
+                        {
+                            "section": r["section"],
+                            "pin": r["connector"],
+                            "description": r["tdi_text"],
+                        }
+                        for r in rows
+                    ]
                 if f"FROM `{key}`" in sql:
                     return [{k: v for k, v in r.items() if k != "id"} for r in rows]
             if "FROM io_boards" in sql:
-                return sorted(
-                    self.io_rows, key=lambda r: (r["board_key"], r["sort_order"])
-                )
+                return sorted(self.io_rows, key=lambda r: (r["board"], r["position"]))
             return []
 
     return Cursor()
@@ -104,7 +111,7 @@ async def test_boards_from_the_table_match_the_old_ones(
     assert {
         k: v for k, v in old_boards.items() if k in TABLES
     } == SETTINGS.content.IO_BOARDS
-    assert [p["connector"] for p in new.bot_data["io_boards"]["io1"]] == [
+    assert [p["pin"] for p in new.bot_data["io_boards"]["io1"]] == [
         "X1:1",
         "X2:1",
         "X1:2",
@@ -130,7 +137,10 @@ async def test_copy_keeps_order_and_skips_boards_without_a_table(
     assert sql.index("START TRANSACTION") < sql.index(
         "INSERT INTO settings (name, value) VALUES (%s, 1)"
     )
-    assert "SELECT section, connector, tdi_text FROM `io1` ORDER BY id" in sql
+    assert (
+        "SELECT section, connector AS pin, tdi_text AS description FROM `io1` ORDER BY id"
+        in sql
+    )
 
 
 @pytest.mark.asyncio

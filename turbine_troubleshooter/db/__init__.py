@@ -25,6 +25,7 @@ from .export import (
 from .io_boards import (
     IO_BOARDS_MIGRATED,
     io_boards_migrate,
+    io_boards_replace,
 )
 from .menu import (
     MENU_MIGRATED,
@@ -62,6 +63,7 @@ from .users import (
 from .wtgs import (
     WTGS_MIGRATED,
     wtgs_migrate,
+    wtgs_replace,
 )
 
 __all__ = [
@@ -81,6 +83,7 @@ __all__ = [
     "db_tables",
     "IO_BOARDS_MIGRATED",
     "io_boards_migrate",
+    "io_boards_replace",
     "MENU_MIGRATED",
     "attachment_add",
     "attachments_remove",
@@ -106,4 +109,5 @@ __all__ = [
     "users_get",
     "WTGS_MIGRATED",
     "wtgs_migrate",
+    "wtgs_replace",
 ]
