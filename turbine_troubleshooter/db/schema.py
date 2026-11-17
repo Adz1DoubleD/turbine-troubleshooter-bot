@@ -15,7 +15,7 @@ async def init_troubleshooter_db(application):
     admins = {}
     parts = []
     requests = {"access": {}, "admin": {}}
-    suggestions = {}
+    delete_requests = {}
 
     try:
         async with db_session() as cur:
@@ -190,28 +190,27 @@ async def init_troubleshooter_db(application):
                     uid = int(r["user_id"])
                     requests[r["kind"]][uid] = r["name"] or str(uid)
 
-            await cur.execute("SHOW TABLES LIKE 'suggestions'")
+            await cur.execute("SHOW TABLES LIKE 'delete_requests'")
             if not await cur.fetchone():
                 await cur.execute("""
-                    CREATE TABLE suggestions (
+                    CREATE TABLE delete_requests (
                         id INT AUTO_INCREMENT PRIMARY KEY,
+                        kind VARCHAR(10) NOT NULL,
+                        target VARCHAR(64) NOT NULL,
+                        label VARCHAR(255) NOT NULL,
                         user_id BIGINT NOT NULL,
                         name VARCHAR(255) DEFAULT NULL,
-                        location TEXT NOT NULL,
-                        title VARCHAR(100) NOT NULL,
-                        body TEXT,
-                        file_id VARCHAR(255) DEFAULT NULL,
-                        file_kind VARCHAR(10) DEFAULT NULL,
-                        created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP
-                    )
+                        requested_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE KEY kind_target (kind, target)
+                    ) DEFAULT CHARSET=utf8mb4
                 """)
 
             await cur.execute(
-                "SELECT id, user_id, name, location, title, body, file_id, file_kind "
-                "FROM suggestions ORDER BY id"
+                "SELECT id, kind, target, label, user_id, name "
+                "FROM delete_requests ORDER BY id"
             )
             for r in await cur.fetchall():
-                suggestions[int(r["id"])] = {**r, "location": json.loads(r["location"])}
+                delete_requests[int(r["id"])] = r
 
         application.bot_data["codes"] = codes
         application.bot_data["io_boards"] = io_boards
@@ -220,7 +219,7 @@ async def init_troubleshooter_db(application):
         application.bot_data["parts"] = parts
         application.bot_data["pending_access_requests"] = requests["access"]
         application.bot_data["pending_admin_requests"] = requests["admin"]
-        application.bot_data["pending_suggestions"] = suggestions
+        application.bot_data["pending_delete_requests"] = delete_requests
 
         print(
             f"✅ Troubleshooter database initialised:\n"
@@ -244,10 +243,13 @@ async def init_troubleshooter_db(application):
                 )
                 if await cur.fetchone():
                     await cur.execute(
-                        "SELECT id, parent_id, type, title, body, sort_order "
-                        "FROM menu_nodes ORDER BY sort_order, id"
+                        "SELECT id, parent_id, type, title, body, sort_order, "
+                        "created_by, edits FROM menu_nodes ORDER BY sort_order, id"
                     )
-                    nodes = await cur.fetchall()
+                    nodes = [
+                        {**n, "edits": json.loads(n["edits"]) if n.get("edits") else []}
+                        for n in await cur.fetchall()
+                    ]
                     await cur.execute(
                         "SELECT node_id, type, file_id, path, status FROM attachments "
                         "WHERE node_id IS NOT NULL ORDER BY sort_order, id"

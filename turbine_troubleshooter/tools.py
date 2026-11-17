@@ -200,6 +200,8 @@ async def send_notification_troubleshooter(
     message=None,
     target_id=None,
     audience="all",
+    undo=None,
+    was=None,
 ):
     if turbine_troubleshooter.application is None:
         return 0, 0, []
@@ -274,15 +276,49 @@ async def send_notification_troubleshooter(
             if not int(SETTINGS.notify_settings.get(f"notify_{verb}", 1)):
                 audience = "admins"
 
+        case "menu_added" | "menu_edited" | "menu_deleted":
+            verb = action.split("_")[1]
+            text = f"📋 *Menu Item {verb.capitalize()}*\n\n• Item: {escape_markdown(code)}\n"
+            if message:
+                text += f"• Change: {escape_markdown(message)}\n"
+            text += f"\n• By: {name}"
+            parse_mode, reply_markup = "Markdown", close_markup
+            to_alerts, to_users = True, False
+
         case _:
             raise ValueError(f"Unknown notification action: {action}")
+
+    owner_text = (
+        f"{text}\n\n• Was:\n{escape_markdown(was[:1500])}" if undo and was else text
+    )
+    owner_markup = (
+        InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("↩️ Undo", callback_data=undo),
+                    InlineKeyboardButton("❌ Close", callback_data="cancel"),
+                ]
+            ]
+        )
+        if undo
+        else None
+    )
+    alerts_is_owner = str(SETTINGS.alerts_chat_id) == str(SETTINGS.owner_id)
 
     if to_alerts:
         await bot.send_message(
             chat_id=SETTINGS.alerts_chat_id,
-            text=text,
+            text=owner_text if undo and alerts_is_owner else text,
             parse_mode=parse_mode,
-            reply_markup=reply_markup,
+            reply_markup=owner_markup if undo and alerts_is_owner else reply_markup,
+        )
+
+    if undo and not (to_alerts and alerts_is_owner):
+        await bot.send_message(
+            chat_id=SETTINGS.owner_id,
+            text=owner_text,
+            parse_mode=parse_mode,
+            reply_markup=owner_markup,
         )
 
     if target_id:

@@ -132,28 +132,30 @@ async def handle_block(
 
     pending = sum(
         len(context.bot_data.get(f"pending_{kind}_requests", {}))
-        for kind in ("access", "admin")
-    )
-    users_label = (
-        f"👥 Users (⏳ {pending} pending)" if owner and pending else "👥 Users"
+        for kind in ("access", "admin", "delete")
     )
 
     kb = [
         [InlineKeyboardButton("➕ Add Code", callback_data="troubleshooter:code_add")],
         [InlineKeyboardButton("🔩 Add Part", callback_data="troubleshooter:part_add")],
-        [InlineKeyboardButton(users_label, callback_data="troubleshooter:user_list")],
+        [
+            InlineKeyboardButton(
+                "📝 Add Content", callback_data="troubleshooter:menu_add"
+            )
+        ],
+        [InlineKeyboardButton("👥 Users", callback_data="troubleshooter:user_list")],
         [InlineKeyboardButton("📤 Export", callback_data="troubleshooter:export_menu")],
     ]
 
     if owner:
-        waiting = len(context.bot_data.get("pending_suggestions", {}))
-        kb.append(
+        kb.insert(
+            0,
             [
                 InlineKeyboardButton(
-                    f"📝 Suggestions ({waiting})" if waiting else "📝 Suggestions",
-                    callback_data="troubleshooter:suggestions",
+                    f"📥 Requests ({pending})" if pending else "📥 Requests",
+                    callback_data="troubleshooter:pending",
                 )
-            ]
+            ],
         )
         kb.append(
             [

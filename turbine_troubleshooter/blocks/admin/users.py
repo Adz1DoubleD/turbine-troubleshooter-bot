@@ -15,11 +15,10 @@ from turbine_troubleshooter.db import (
     user_revoke,
     users_get,
 )
-from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner
+from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner, own_bot
 from turbine_troubleshooter.settings import SETTINGS
 
 from ...tools import send_notification_troubleshooter, user_is_admin
-from ..suggest import own_bot
 
 PAGE_SIZE = 10
 SORTS = ("name", "added", "edits", "login")
@@ -143,7 +142,7 @@ async def grant_admin(context, user_id, name):
             [
                 [
                     InlineKeyboardButton(
-                        "🔐 Admin Menu", callback_data="troubleshooter:admin_menu"
+                        "⚙️ Admin Panel", callback_data="troubleshooter:admin_menu"
                     )
                 ],
                 [InlineKeyboardButton("❌ Close", callback_data="cancel")],
@@ -227,6 +226,8 @@ async def button_decide_request(update: Update, context: ContextTypes.DEFAULT_TY
     message = DECISIONS[kind, verdict]
     if from_panel:
         status = message.format(name=html.escape(str(name or target_id)))
+        from .changes import show_pending
+
         await show_pending(query, context, status=status)
         return
     await query.edit_message_text(
@@ -255,54 +256,6 @@ def nav_row(callback_prefix, page, pages):
             InlineKeyboardButton("Next ▶️", callback_data=f"{callback_prefix}{page + 1}")
         )
     return [row] if row else []
-
-
-async def show_pending(query, context, status=None, page=None):
-    requests = pending_requests(context)
-    pages = page_count(len(requests))
-    if page is None:
-        page = context.user_data.get("pending_page", 0)
-    page = min(max(page, 0), pages - 1)
-    context.user_data["pending_page"] = page
-    shown = requests[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
-
-    text = f"{status}\n\n" if status else ""
-    text += f"⏳ <b>Pending Requests</b> ({len(requests)})\n\n"
-    if not requests:
-        text += "Nothing waiting."
-    else:
-        text += "\n".join(
-            f"• {html.escape(str(name))} wants {'admin' if kind == 'admin' else 'access'}"
-            for _, name, kind in shown
-        )
-        if pages > 1:
-            text += f"\n\nPage {page + 1} of {pages}"
-
-    kb = [
-        [
-            InlineKeyboardButton(
-                f"✅ {name}{' (admin)' if kind == 'admin' else ''}",
-                callback_data=f"troubleshooter:{kind}:approve:{uid}:p",
-            ),
-            InlineKeyboardButton(
-                "❌ Deny", callback_data=f"troubleshooter:{kind}:deny:{uid}:p"
-            ),
-        ]
-        for uid, name, kind in shown
-    ]
-    kb += nav_row("troubleshooter:pending:", page, pages)
-    kb.append([InlineKeyboardButton("🔙 Users", callback_data=users_back(context))])
-    await edit(query, text, kb)
-
-
-async def button_pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    if not is_owner(query.from_user.id):
-        await query.answer(OWNER_ONLY, show_alert=True)
-        return
-    parts = query.data.split(":")
-    page = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
-    await show_pending(query, context, page=page)
 
 
 def users_back(context):

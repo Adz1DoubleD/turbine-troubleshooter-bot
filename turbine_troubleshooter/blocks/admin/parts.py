@@ -6,10 +6,11 @@ from turbine_troubleshooter.db import (
     part_add,
     part_update,
 )
-from turbine_troubleshooter.helpers import escape_markdown
+from turbine_troubleshooter.helpers import escape_markdown, is_owner
 
 from ...tools import send_notification_troubleshooter, user_is_admin
 from . import handle_block, local_now
+from .changes import ask_owner_to_delete
 
 PART_FIELDS = {
     "part_no": ("🔢", "Part Number", 20),
@@ -272,9 +273,11 @@ async def handle_part_edit(
     ):
         status = f"⚠️ `{value}` already exists."
     else:
-        await part_update(part_id, field, value, editor, edited_at)
+        await part_update(part_id, field, value, editor, edited_at, old=old_value)
         part[field] = value
-        part["edits"] = (part.get("edits") or []) + [{"by": editor, "at": edited_at}]
+        part["edits"] = (part.get("edits") or []) + [
+            {"by": editor, "at": edited_at, "changes": {field: [old_value, value]}}
+        ]
         status = "✅ *Saved*"
         await send_notification_troubleshooter(
             update.effective_user,
@@ -282,6 +285,9 @@ async def handle_part_edit(
             part["part_no"],
             part["description"],
             message=f"{label}: {old_value or 'None'} → {value or 'None'}",
+            undo=None
+            if is_owner(user.id)
+            else f"troubleshooter:undo:part:{part_id}:{len(part['edits']) - 1}",
         )
 
     await _show_part(
@@ -307,9 +313,11 @@ async def button_part_delete_confirm(
         return
 
     section = f"\n_{escape_markdown(part['section'])}_" if part.get("section") else ""
+    owner = is_owner(query.from_user.id)
     await query.edit_message_text(
         f"⚠️ *Are you sure?*\n\nDelete `{part['part_no']}` – "
-        f"{escape_markdown(part['description'])}{section}",
+        f"{escape_markdown(part['description'])}{section}"
+        + ("" if owner else "\n\nThe owner has to approve it before it's removed."),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -319,7 +327,7 @@ async def button_part_delete_confirm(
                         callback_data=f"troubleshooter:part_edit:{part_id}",
                     ),
                     InlineKeyboardButton(
-                        "✅ Yes, Delete",
+                        "✅ Yes, Delete" if owner else "✅ Yes, Ask the Owner",
                         callback_data=f"troubleshooter:part_delete:{part_id}",
                     ),
                 ]
@@ -339,7 +347,19 @@ async def button_part_delete(update: Update, context: ContextTypes.DEFAULT_TYPE)
     parts = context.bot_data.get("parts", [])
     part = next((p for p in parts if p.get("id") == part_id), None)
 
-    if await delete_entry("parts", "id", part_id):
+    if not is_owner(query.from_user.id):
+        status = (
+            await ask_owner_to_delete(
+                update,
+                context,
+                "part",
+                part_id,
+                f"{part['part_no']} – {part['description']}",
+            )
+            if part
+            else "⚠️ Part not found."
+        )
+    elif await delete_entry("parts", "id", part_id):
         if part:
             parts.remove(part)
         part_no = part["part_no"] if part else str(part_id)

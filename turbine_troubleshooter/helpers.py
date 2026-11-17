@@ -5,6 +5,7 @@ import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 
+import turbine_troubleshooter
 from turbine_troubleshooter.settings import SETTINGS
 
 ERROR_REPLY = "⚠️ Something went wrong. It's been logged."
@@ -22,6 +23,15 @@ def is_owner(user_id) -> bool:
         return int(user_id) == int(chat_id)
     except (TypeError, ValueError):
         return False
+
+
+def own_bot(context):
+    if (
+        context.bot_data.get("is_troubleshooter")
+        or turbine_troubleshooter.application is None
+    ):
+        return context.bot
+    return turbine_troubleshooter.application.bot
 
 
 def escape_markdown(text):

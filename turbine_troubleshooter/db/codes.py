@@ -1,3 +1,5 @@
+import json
+
 from .core import db_session
 
 
@@ -10,6 +12,9 @@ async def fault_code_add(**kwargs):
         "added_at": kwargs.get("added_at"),
         "edited_by": kwargs.get("edited_by") or kwargs.get("added_by"),
         "edited_at": kwargs.get("edited_at"),
+        "changes": json.dumps(kwargs["changes"], ensure_ascii=False)
+        if kwargs.get("changes")
+        else None,
     }
     query = """
     INSERT INTO codes (code, advice, parts, added_by, added_at)
@@ -24,7 +29,8 @@ async def fault_code_add(**kwargs):
             '$',
             JSON_OBJECT(
                 'by', %(edited_by)s,
-                'at', COALESCE(%(edited_at)s, DATE_FORMAT(NOW(), '%%Y-%%m-%%d %%H:%%i'))
+                'at', COALESCE(%(edited_at)s, DATE_FORMAT(NOW(), '%%Y-%%m-%%d %%H:%%i')),
+                'changes', CAST(%(changes)s AS JSON)
             )
         )
     """

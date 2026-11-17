@@ -42,34 +42,42 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `wtg_prefix` | `TROUBLESHOOTER_WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
 | `token` | `TROUBLESHOOTER_BOT_TOKEN` | Bot token from @BotFather (see [Create your Telegram bot](#create-your-telegram-bot)) |
 | `owner_id` | `TROUBLESHOOTER_OWNER_ID` | Your Telegram user ID; the owner approves access and admins ([how to find it](#your-telegram-user-id)) |
-| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for new-user, access-request, suggestion and change notifications. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
+| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for new-user, access-request and change notifications. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
 | `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
 | `test_mode` | `TROUBLESHOOTER_TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
 | `files_dir` | — | Folder that `file:` references in the content resolve against |
-| `content` | — | Fallback content when the database has none (see below) |
+| `content` | — | Fallback turbine map and IO boards when the database has none (see below) |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `settings`, `requests` (access and admin requests waiting for the owner) and `suggestions` (content suggestions waiting for the owner).
-
-### Content suggestions
-
-Approved users can suggest a note, a PDF or photo, or a file with text, from **📝 Suggest Content** on the main menu. Text sent with a file is shown as its caption, so it's limited to Telegram's 1024 characters. It waits in **Admin Panel → 📝 Suggestions** until the owner approves or rejects it. Nothing reaches other users before that.
-
-- **Text** goes live as soon as it's approved: the bot writes it into the `content` table.
-- **A PDF or photo** adds its menu item straight away, pointing at a `file:` path in `files_dir`, and the bot sends the owner the file with the exact path to save it as. Until the file is uploaded, the item says the document isn't available. Files go in the host's files folder, as with any other document.
-
-PDFs and photos can only be sent to the troubleshooter bot itself, up to 20 MB. A host showing the menus through `share_with` takes text suggestions only.
+MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `menu_nodes` and `attachments` (the menus, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
 
+## Who can change what
+
+The same rules cover fault codes, spare parts and menu items:
+
+| | Owner | Admin | Approved user |
+|---|---|---|---|
+| View | ✅ | ✅ | ✅ |
+| Add | ✅ | ✅ Live at once | ❌ |
+| Edit | ✅ | ✅ Live at once; the owner gets the old text with **↩️ Undo** | ❌ |
+| Delete | ✅ | Asks the owner, who approves or keeps it from the message or **Admin Panel → 📥 Requests** (which also lists access and admin requests) | ❌ |
+
+Undo only works while the item still has the text the admin saved; if it's been changed again since, the bot says so. Edits made before this version can't be undone, because their old text wasn't kept.
+
 ## Content
 
-The menus, turbine map, IO boards and part-search hints are loaded from the `content` table: one row per item (`MODULES_MAP`, `WTG_MAP`, `IO_BOARDS`), stored as JSON text. Documents and photos are referenced as `file:<path relative to files_dir>`. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
+The turbine map and IO boards are loaded from the `content` table: one row per item (`WTG_MAP`, `IO_BOARDS`), stored as JSON text. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
+
+The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
+
+Admins add menu items from **Admin Panel → 📝 Add Content**: pick where it goes, then a page (text) or a submenu (more buttons), a title and the text. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. Opening a menu item as an admin shows **✏️ Edit** and **🗑 Delete**, and a submenu also shows **➕ Add Here**. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
 
 ## Create your Telegram bot
 
@@ -119,13 +127,13 @@ In `.env`, set these three (the bot refuses to start and lists any that are miss
 - `TROUBLESHOOTER_OWNER_ID`: your [Telegram user ID](#your-telegram-user-id).
 - `TROUBLESHOOTER_DB_URL`: your MySQL database.
 
-Everything else is optional. Access requests, content suggestions and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
+Everything else is optional. Access requests and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
 
 ```bash
 python -m turbine_troubleshooter
 ```
 
-Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and while the database has no content the menus use the made-up [`example_content.py`](turbine_troubleshooter/example_content.py). Add codes and parts from **Admin Panel → Add Code / Add Part**. Stop with Ctrl+C.
+Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start. The menus start empty, and while the database has no turbine map or IO boards the bot uses the made-up [`example_content.py`](turbine_troubleshooter/example_content.py). Add codes, parts and menu items from **Admin Panel → Add Code / Add Part / Add Content**. Stop with Ctrl+C.
 
 ## Development
 

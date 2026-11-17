@@ -41,7 +41,7 @@ async def test_main_menu_user_buttons_only_in_the_troubleshooter_bot(
     labels = button_labels(block["reply_markup"])
 
     assert ("👤 User Menu" in labels) is shown
-    assert ("📝 Suggest Content" in labels) is shown
+    assert not any("Suggest" in label for label in labels)
     assert "💬 Send Feedback" not in labels
 
 

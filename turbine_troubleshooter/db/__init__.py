@@ -5,8 +5,6 @@ from .content import (
     CONTENT_ITEMS,
     FILE_PREFIX,
     content_from_json,
-    content_save,
-    content_to_json,
 )
 from .core import (
     close_db,
@@ -14,6 +12,10 @@ from .core import (
     delete_entry,
     get_db_pool,
     get_neighbours,
+)
+from .deletes import (
+    delete_request_add,
+    delete_request_remove,
 )
 from .export import (
     EXPORT_TABLES,
@@ -23,6 +25,9 @@ from .export import (
 from .menu import (
     MENU_MIGRATED,
     menu_migrate,
+    menu_node_add,
+    menu_node_delete,
+    menu_node_update,
 )
 from .parts import (
     part_add,
@@ -33,10 +38,6 @@ from .schema import (
 )
 from .settings import (
     setting_toggle,
-)
-from .suggestions import (
-    suggestion_add,
-    suggestion_remove,
 )
 from .users import (
     admin_add,
@@ -57,24 +58,25 @@ __all__ = [
     "CONTENT_ITEMS",
     "FILE_PREFIX",
     "content_from_json",
-    "content_save",
-    "content_to_json",
     "close_db",
     "db_session",
     "delete_entry",
     "get_db_pool",
     "get_neighbours",
+    "delete_request_add",
+    "delete_request_remove",
     "EXPORT_TABLES",
     "db_export",
     "db_tables",
     "MENU_MIGRATED",
     "menu_migrate",
+    "menu_node_add",
+    "menu_node_delete",
+    "menu_node_update",
     "part_add",
     "part_update",
     "init_troubleshooter_db",
     "setting_toggle",
-    "suggestion_add",
-    "suggestion_remove",
     "admin_add",
     "admin_remove",
     "request_add",
