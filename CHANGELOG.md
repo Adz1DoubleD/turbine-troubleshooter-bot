@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.1.0...v2.2.0) (2026-11-17)
+
+
+### Features
+
+* remove the old content now that it lives in its own tables ([#57](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/57)) ([f4798d2](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/f4798d26fa864b7f91628892c93ff5dba1312203))
+
 ## [2.1.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.0.2...v2.1.0) (2026-11-17)
 
 
