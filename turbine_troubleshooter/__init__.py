@@ -28,6 +28,7 @@ from .blocks.admin import broadcast as admin_broadcast
 from .blocks.admin import changes as admin_changes
 from .blocks.admin import codes as admin_codes
 from .blocks.admin import content as admin_content
+from .blocks.admin import files as admin_files
 from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
 from .blocks.user import LOCKED_MARKUP, LOCKED_TEXT
@@ -98,6 +99,14 @@ async def text_handler(update: Update, context):
     if not context.user_data["is_approved"]:
         return
     await handle_text_input(update, context)
+
+
+async def file_handler(update: Update, context):
+    if update.effective_user is None or context.user_data is None:
+        return
+    await set_user_roles(context, update.effective_user.id)
+    if context.user_data.get("is_admin"):
+        await admin_files.handle_file(update, context)
 
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -239,6 +248,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         files = item.get("file")
         files = files if isinstance(files, list) else [files]
+        if context.bot_data.get("is_troubleshooter") and item.get("file_ids"):
+            files = [fid or f for f, fid in zip(files, item["file_ids"])]
         if item["type"] in ("document", "photo") and any(
             isinstance(f, Path) and not f.is_file() for f in files
         ):
@@ -277,7 +288,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif item["type"] == "photo":
             await close_message(query)
             await query.message.reply_photo(
-                photo=item["file"],
+                photo=files[0],
                 caption=caption,
                 parse_mode="Markdown",
                 reply_markup=kb,
@@ -529,6 +540,12 @@ async def start_troubleshooter_bot(share_with=None, **options):
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & ~filters.UpdateType.CHANNEL_POSTS,
             text_handler,
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            (filters.Document.ALL | filters.PHOTO) & ~filters.UpdateType.CHANNEL_POSTS,
+            file_handler,
         )
     )
     application.add_error_handler(error_handler)

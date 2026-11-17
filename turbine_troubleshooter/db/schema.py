@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import sentry_sdk
@@ -251,13 +252,29 @@ async def init_troubleshooter_db(application):
                         for n in await cur.fetchall()
                     ]
                     await cur.execute(
-                        "SELECT node_id, type, file_id, path, status FROM attachments "
-                        "WHERE node_id IS NOT NULL ORDER BY sort_order, id"
+                        "SELECT id, node_id, type, file_id, file_unique_id, path, "
+                        "status FROM attachments WHERE node_id IS NOT NULL "
+                        "ORDER BY sort_order, id"
                     )
-                    SETTINGS.menu = {
-                        "nodes": nodes,
-                        "attachments": await cur.fetchall(),
-                    }
+                    attachments = await cur.fetchall()
+                    saved = [
+                        a
+                        for a in attachments
+                        if a["status"] == "pending"
+                        and a["path"]
+                        and SETTINGS.files_dir
+                        and (Path(SETTINGS.files_dir) / a["path"]).is_file()
+                    ]
+                    if saved:
+                        await cur.execute(
+                            "UPDATE attachments SET status = 'saved' WHERE id IN ("
+                            + ", ".join(["%s"] * len(saved))
+                            + ")",
+                            [a["id"] for a in saved],
+                        )
+                        for a in saved:
+                            a["status"] = "saved"
+                    SETTINGS.menu = {"nodes": nodes, "attachments": attachments}
         except Exception as e:
             print(f"❌ [DB] Troubleshooter menu copy failed: {e}")
             sentry_sdk.capture_exception(e)

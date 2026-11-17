@@ -58,6 +58,12 @@ MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's 
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
 
+### Photos and PDFs on menu pages
+
+In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.
+
+A new file works in the troubleshooter bot straight away. The bot also sends it to the owner with the path to save it as in `files_dir` (for example `pdf/manual.pdf`), and lists it under **Admin Panel → 📎 Pending Files** until it's there. Hosts show files from `files_dir`, so until it's saved a host shows "This document isn't available right now". On each start the bot marks pending files it finds in `files_dir` as saved.
+
 ## Who can change what
 
 The same rules cover fault codes, spare parts and menu items:

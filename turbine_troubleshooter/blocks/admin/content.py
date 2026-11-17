@@ -2,7 +2,11 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
-from turbine_troubleshooter.db import menu_node_add, menu_node_delete, menu_node_update
+from turbine_troubleshooter.db import (
+    menu_node_add,
+    menu_node_delete,
+    menu_node_update,
+)
 from turbine_troubleshooter.helpers import escape_markdown, is_owner
 from turbine_troubleshooter.settings import SETTINGS
 
@@ -46,6 +50,19 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     node_id = int(bits[-1]) if bits[-1].isdigit() else draft.get("node")
     node = next((n for n in nodes if n["id"] == node_id), None)
     text, kb = EXPIRED, [[TO_PANEL]]
+
+    if (
+        action in ("menu_files", "menu_file_rm")
+        or bits[2:3] == ["file"]
+        or (
+            query.data == "troubleshooter:menu_edit:save"
+            and draft.get("field") == "file"
+        )
+    ):
+        from .files import handle_button as handle_file_button
+
+        await handle_file_button(update, context)
+        return
 
     if query.data == "troubleshooter:menu_add":
         context.user_data["state"] = None
@@ -103,6 +120,10 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             draft["parent"], draft["type"], draft["title"], draft.get("body"), user.id
         )
         nodes.append(node)
+        if draft.get("file"):
+            from .files import attach
+
+            await attach(context, user, node, draft["file"])
         context.user_data.pop("menu_draft", None)
         await send_notification_troubleshooter(user, "menu_added", where(node["id"]))
         text = f"✅ *Added* · {escape_markdown(where(node['id']))}"
@@ -135,6 +156,18 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
                 ]
                 if node["type"] == "page"
+                else []
+            )
+            + (
+                [
+                    InlineKeyboardButton(
+                        "📎 File",
+                        callback_data=f"troubleshooter:menu_edit:file:{node['id']}",
+                    )
+                ]
+                if node["type"] == "page"
+                and context.bot_data.get("is_troubleshooter")
+                and SETTINGS.files_dir
                 else []
             ),
             [
@@ -285,8 +318,8 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
 
     parent = draft["parent"] if "parent" in draft else node["parent_id"]
     title = text if state.endswith(":title") else (node or draft)["title"]
-    attached = node and any(
-        a["node_id"] == node["id"] for a in SETTINGS.menu["attachments"]
+    attached = draft.get("file") or (
+        node and any(a["node_id"] == node["id"] for a in SETTINGS.menu["attachments"])
     )
     limit = MAX_CAPTION - len(f"*{title}*\n\n") if attached else MAX_BODY
 
@@ -321,7 +354,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
         await context.bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg_id,
-            text=f"📝 *{title}*\n\nNow type the text for the page:",
+            text=f"📝 *{title}*\n\nNow type the text for the page"
+            + (
+                ", or send a PDF or photo. Text sent with it becomes its caption."
+                if context.bot_data.get("is_troubleshooter") and SETTINGS.files_dir
+                else ":"
+            ),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[cancel]]),
         )
@@ -352,7 +390,10 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
             chat_id=chat_id,
             message_id=msg_id,
             text=f"👀 *Preview*\n\n*{title}*\n\n"
-            + (body or "" if is_page else "📁 Submenu"),
+            + (body or "" if is_page else "📁 Submenu")
+            + {"photo": "\n\n📎 Photo attached", "document": "\n\n📎 PDF attached"}.get(
+                (draft.get("file") or {}).get("type"), ""
+            ),
             parse_mode="Markdown",
             reply_markup=kb,
         )

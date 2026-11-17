@@ -53,6 +53,7 @@ def get_troubleshooter_content():
                     "title": n["title"],
                     "content": n["body"] or "",
                     "file": (paths[0] if len(paths) == 1 else paths) or None,
+                    "file_ids": [a.get("file_id") for a in files],
                     "parent": parent,
                 }
             content[f"troubleshooter:menu:{n['id']}"] = item

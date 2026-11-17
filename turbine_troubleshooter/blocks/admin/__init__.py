@@ -157,6 +157,20 @@ async def handle_block(
                 )
             ],
         )
+        files = [
+            a
+            for a in (SETTINGS.menu or {}).get("attachments", [])
+            if a["status"] == "pending"
+        ]
+        if files:
+            kb.append(
+                [
+                    InlineKeyboardButton(
+                        f"📎 Pending Files ({len(files)})",
+                        callback_data="troubleshooter:menu_files",
+                    )
+                ]
+            )
         kb.append(
             [
                 InlineKeyboardButton(
