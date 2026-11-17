@@ -197,8 +197,8 @@ async def test_owner_denial_tells_user(monkeypatch):
 async def test_startup_loads_approved_users(monkeypatch, make_cursor, patch_session):
     monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
     cur = make_cursor(
-        fetchone=[{"t": "content"}, {"t": "codes"}, {"t": "users"}, {"t": "parts"}],
-        fetchall=[[], [], [], [{"user_id": 5}, {"user_id": 6}], []],
+        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}],
+        fetchall=[[], [], [{"user_id": 5}, {"user_id": 6}], []],
     )
     patch_session(db, cur)
     app = SimpleNamespace(bot_data={})

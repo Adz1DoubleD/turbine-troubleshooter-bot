@@ -29,12 +29,13 @@ def test_turbine_ips_are_documentation_addresses():
 def test_example_content_stays_small():
     assert len(example_content.WTG_MAP) <= 5
     assert len(example_content.IO_BOARDS) <= 3
-    assert len(example_content.MODULES_MAP) <= 5
+    assert len(example_content.MENU["nodes"]) <= 5
+    assert example_content.MENU["attachments"] == []
 
 
 def test_example_content_references_no_files():
     everything = [
-        example_content.MODULES_MAP,
+        example_content.MENU,
         example_content.WTG_MAP,
         example_content.IO_BOARDS,
     ]

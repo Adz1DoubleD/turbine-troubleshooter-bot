@@ -327,149 +327,58 @@ async def test_export_only_reads_troubleshooter_tables(make_cursor, patch_sessio
     cur.execute.assert_not_called()
 
 
-def content_rows(**items):
-    import json
-
-    return [{"name": k, "data": json.dumps(v)} for k, v in items.items()]
-
-
-FULL_CONTENT = {
-    "MODULES_MAP": {
-        "Diagrams": {"menu": {"SLD": {"text": " ", "document": "file:pdf/SLD.pdf"}}}
-    },
-    "WTG_MAP": {"WTA01": 1},
-    "IO_BOARDS": {"io1": "IO Board 1"},
-}
-
-
 @pytest.mark.asyncio
-async def test_content_is_loaded_from_the_database(
-    monkeypatch, make_cursor, patch_session
-):
-    from pathlib import Path
-
-    from turbine_troubleshooter.settings import SETTINGS
-
-    monkeypatch.setattr(SETTINGS, "files_dir", Path("/media"))
-    cur = make_cursor(
-        fetchone=[
-            {"t": "content"},
-            {"t": "codes"},
-            {"t": "users"},
-            {"t": "parts"},
-            {"t": "io1"},
-        ],
-        fetchall=[content_rows(**FULL_CONTENT), [], [], [], [], []],
-    )
-    patch_session(ts, cur)
-
-    await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
-
-    sld = SETTINGS.content.MODULES_MAP["Diagrams"]["menu"]["SLD"]["document"]
-    assert sld == Path("/media") / "pdf/SLD.pdf"
-    assert SETTINGS.content.WTG_MAP == {"WTA01": 1}
-    assert SETTINGS.content.IO_BOARDS == {"io1": "IO Board 1"}
-
-
-@pytest.mark.parametrize(
-    "rows",
-    [[], content_rows(WTG_MAP={"WTA01": 1})],
-    ids=["empty-table", "incomplete"],
-)
-@pytest.mark.asyncio
-async def test_content_falls_back_to_setup_when_table_incomplete(
-    monkeypatch, make_cursor, patch_session, rows
-):
-    from turbine_troubleshooter.settings import SETTINGS
-
-    original = SETTINGS.content
-    monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
-    cur = make_cursor(
-        fetchone=[{"t": "content"}, {"t": "codes"}, {"t": "users"}, {"t": "parts"}],
-        fetchall=[rows, [], [], [], []],
-    )
-    patch_session(ts, cur)
-
-    await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
-
-    assert SETTINGS.content is original
-
-
-def test_content_from_json_resolves_only_file_references(monkeypatch):
-    from pathlib import Path
-
-    from turbine_troubleshooter.settings import SETTINGS
-
-    monkeypatch.setattr(SETTINGS, "files_dir", "/media")
-    data = '{"a": "file:images/m.png", "b": ["plain text", "file:pdf/x.pdf"], "c": 3}'
-
-    assert ts.content_from_json(data) == {
-        "a": Path("/media") / "images/m.png",
-        "b": ["plain text", Path("/media") / "pdf/x.pdf"],
-        "c": 3,
-    }
-
-
-def test_missing_file_is_reported(monkeypatch, tmp_path):
-    from unittest.mock import MagicMock
-
-    from turbine_troubleshooter.settings import SETTINGS
-
-    (tmp_path / "pdf").mkdir()
-    (tmp_path / "pdf" / "there.pdf").write_bytes(b"%PDF")
-    monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
-    reported = MagicMock()
-    monkeypatch.setattr(ts.content.sentry_sdk, "capture_message", reported)
-
-    ts.content_from_json('["file:pdf/there.pdf", "file:pdf/gone.pdf"]')
-
-    reported.assert_called_once()
-    assert "pdf/gone.pdf" in reported.call_args.args[0]
-
-
-@pytest.mark.asyncio
-async def test_new_database_gives_empty_menus_without_an_error(
+async def test_new_database_starts_empty_without_an_error(
     monkeypatch, make_cursor, patch_session
 ):
     from unittest.mock import MagicMock
 
     from turbine_troubleshooter.settings import SETTINGS
 
-    monkeypatch.setattr(SETTINGS, "content", None)
     reported = MagicMock()
     monkeypatch.setattr(ts.schema.sentry_sdk, "capture_message", reported)
-    cur = make_cursor(
-        fetchone=[{"t": "content"}, {"t": "codes"}, {"t": "users"}, {"t": "parts"}],
-        fetchall=[
-            [],
-            [{"id": 1, "code": "E1", "advice": "a", "parts": "p"}],
-            [],
-            [],
-            [],
-        ],
-    )
+    monkeypatch.setattr(ts.schema.sentry_sdk, "capture_exception", reported)
+    cur = make_cursor()
     patch_session(ts, cur)
     app = SimpleNamespace(bot_data={})
 
     await ts.init_troubleshooter_db(app)
 
-    assert SETTINGS.content.MODULES_MAP == {}
-    assert SETTINGS.content.IO_BOARDS == {}
-    assert "E1" in app.bot_data["codes"]
+    sql = [" ".join(c[0].split()) for c in cur.calls]
+    created = [s.split()[2] for s in sql if s.startswith("CREATE TABLE")]
+    assert created == [
+        "codes",
+        "users",
+        "parts",
+        "settings",
+        "requests",
+        "delete_requests",
+        "menus",
+        "attachments",
+        "io_boards",
+        "wtgs",
+    ]
+    assert not any("content" in s for s in sql)
+    assert SETTINGS.menu == {"nodes": [], "attachments": []}
+    assert SETTINGS.content.WTG_MAP == {} and SETTINGS.content.IO_BOARDS == {}
+    assert app.bot_data["io_boards"] == {}
     reported.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_content_table_created_only_when_missing(make_cursor, patch_session):
-    cur = make_cursor(fetchone=[None, {"t": "codes"}, {"t": "users"}, {"t": "parts"}])
+async def test_existing_tables_are_not_created_again(make_cursor, patch_session):
+    cur = make_cursor()
+
+    async def fetchone():
+        sql = cur.calls[-1][0]
+        return {"t": 1} if sql.startswith("SHOW TABLES LIKE") else None
+
+    cur.fetchone = AsyncMock(side_effect=fetchone)
     patch_session(ts, cur)
 
     await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
 
-    sql = [" ".join(c.args[0].split()) for c in cur.execute.call_args_list]
-    assert sql[0] == "SHOW TABLES LIKE 'content'"
-    assert sql[1].startswith("CREATE TABLE content")
-    assert not any("IF NOT EXISTS" in s for s in sql)
+    assert not any("CREATE TABLE" in c[0] for c in cur.calls)
 
 
 @pytest.mark.asyncio

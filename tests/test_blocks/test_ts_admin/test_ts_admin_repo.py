@@ -341,11 +341,6 @@ async def test_start_marks_committed_files_saved_once_deployed(
                 ]
             return []
 
-    async def nothing(_):
-        return 0
-
-    for name in ("menu_migrate", "io_boards_migrate", "wtgs_migrate"):
-        monkeypatch.setattr(ts.schema, name, nothing)
     cur = patch_session(ts, Cursor())
 
     await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
@@ -411,11 +406,6 @@ async def test_start_puts_vanished_files_back_in_pending(
                 ]
             return []
 
-    async def nothing(_):
-        return 0
-
-    for name in ("menu_migrate", "io_boards_migrate", "wtgs_migrate"):
-        monkeypatch.setattr(ts.schema, name, nothing)
     cur = patch_session(ts, Cursor())
 
     await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))

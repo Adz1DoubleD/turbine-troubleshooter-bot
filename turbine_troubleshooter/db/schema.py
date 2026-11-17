@@ -5,11 +5,8 @@ from types import SimpleNamespace
 import sentry_sdk
 
 from ..settings import SETTINGS
-from .content import CONTENT_ITEMS, content_from_json
 from .core import db_session
-from .io_boards import IO_BOARDS_MIGRATED, io_boards_migrate
-from .menu import MENU_MIGRATED, menu_migrate
-from .wtgs import WTGS_MIGRATED, wtgs_migrate
+from .old_content import old_content_remove
 
 
 async def init_troubleshooter_db(application):
@@ -20,31 +17,10 @@ async def init_troubleshooter_db(application):
     requests = {"access": {}, "admin": {}}
     delete_requests = {}
 
+    SETTINGS.content = SimpleNamespace(WTG_MAP={}, IO_BOARDS={})
+
     try:
         async with db_session() as cur:
-            await cur.execute("SHOW TABLES LIKE 'content'")
-            if not await cur.fetchone():
-                await cur.execute("""
-                    CREATE TABLE content (
-                        name VARCHAR(64) PRIMARY KEY,
-                        data MEDIUMTEXT NOT NULL
-                    ) DEFAULT CHARSET=utf8mb4
-                """)
-
-            await cur.execute("SELECT name, data FROM content")
-            rows = await cur.fetchall()
-
-            stored = {r["name"]: content_from_json(r["data"]) for r in rows}
-
-            content_names = list(stored)
-
-            if CONTENT_ITEMS <= stored.keys():
-                SETTINGS.content = SimpleNamespace(**stored)
-            elif SETTINGS.content is None:
-                SETTINGS.content = SimpleNamespace(
-                    MODULES_MAP={}, WTG_MAP={}, IO_BOARDS={}
-                )
-
             await cur.execute("SHOW TABLES LIKE 'codes'")
             if not await cur.fetchone():
                 await cur.execute("""
@@ -86,18 +62,6 @@ async def init_troubleshooter_db(application):
                     )
                 """)
 
-            for table_name in SETTINGS.content.IO_BOARDS.keys():
-                await cur.execute(f"SHOW TABLES LIKE '{table_name}'")
-                if not await cur.fetchone():
-                    await cur.execute(f"""
-                        CREATE TABLE `{table_name}` (
-                            id INT AUTO_INCREMENT PRIMARY KEY,
-                            section VARCHAR(100),
-                            connector VARCHAR(100),
-                            tdi_text TEXT
-                        )
-                    """)
-
             await cur.execute(
                 "SELECT id, code, advice, parts, added_by, added_at, edits FROM codes"
             )
@@ -114,22 +78,6 @@ async def init_troubleshooter_db(application):
                     "added_at": record.get("added_at"),
                     "edits": json.loads(record["edits"]) if record.get("edits") else [],
                 }
-
-            for table_name in SETTINGS.content.IO_BOARDS.keys():
-                await cur.execute(
-                    f"SELECT section, connector, tdi_text FROM `{table_name}`"
-                )
-                io_records = await cur.fetchall()
-
-                if io_records:
-                    io_boards[table_name] = [
-                        {
-                            "section": r.get("section", ""),
-                            "pin": r.get("connector", ""),
-                            "description": r.get("tdi_text", ""),
-                        }
-                        for r in io_records
-                    ]
 
             await cur.execute("SELECT user_id, username FROM users WHERE is_admin = 1")
             records = await cur.fetchall()
@@ -205,6 +153,77 @@ async def init_troubleshooter_db(application):
                     ) DEFAULT CHARSET=utf8mb4
                 """)
 
+            await cur.execute("SHOW TABLES LIKE 'menus'")
+            if not await cur.fetchone():
+                await cur.execute("""
+                    CREATE TABLE menus (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        parent_id INT NULL,
+                        type VARCHAR(10) NOT NULL,
+                        title VARCHAR(255) NOT NULL,
+                        body TEXT NULL,
+                        sort_order INT NOT NULL DEFAULT 0,
+                        verified TINYINT NOT NULL DEFAULT 0,
+                        created_by BIGINT NULL,
+                        updated_by BIGINT NULL,
+                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                            ON UPDATE CURRENT_TIMESTAMP,
+                        edits JSON NULL,
+                        KEY parent_order (parent_id, sort_order),
+                        FOREIGN KEY (parent_id) REFERENCES menus (id)
+                    ) DEFAULT CHARSET=utf8mb4
+                """)
+
+            await cur.execute("SHOW TABLES LIKE 'attachments'")
+            if not await cur.fetchone():
+                await cur.execute("""
+                    CREATE TABLE attachments (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        node_id INT NULL,
+                        type VARCHAR(10) NOT NULL,
+                        file_id VARCHAR(255) NULL,
+                        file_unique_id VARCHAR(64) NULL,
+                        path VARCHAR(255) NULL,
+                        status VARCHAR(10) NOT NULL DEFAULT 'pending',
+                        caption VARCHAR(1024) NULL,
+                        sort_order INT NOT NULL DEFAULT 0,
+                        created_by BIGINT NULL,
+                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        KEY node_order (node_id, sort_order),
+                        KEY file_unique (file_unique_id),
+                        FOREIGN KEY (node_id) REFERENCES menus (id)
+                            ON DELETE CASCADE
+                    ) DEFAULT CHARSET=utf8mb4
+                """)
+
+            await cur.execute("SHOW TABLES LIKE 'io_boards'")
+            if not await cur.fetchone():
+                await cur.execute("""
+                    CREATE TABLE io_boards (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        board VARCHAR(32) NOT NULL,
+                        board_name VARCHAR(100) NOT NULL,
+                        can_node VARCHAR(100) NULL,
+                        section VARCHAR(100) NULL,
+                        pin VARCHAR(100) NULL,
+                        description TEXT NULL,
+                        position INT NOT NULL DEFAULT 0,
+                        KEY board_position (board, position)
+                    ) DEFAULT CHARSET=utf8mb4
+                """)
+
+            await cur.execute("SHOW TABLES LIKE 'wtgs'")
+            if not await cur.fetchone():
+                await cur.execute("""
+                    CREATE TABLE wtgs (
+                        wtg VARCHAR(32) PRIMARY KEY,
+                        serial VARCHAR(64) NULL,
+                        ip VARCHAR(64) NULL,
+                        sort_order INT NOT NULL DEFAULT 0
+                    ) DEFAULT CHARSET=utf8mb4
+                """)
+
             await cur.execute(
                 "SELECT id, kind, target, label, user_id, name "
                 "FROM delete_requests ORDER BY id"
@@ -221,144 +240,125 @@ async def init_troubleshooter_db(application):
         application.bot_data["pending_admin_requests"] = requests["admin"]
         application.bot_data["pending_delete_requests"] = delete_requests
 
+        try:
+            async with db_session() as cur:
+                await cur.execute(
+                    "SELECT id, parent_id, type, title, body, sort_order, "
+                    "created_by, edits FROM menus ORDER BY sort_order, id"
+                )
+                nodes = [
+                    {**n, "edits": json.loads(n["edits"]) if n.get("edits") else []}
+                    for n in await cur.fetchall()
+                ]
+                await cur.execute(
+                    "SELECT id, node_id, type, file_id, file_unique_id, path, "
+                    "status FROM attachments WHERE node_id IS NOT NULL "
+                    "ORDER BY sort_order, id"
+                )
+                attachments = await cur.fetchall()
+                saved = [
+                    a
+                    for a in attachments
+                    if a["status"] in ("pending", "committed")
+                    and a["path"]
+                    and SETTINGS.files_dir
+                    and (Path(SETTINGS.files_dir) / a["path"]).is_file()
+                ]
+                lost = [
+                    a
+                    for a in attachments
+                    if a["status"] == "saved"
+                    and a["file_id"]
+                    and a["path"]
+                    and SETTINGS.files_dir
+                    and not (Path(SETTINGS.files_dir) / a["path"]).is_file()
+                ]
+                if lost:
+                    await cur.execute(
+                        "UPDATE attachments SET status = 'pending' WHERE id IN ("
+                        + ", ".join(["%s"] * len(lost))
+                        + ")",
+                        [a["id"] for a in lost],
+                    )
+                    for a in lost:
+                        a["status"] = "pending"
+                if saved:
+                    await cur.execute(
+                        "UPDATE attachments SET status = 'saved' WHERE id IN ("
+                        + ", ".join(["%s"] * len(saved))
+                        + ")",
+                        [a["id"] for a in saved],
+                    )
+                    for a in saved:
+                        a["status"] = "saved"
+                SETTINGS.menu = {"nodes": nodes, "attachments": attachments}
+        except Exception as e:
+            print(f"❌ [DB] Troubleshooter menus failed to load: {e}")
+            sentry_sdk.capture_exception(e)
+
+        try:
+            async with db_session() as cur:
+                await cur.execute(
+                    "SELECT board, board_name, can_node, section, pin, description "
+                    "FROM io_boards ORDER BY board, position, id"
+                )
+                boards, pins = {}, {}
+                for r in await cur.fetchall():
+                    boards.setdefault(
+                        r["board"],
+                        {"name": r["board_name"], "can": r["can_node"] or ""},
+                    )
+                    pins.setdefault(r["board"], []).append(
+                        {
+                            "section": r["section"],
+                            "pin": r["pin"],
+                            "description": r["description"],
+                        }
+                    )
+                SETTINGS.content.IO_BOARDS = boards
+                io_boards.clear()
+                io_boards.update(pins)
+        except Exception as e:
+            print(f"❌ [DB] Troubleshooter IO boards failed to load: {e}")
+            sentry_sdk.capture_exception(e)
+
+        try:
+            async with db_session() as cur:
+                await cur.execute(
+                    "SELECT wtg, serial, ip FROM wtgs ORDER BY sort_order, wtg"
+                )
+                SETTINGS.content.WTG_MAP = {
+                    r["wtg"]: {"serial": r["serial"], "ip": r["ip"]}
+                    for r in await cur.fetchall()
+                }
+        except Exception as e:
+            print(f"❌ [DB] Troubleshooter turbines failed to load: {e}")
+            sentry_sdk.capture_exception(e)
+
         print(
             f"✅ Troubleshooter database initialised:\n"
-            f"   Content: {', '.join(content_names) if content_names else 'None'}\n"
             f"   Codes: {len(codes)}\n"
-            f"   IO Boards: {len(io_boards)}\n"
             f"   Parts: {len(parts)}\n"
+            f"   Menu items: {len((SETTINGS.menu or {}).get('nodes', []))}\n"
+            f"   IO Boards: {len(io_boards)}\n"
+            f"   Turbines: {len(SETTINGS.content.WTG_MAP)}\n"
             f"   Admins: {len(admins)}\n"
             f"   Approved Users: {len(approved)}"
         )
 
         try:
-            migrated = await menu_migrate(
-                next((r["data"] for r in rows if r["name"] == "MODULES_MAP"), None)
-            )
-            if migrated:
-                print(f"✅ Troubleshooter menu copied to menus: {migrated} items")
-            async with db_session() as cur:
-                await cur.execute(
-                    "SELECT value FROM settings WHERE name = %s", (MENU_MIGRATED,)
+            removed = await old_content_remove()
+            if removed:
+                print(f"🧹 Troubleshooter old content removed: {', '.join(removed)}")
+            elif removed is False:
+                print("⚠️ Troubleshooter old content kept: it was never copied")
+                sentry_sdk.capture_message(
+                    "Troubleshooter old content kept: it was never copied to the new "
+                    "tables. Start version 2.1 once to copy it, then this version.",
+                    level="error",
                 )
-                if await cur.fetchone():
-                    await cur.execute(
-                        "SELECT id, parent_id, type, title, body, sort_order, "
-                        "created_by, edits FROM menus ORDER BY sort_order, id"
-                    )
-                    nodes = [
-                        {**n, "edits": json.loads(n["edits"]) if n.get("edits") else []}
-                        for n in await cur.fetchall()
-                    ]
-                    await cur.execute(
-                        "SELECT id, node_id, type, file_id, file_unique_id, path, "
-                        "status FROM attachments WHERE node_id IS NOT NULL "
-                        "ORDER BY sort_order, id"
-                    )
-                    attachments = await cur.fetchall()
-                    saved = [
-                        a
-                        for a in attachments
-                        if a["status"] in ("pending", "committed")
-                        and a["path"]
-                        and SETTINGS.files_dir
-                        and (Path(SETTINGS.files_dir) / a["path"]).is_file()
-                    ]
-                    lost = [
-                        a
-                        for a in attachments
-                        if a["status"] == "saved"
-                        and a["file_id"]
-                        and a["path"]
-                        and SETTINGS.files_dir
-                        and not (Path(SETTINGS.files_dir) / a["path"]).is_file()
-                    ]
-                    if lost:
-                        await cur.execute(
-                            "UPDATE attachments SET status = 'pending' WHERE id IN ("
-                            + ", ".join(["%s"] * len(lost))
-                            + ")",
-                            [a["id"] for a in lost],
-                        )
-                        for a in lost:
-                            a["status"] = "pending"
-                    if saved:
-                        await cur.execute(
-                            "UPDATE attachments SET status = 'saved' WHERE id IN ("
-                            + ", ".join(["%s"] * len(saved))
-                            + ")",
-                            [a["id"] for a in saved],
-                        )
-                        for a in saved:
-                            a["status"] = "saved"
-                    SETTINGS.menu = {"nodes": nodes, "attachments": attachments}
         except Exception as e:
-            print(f"❌ [DB] Troubleshooter menu copy failed: {e}")
-            sentry_sdk.capture_exception(e)
-
-        try:
-            copied = await io_boards_migrate(
-                next((r["data"] for r in rows if r["name"] == "IO_BOARDS"), None)
-            )
-            if copied:
-                print(f"✅ Troubleshooter IO boards copied to io_boards: {copied} pins")
-            async with db_session() as cur:
-                await cur.execute(
-                    "SELECT value FROM settings WHERE name = %s", (IO_BOARDS_MIGRATED,)
-                )
-                if await cur.fetchone():
-                    await cur.execute(
-                        "SELECT board, board_name, can_node, section, pin, description "
-                        "FROM io_boards ORDER BY board, position, id"
-                    )
-                    boards, pins = {}, {}
-                    for r in await cur.fetchall():
-                        boards.setdefault(
-                            r["board"],
-                            {"name": r["board_name"], "can": r["can_node"] or ""},
-                        )
-                        pins.setdefault(r["board"], []).append(
-                            {
-                                "section": r["section"],
-                                "pin": r["pin"],
-                                "description": r["description"],
-                            }
-                        )
-                    SETTINGS.content = SimpleNamespace(
-                        MODULES_MAP=SETTINGS.content.MODULES_MAP,
-                        WTG_MAP=SETTINGS.content.WTG_MAP,
-                        IO_BOARDS=boards,
-                    )
-                    io_boards.clear()
-                    io_boards.update(pins)
-        except Exception as e:
-            print(f"❌ [DB] Troubleshooter IO board copy failed: {e}")
-            sentry_sdk.capture_exception(e)
-
-        try:
-            copied = await wtgs_migrate(
-                next((r["data"] for r in rows if r["name"] == "WTG_MAP"), None)
-            )
-            if copied:
-                print(f"✅ Troubleshooter turbines copied to wtgs: {copied} turbines")
-            async with db_session() as cur:
-                await cur.execute(
-                    "SELECT value FROM settings WHERE name = %s", (WTGS_MIGRATED,)
-                )
-                if await cur.fetchone():
-                    await cur.execute(
-                        "SELECT wtg, serial, ip FROM wtgs ORDER BY sort_order, wtg"
-                    )
-                    SETTINGS.content = SimpleNamespace(
-                        MODULES_MAP=SETTINGS.content.MODULES_MAP,
-                        WTG_MAP={
-                            r["wtg"]: {"serial": r["serial"], "ip": r["ip"]}
-                            for r in await cur.fetchall()
-                        },
-                        IO_BOARDS=SETTINGS.content.IO_BOARDS,
-                    )
-        except Exception as e:
-            print(f"❌ [DB] Troubleshooter turbine copy failed: {e}")
+            print(f"❌ [DB] Troubleshooter old content removal failed: {e}")
             sentry_sdk.capture_exception(e)
 
     except Exception as e:

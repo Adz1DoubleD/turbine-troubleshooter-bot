@@ -3,7 +3,6 @@ import io
 import json
 from datetime import datetime
 
-from ..settings import SETTINGS
 from .core import db_session
 
 EXPORT_TABLES = (
@@ -106,69 +105,8 @@ async def db_tables(table):
                     ]
                 return rows or None
 
-        if table in ("menus", "wtgs"):
-            content_name = {
-                "menus": "MODULES_MAP",
-                "wtgs": "WTG_MAP",
-            }[table]
-
-            await cur.execute(
-                "SELECT `data` FROM `content` WHERE `name` = %s LIMIT 1",
-                (content_name,),
-            )
-
-            rows = await cur.fetchall()
-
-            if not rows:
-                return None
-
-            data = rows[0]["data"]
-
-            if isinstance(data, bytes):
-                data = data.decode("utf-8")
-
-            if isinstance(data, str):
-                data = json.loads(data)
-
-            if not isinstance(data, dict):
-                return None
-
-            result = []
-
-            for name, details in data.items():
-                row = {"name": name}
-
-                if isinstance(details, dict):
-                    row.update(details)
-                    row["name"] = name
-                else:
-                    row["value"] = details
-
-                result.append(row)
-
-            return result
-
         await cur.execute("SHOW TABLES")
         names = {next(iter(r.values())) for r in await cur.fetchall()}
-
-        if table == "io_boards" and "io_boards" not in names:
-            merged = []
-
-            for board in SETTINGS.content.IO_BOARDS:
-                if board not in names:
-                    continue
-
-                await cur.execute(f"SELECT * FROM `{board}`")
-
-                for r in await cur.fetchall():
-                    merged.append(
-                        {
-                            "board": board,
-                            **r,
-                        }
-                    )
-
-            return merged
 
         if table not in names:
             return None

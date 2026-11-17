@@ -363,13 +363,13 @@ async def test_a_submenu_with_items_cannot_be_deleted(db):
 
 
 @pytest.mark.asyncio
-async def test_nothing_can_change_before_the_copy(db, monkeypatch):
+async def test_nothing_can_change_if_the_menus_did_not_load(db, monkeypatch):
     monkeypatch.setattr(SETTINGS, "menu", None)
     user, context = make(OWNER)
 
     query = await press("troubleshooter:menu_manage:0", user, context)
 
-    assert "copied to the menu tables" in query.answer.await_args.args[0]
+    assert "menus couldn't be loaded" in query.answer.await_args.args[0]
 
 
 @pytest.mark.asyncio

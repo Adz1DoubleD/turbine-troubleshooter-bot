@@ -57,7 +57,9 @@ The settings below are read from the environment; any keyword passed to `start_t
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `content`, `menus` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
+MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `menus` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
+
+Upgrading from 2.0: start version 2.1 once before 2.2 or later. 2.1 copies the old `content` rows and per-board IO tables into the tables above; 2.2 then removes the old ones (`content`, the per-board tables and `suggestions`). If 2.2 starts on a database that was never copied, it leaves the old data alone and reports it to Sentry.
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`), set from **Admin Panel → 🔔 Notify Users**. Added and Deleted start on and Edited starts off, so small fixes don't message everyone; a row in `settings` overrides that. When one is off, that kind of code or part change is only sent to admins. Users are also told when a menu page or a file on one is added, following the Added toggle; other menu changes only go to the alerts chat. Users can turn notifications off for themselves from any notice or their User Menu.
 
@@ -88,9 +90,9 @@ Approved users can tell the admins about anything missing or wrong with **💬 F
 
 ## Content
 
-Turbines live in `wtgs`, one row per turbine with its serial and IP, used by **🔍 Search WTG Serials**. On the first start with this table, the bot copies the `WTG_MAP` row of `content` into it once and leaves that row untouched. On a new database there's nothing to copy, so there are no turbines.
+Turbines live in `wtgs`, one row per turbine with its serial and IP, used by **🔍 Search WTG Serials**. A new database has no turbines; add them with the CSV import below.
 
-IO board pin-outs live in `io_boards`, one row per pin with its board's ID, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **🔌 IO Boards** and **🔍 Search WTG Serials** buttons only appear once there's at least one board or turbine.
+IO board pin-outs live in `io_boards`, one row per pin with its board's ID, name and CAN node, in the order they're shown. A new database has no boards; add them with the CSV import below. The **🔌 IO Boards** and **🔍 Search WTG Serials** buttons only appear once there's at least one board or turbine.
 
 ### Adding turbines and IO boards
 
@@ -133,7 +135,7 @@ io1,IO Board 1,Node 1,Outputs,X2:1,Example relay
 
 Exports also have `id` and `position` columns; the import ignores them and uses the order of the rows.
 
-The menus live in `menus`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
+The menus live in `menus`, one row per button, with photos and PDFs in `attachments`. Documents and photos are files in `files_dir`, and each attachment row holds its path relative to `files_dir`. On a new database the menus start empty.
 
 Admins change the menus from **Admin Panel → 📋 Edit Menus**, which shows the menus as a list to browse; the menus themselves show no editing buttons. In any menu, **➕ Add Here** adds a page (text) or a submenu (more buttons) with a title and the text; a submenu also has **✏️ Rename** and **🗑 Delete**, and tapping a page shows its text with **✏️ Edit** and **🗑 Delete**. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
 
