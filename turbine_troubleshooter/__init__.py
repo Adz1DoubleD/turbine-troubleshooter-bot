@@ -24,7 +24,7 @@ from turbine_troubleshooter.helpers import (
 
 from . import weather
 from .blocks import admin as admin_menu
-from .blocks import codes, handle_block, io_boards, parts, user, wtg
+from .blocks import codes, feedback, handle_block, io_boards, parts, user, wtg
 from .blocks.admin import broadcast as admin_broadcast
 from .blocks.admin import changes as admin_changes
 from .blocks.admin import codes as admin_codes
@@ -323,6 +323,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "troubleshooter:parts_search":
         await parts.button_search(update, context)
 
+    elif data == "troubleshooter:feedback":
+        await feedback.button_feedback(update, context)
+
     elif admin and data == "troubleshooter:part_add":
         await admin_parts.button_part_add(update, context)
 
@@ -502,6 +505,9 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif state == "troubleshooter:parts_search":
         await parts.handle_search(update, context, text)
+
+    elif state == "troubleshooter:feedback":
+        await feedback.handle_text(update, context, text)
 
     elif admin and state.startswith("troubleshooter:menu_"):
         await admin_content.handle_text(update, context, text)
