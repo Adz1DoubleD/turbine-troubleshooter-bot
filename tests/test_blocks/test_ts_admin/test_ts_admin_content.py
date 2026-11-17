@@ -269,6 +269,7 @@ async def test_editing_a_page_text(db, who, undo):
     assert buttons == [
         "troubleshooter:menu_edit:title:3",
         "troubleshooter:menu_edit:body:3",
+        "troubleshooter:menu_edit:file:3",
         "troubleshooter:menu:3",
     ]
 

@@ -194,3 +194,28 @@ async def menu_node_delete(node_id):
     async with db_session() as cur:
         await cur.execute("DELETE FROM menu_nodes WHERE id = %s", (node_id,))
         return cur.rowcount > 0
+
+
+async def attachment_add(node_id, kind, file_id, file_unique_id, path, user_id):
+    async with db_session() as cur:
+        await cur.execute(
+            "INSERT INTO attachments (node_id, type, file_id, file_unique_id, path, "
+            "status, sort_order, created_by) "
+            "VALUES (%s, %s, %s, %s, %s, 'pending', 1, %s)",
+            (node_id, kind, file_id, file_unique_id, path, user_id),
+        )
+        return {
+            "id": cur.lastrowid,
+            "node_id": node_id,
+            "type": kind,
+            "file_id": file_id,
+            "file_unique_id": file_unique_id,
+            "path": path,
+            "status": "pending",
+        }
+
+
+async def attachments_remove(node_id):
+    async with db_session() as cur:
+        await cur.execute("DELETE FROM attachments WHERE node_id = %s", (node_id,))
+        return cur.rowcount

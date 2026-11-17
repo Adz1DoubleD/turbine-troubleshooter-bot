@@ -190,7 +190,7 @@ async def test_channel_posts_reach_no_message_handler(monkeypatch, fake_app, kin
         for c in fake_app.add_handler.call_args_list
         if isinstance(c.args[0], MessageHandler)
     ]
-    assert len(handlers) == 1
+    assert len(handlers) == 2
     assert not any(h.check_update(update) for h in handlers)
 
 

@@ -24,6 +24,8 @@ from .export import (
 )
 from .menu import (
     MENU_MIGRATED,
+    attachment_add,
+    attachments_remove,
     menu_migrate,
     menu_node_add,
     menu_node_delete,
@@ -69,6 +71,8 @@ __all__ = [
     "db_export",
     "db_tables",
     "MENU_MIGRATED",
+    "attachment_add",
+    "attachments_remove",
     "menu_migrate",
     "menu_node_add",
     "menu_node_delete",
