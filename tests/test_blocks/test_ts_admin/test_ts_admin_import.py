@@ -253,7 +253,7 @@ async def test_io_boards_import(db):
         ("io 3,IO Board 3,,Inputs,X1,", "Row 4: board must be letters"),
         (
             "io1,IO Board 1,Node 1,Inputs,,",
-            "Row 4: board_name, section and pin can't be blank",
+            "Row 4: board_name and pin can't be blank",
         ),
     ],
     ids=["inconsistent-board", "bad-key", "blank-connector"],
@@ -389,3 +389,17 @@ async def test_replace_rolls_back_on_failure(make_cursor, patch_session):
         await ts.wtgs_replace([{"wtg": "WTA01", "serial": "1", "ip": None}])
 
     assert cur.calls[-1][0] == "ROLLBACK"
+
+
+@pytest.mark.asyncio
+async def test_io_board_sections_are_optional(db):
+    user, context = make()
+    await press("troubleshooter:import:io_boards", user, context)
+
+    preview = await send(
+        "board,board_name,pin\nio9,Small Board,P1\nio9,Small Board,P2\n", user, context
+    )
+
+    assert "Nothing was saved" not in preview
+    await press("troubleshooter:import:save", user, context)
+    assert [(p["pin"], p["section"]) for p in db.pins] == [("P1", None), ("P2", None)]

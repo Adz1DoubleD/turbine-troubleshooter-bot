@@ -109,7 +109,7 @@ WTB01,1000101,192.0.2.21
 | `board` | The board's short ID, used in its button: letters, numbers or `_`, e.g. `io1` |
 | `board_name` | Name on the board's button and screen |
 | `can_node` | Optional CAN node, shown under the board's name |
-| `section` | Heading the pin is grouped under |
+| `section` | Optional heading the pin is grouped under. Leave it blank on every pin for a board without headings; on a board that has some, blank ones go under **General** |
 | `pin` | Pin or terminal label, e.g. `X1:1` |
 | `description` | Optional: what's on that pin |
 

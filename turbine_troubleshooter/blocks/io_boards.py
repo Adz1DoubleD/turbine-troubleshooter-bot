@@ -41,8 +41,10 @@ async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response += f"_{board['can']}_\n"
     response += "—" * 20 + "\n\n"
 
+    headed = any(entry.get("section") for entry in board_entries)
     for section, entries in sorted(sections.items()):
-        response += f"🔹 *{section}*\n"
+        if headed:
+            response += f"🔹 *{section}*\n"
         for entry in entries:
             pin = entry.get("pin") or "N/A"
             description = str(entry.get("description") or "").strip()

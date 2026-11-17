@@ -15,8 +15,8 @@ KINDS = {
     "wtgs": ("🔢 Turbines", ["name", "serial", "ip"], [], "turbine"),
     "io_boards": (
         "📋 IO Boards",
-        ["board", "board_name", "section", "pin"],
-        ["can_node", "description"],
+        ["board", "board_name", "pin"],
+        ["section", "can_node", "description"],
         "IO board pin",
     ),
 }
@@ -181,11 +181,10 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             "up to 32."
                         )
                     elif not all(r[c] for c in required):
-                        errors.append(
-                            f"Row {line}: board_name, section and pin can't be blank."
-                        )
+                        errors.append(f"Row {line}: board_name and pin can't be blank.")
                     elif any(
-                        len(r.get(c, "")) > 100 for c in required[1:] + ["can_node"]
+                        len(r.get(c, "")) > 100
+                        for c in ["board_name", "pin", "section", "can_node"]
                     ):
                         errors.append(f"Row {line}: a value is over 100 characters.")
                     elif seen.setdefault(key, (board, line))[0] != board:
@@ -198,7 +197,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             "board": key,
                             "board_name": r["board_name"],
                             "can_node": r.get("can_node", ""),
-                            "section": r["section"],
+                            "section": r.get("section") or None,
                             "pin": r["pin"],
                             "description": r.get("description") or None,
                         }

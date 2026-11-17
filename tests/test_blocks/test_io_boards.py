@@ -79,3 +79,27 @@ async def test_pins_without_a_description_show_just_the_pin():
     assert "`X1:1` | Signal A\n" in text
     assert "`X1:2`\n" in text and "`X1:3`\n" in text
     assert "None" not in text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sections,headings",
+    [
+        ((None, None), []),
+        (("Inputs", None), ["🔹 *General*", "🔹 *Inputs*"]),
+    ],
+    ids=["no-sections", "some-sections"],
+)
+async def test_section_headings(sections, headings):
+    update, edits = make_update("troubleshooter:ioboard:io1")
+    pins = [
+        {"section": s, "pin": f"X{i}", "description": None}
+        for i, s in enumerate(sections, 1)
+    ]
+    context = SimpleNamespace(bot_data={"io_boards": {"io1": pins}}, user_data={})
+
+    await io_boards.button_board(update, context)
+
+    text = edits[0]["text"]
+    assert [line for line in text.splitlines() if line.startswith("🔹")] == headings
+    assert "`X1`" in text and "`X2`" in text
