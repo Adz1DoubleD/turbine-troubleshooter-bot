@@ -276,6 +276,15 @@ async def send_notification_troubleshooter(
             if not int(SETTINGS.notify_settings.get(f"notify_{verb}", 1)):
                 audience = "admins"
 
+        case "menu_added" | "menu_edited" | "menu_deleted":
+            verb = action.split("_")[1]
+            text = f"📋 *Menu Item {verb.capitalize()}*\n\n• Item: {escape_markdown(code)}\n"
+            if message:
+                text += f"• Change: {escape_markdown(message)}\n"
+            text += f"\n• By: {name}"
+            parse_mode, reply_markup = "Markdown", close_markup
+            to_alerts, to_users = True, False
+
         case _:
             raise ValueError(f"Unknown notification action: {action}")
 

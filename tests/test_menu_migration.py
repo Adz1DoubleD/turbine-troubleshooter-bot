@@ -172,12 +172,14 @@ async def test_copy_runs_only_once(make_cursor, patch_session):
 
 
 @pytest.mark.asyncio
-async def test_nothing_to_copy_without_a_menu(make_cursor, patch_session):
+async def test_new_database_starts_with_empty_menus(make_cursor, patch_session):
     cur = patch_session(ts, migrate_cursor(make_cursor))
 
     assert await ts.menu_migrate(None) == 0
 
-    assert not any(c[0].startswith(("INSERT", "START")) for c in cur.calls)
+    assert inserted(cur, "menu_nodes") == []
+    assert inserted(cur, "settings") == [(ts.MENU_MIGRATED,)]
+    assert not any(c[0] == "START TRANSACTION" for c in cur.calls)
 
 
 @pytest.mark.asyncio
@@ -270,7 +272,9 @@ async def test_rows_are_used_only_once_the_copy_is_done(
 
     await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
 
-    assert SETTINGS.menu == ({"nodes": [node], "attachments": []} if copied else None)
+    assert SETTINGS.menu == (
+        {"nodes": [{**node, "edits": []}], "attachments": []} if copied else None
+    )
 
 
 @pytest.mark.asyncio
@@ -333,7 +337,7 @@ async def test_tapping_through_a_menu_built_from_rows(monkeypatch):
         )
         await turbine_troubleshooter.handle_button(
             SimpleNamespace(callback_query=query),
-            SimpleNamespace(bot_data={}, user_data={}),
+            SimpleNamespace(bot_data={}, user_data={"is_admin": False}),
         )
 
     assert edits == [

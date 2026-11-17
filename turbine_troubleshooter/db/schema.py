@@ -243,10 +243,13 @@ async def init_troubleshooter_db(application):
                 )
                 if await cur.fetchone():
                     await cur.execute(
-                        "SELECT id, parent_id, type, title, body, sort_order "
-                        "FROM menu_nodes ORDER BY sort_order, id"
+                        "SELECT id, parent_id, type, title, body, sort_order, "
+                        "created_by, edits FROM menu_nodes ORDER BY sort_order, id"
                     )
-                    nodes = await cur.fetchall()
+                    nodes = [
+                        {**n, "edits": json.loads(n["edits"]) if n.get("edits") else []}
+                        for n in await cur.fetchall()
+                    ]
                     await cur.execute(
                         "SELECT node_id, type, file_id, path, status FROM attachments "
                         "WHERE node_id IS NOT NULL ORDER BY sort_order, id"

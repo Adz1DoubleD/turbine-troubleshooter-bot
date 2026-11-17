@@ -25,6 +25,9 @@ from .export import (
 from .menu import (
     MENU_MIGRATED,
     menu_migrate,
+    menu_node_add,
+    menu_node_delete,
+    menu_node_update,
 )
 from .parts import (
     part_add,
@@ -67,6 +70,9 @@ __all__ = [
     "db_tables",
     "MENU_MIGRATED",
     "menu_migrate",
+    "menu_node_add",
+    "menu_node_delete",
+    "menu_node_update",
     "part_add",
     "part_update",
     "init_troubleshooter_db",

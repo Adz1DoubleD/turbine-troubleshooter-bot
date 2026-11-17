@@ -27,6 +27,7 @@ from .blocks import codes, handle_block, io_boards, parts, user, wtg
 from .blocks.admin import broadcast as admin_broadcast
 from .blocks.admin import changes as admin_changes
 from .blocks.admin import codes as admin_codes
+from .blocks.admin import content as admin_content
 from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
 from .blocks.user import LOCKED_MARKUP, LOCKED_TEXT
@@ -153,12 +154,30 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await query.edit_message_text(
                     "Select an IO Board:", reply_markup=io_boards.board_menu()
                 )
-            elif item.get("items"):
+            elif item.get("items") is not None:
                 buttons = [
                     InlineKeyboardButton(content[k]["title"], callback_data=k)
                     for k in item["items"]
                 ]
                 kb = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
+                if admin and data.startswith("troubleshooter:menu:"):
+                    node_id = data.split(":")[2]
+                    kb.append(
+                        [
+                            InlineKeyboardButton(
+                                "➕ Add Here",
+                                callback_data=f"troubleshooter:menu_add:in:{node_id}",
+                            ),
+                            InlineKeyboardButton(
+                                "✏️ Rename",
+                                callback_data=f"troubleshooter:menu_edit:{node_id}",
+                            ),
+                            InlineKeyboardButton(
+                                "🗑 Delete",
+                                callback_data=f"troubleshooter:menu_del:{node_id}",
+                            ),
+                        ]
+                    )
                 kb.append(
                     [
                         InlineKeyboardButton(
@@ -167,7 +186,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         )
                     ]
                 )
-                text = f"*{item['title']}*\n\nSelect an option:"
+                text = f"*{item['title']}*\n\n" + (
+                    "Select an option:" if buttons else "Nothing here yet."
+                )
                 if query.message.text:
                     await query.edit_message_text(
                         text,
@@ -186,8 +207,27 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         content_body = item.get("content", "")
         caption = f"*{item['title']}*\n\n{content_body}"
+        node_id = (
+            data.split(":")[2] if data.startswith("troubleshooter:menu:") else None
+        )
         kb = InlineKeyboardMarkup(
-            [
+            (
+                [
+                    [
+                        InlineKeyboardButton(
+                            "✏️ Edit",
+                            callback_data=f"troubleshooter:menu_edit:{node_id}",
+                        ),
+                        InlineKeyboardButton(
+                            "🗑 Delete",
+                            callback_data=f"troubleshooter:menu_del:{node_id}",
+                        ),
+                    ]
+                ]
+                if admin and node_id
+                else []
+            )
+            + [
                 [
                     InlineKeyboardButton(
                         "🔙 Back",
@@ -294,6 +334,9 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("troubleshooter:undo:"):
         await admin_changes.button_undo(update, context)
+
+    elif admin and data.startswith("troubleshooter:menu_"):
+        await admin_content.handle_button(update, context)
 
     elif admin and data.startswith("troubleshooter:code_confirm_del:"):
         await admin_codes.button_code_delete_confirm(update, context)
@@ -432,6 +475,9 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif state == "troubleshooter:parts_search":
         await parts.handle_search(update, context, text)
+
+    elif admin and state.startswith("troubleshooter:menu_"):
+        await admin_content.handle_text(update, context, text)
 
     elif admin and state == "troubleshooter:user_search":
         await admin_users.handle_user_search(update, context, text)

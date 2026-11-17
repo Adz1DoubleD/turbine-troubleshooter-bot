@@ -49,7 +49,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
 | `files_dir` | — | Folder that `file:` references in the content resolve against |
-| `content` | — | Fallback content when the database has none (see below) |
+| `content` | — | Fallback turbine map and IO boards when the database has none (see below) |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
@@ -75,7 +75,9 @@ Undo only works while the item still has the text the admin saved; if it's been 
 
 The turbine map and IO boards are loaded from the `content` table: one row per item (`WTG_MAP`, `IO_BOARDS`), stored as JSON text. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
 
-The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`.
+The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
+
+Admins add menu items from **Admin Panel → 📝 Add Content**: pick where it goes, then a page (text) or a submenu (more buttons), a title and the text. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. Opening a menu item as an admin shows **✏️ Edit** and **🗑 Delete**, and a submenu also shows **➕ Add Here**. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
 
 ## Create your Telegram bot
 
@@ -131,7 +133,7 @@ Everything else is optional. Access requests and change notices go to `TROUBLESH
 python -m turbine_troubleshooter
 ```
 
-Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and while the database has no content the menus use the made-up [`example_content.py`](turbine_troubleshooter/example_content.py). Add codes and parts from **Admin Panel → Add Code / Add Part**. Stop with Ctrl+C.
+Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start. The menus start empty, and while the database has no turbine map or IO boards the bot uses the made-up [`example_content.py`](turbine_troubleshooter/example_content.py). Add codes, parts and menu items from **Admin Panel → Add Code / Add Part / Add Content**. Stop with Ctrl+C.
 
 ## Development
 

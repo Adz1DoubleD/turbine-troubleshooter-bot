@@ -141,6 +141,11 @@ async def handle_block(
     kb = [
         [InlineKeyboardButton("➕ Add Code", callback_data="troubleshooter:code_add")],
         [InlineKeyboardButton("🔩 Add Part", callback_data="troubleshooter:part_add")],
+        [
+            InlineKeyboardButton(
+                "📝 Add Content", callback_data="troubleshooter:menu_add"
+            )
+        ],
         [InlineKeyboardButton(users_label, callback_data="troubleshooter:user_list")],
         [InlineKeyboardButton("📤 Export", callback_data="troubleshooter:export_menu")],
     ]

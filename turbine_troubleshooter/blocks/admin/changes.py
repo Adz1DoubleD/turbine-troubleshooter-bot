@@ -9,6 +9,8 @@ from turbine_troubleshooter.db import (
     delete_request_add,
     delete_request_remove,
     fault_code_add,
+    menu_node_delete,
+    menu_node_update,
     part_update,
 )
 from turbine_troubleshooter.helpers import escape_markdown, is_owner, own_bot
@@ -107,12 +109,34 @@ async def button_delete_requests(update: Update, context: ContextTypes.DEFAULT_T
                             part["part_no"],
                             part["description"],
                         )
+                elif request["kind"] == "menu" and SETTINGS.menu is not None:
+                    nodes = SETTINGS.menu["nodes"]
+                    node = next(
+                        (n for n in nodes if str(n["id"]) == request["target"]), None
+                    )
+                    if node and not any(n["parent_id"] == node["id"] for n in nodes):
+                        done = await menu_node_delete(node["id"])
+                        nodes.remove(node)
+                        SETTINGS.menu["attachments"][:] = [
+                            a
+                            for a in SETTINGS.menu["attachments"]
+                            if a["node_id"] != node["id"]
+                        ]
+                        await send_notification_troubleshooter(
+                            requester, "menu_deleted", label
+                        )
+                    elif node:
+                        label += " (it has items in it now, so it was kept)"
                 status = (
                     f"✅ Deleted the {kind}: {escape_markdown(label)}\n\n"
                     if done
-                    else f"ℹ️ The {kind} {escape_markdown(label)} was already gone.\n\n"
+                    else f"ℹ️ Not deleted: {escape_markdown(label)}\n\n"
                 )
-                told = f"✅ The owner deleted the {kind} you asked about: {label}"
+                told = (
+                    f"✅ The owner deleted the {kind} you asked about: {label}"
+                    if done
+                    else f"ℹ️ The {kind} you asked to delete wasn't deleted: {label}"
+                )
             else:
                 status = f"❌ Kept the {kind}: {escape_markdown(label)}\n\n"
                 told = f"❌ The owner kept the {kind} you asked to delete: {label}"
@@ -152,7 +176,16 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     _, _, kind, item_id, index = query.data.split(":")
-    if kind == "code":
+    if kind == "menu":
+        item = next(
+            (
+                n
+                for n in (SETTINGS.menu or {}).get("nodes", [])
+                if str(n["id"]) == item_id
+            ),
+            None,
+        )
+    elif kind == "code":
         item = next(
             (
                 c
@@ -188,7 +221,16 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     edited_at = local_now().strftime("%Y-%m-%d %H:%M")
     back = {f: [new, old] for f, (old, new) in changes.items()}
 
-    if kind == "code":
+    if kind == "menu":
+        for field, (old, new) in changes.items():
+            await menu_node_update(
+                item["id"], field, old, user.id, editor, edited_at, new
+            )
+            item[field] = old
+        await send_notification_troubleshooter(
+            user, "menu_edited", item["title"], message="Undone"
+        )
+    elif kind == "code":
         restored = {**item, **{f: old for f, (old, _) in changes.items()}}
         await fault_code_add(
             code=item["code"],
