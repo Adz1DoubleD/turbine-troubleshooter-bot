@@ -6,6 +6,7 @@ import sentry_sdk
 from ..settings import SETTINGS
 from .content import CONTENT_ITEMS, content_from_json
 from .core import db_session
+from .menu import menu_migrate
 
 
 async def init_troubleshooter_db(application):
@@ -230,6 +231,16 @@ async def init_troubleshooter_db(application):
             f"   Admins: {len(admins)}\n"
             f"   Approved Users: {len(approved)}"
         )
+
+        try:
+            migrated = await menu_migrate(
+                next((r["data"] for r in rows if r["name"] == "MODULES_MAP"), None)
+            )
+            if migrated:
+                print(f"✅ Troubleshooter menu copied to menu_nodes: {migrated} items")
+        except Exception as e:
+            print(f"❌ [DB] Troubleshooter menu copy failed: {e}")
+            sentry_sdk.capture_exception(e)
 
     except Exception as e:
         print(f"❌ [DB] Troubleshooter DB init failed: {e}")
