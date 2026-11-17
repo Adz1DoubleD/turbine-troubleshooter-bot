@@ -35,6 +35,9 @@ def test_troubleshooter_imports_nothing_from_the_main_bot():
 def test_setup_rejects_unknown_settings():
     with pytest.raises(TypeError, match="not_a_setting"):
         setup(not_a_setting=1)
+    for internal in ("content", "menu", "notify_settings"):
+        with pytest.raises(TypeError):
+            setup(**{internal: 1})
 
 
 def test_setup_applies_known_settings(monkeypatch):

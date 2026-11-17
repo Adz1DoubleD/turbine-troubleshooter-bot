@@ -58,7 +58,9 @@ SETTINGS = SimpleNamespace(
 
 
 def setup(**options):
-    unknown = set(options) - set(vars(SETTINGS))
+    unknown = set(options) - set(vars(SETTINGS)) | (
+        set(options) & {"content", "menu", "notify_settings"}
+    )
     if unknown:
         raise TypeError(f"Unknown troubleshooter settings: {sorted(unknown)}")
     for name, var in ENV_VARS.items():

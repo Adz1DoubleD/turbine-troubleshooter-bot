@@ -9,6 +9,7 @@ from .content import CONTENT_ITEMS, content_from_json
 from .core import db_session
 from .io_boards import IO_BOARDS_MIGRATED, io_boards_migrate
 from .menu import MENU_MIGRATED, menu_migrate
+from .wtgs import WTGS_MIGRATED, wtgs_migrate
 
 
 async def init_troubleshooter_db(application):
@@ -317,6 +318,32 @@ async def init_troubleshooter_db(application):
                     io_boards.update(pins)
         except Exception as e:
             print(f"❌ [DB] Troubleshooter IO board copy failed: {e}")
+            sentry_sdk.capture_exception(e)
+
+        try:
+            copied = await wtgs_migrate(
+                next((r["data"] for r in rows if r["name"] == "WTG_MAP"), None)
+            )
+            if copied:
+                print(f"✅ Troubleshooter turbines copied to wtgs: {copied} turbines")
+            async with db_session() as cur:
+                await cur.execute(
+                    "SELECT value FROM settings WHERE name = %s", (WTGS_MIGRATED,)
+                )
+                if await cur.fetchone():
+                    await cur.execute(
+                        "SELECT wtg, serial, ip FROM wtgs ORDER BY sort_order, wtg"
+                    )
+                    SETTINGS.content = SimpleNamespace(
+                        MODULES_MAP=SETTINGS.content.MODULES_MAP,
+                        WTG_MAP={
+                            r["wtg"]: {"serial": r["serial"], "ip": r["ip"]}
+                            for r in await cur.fetchall()
+                        },
+                        IO_BOARDS=SETTINGS.content.IO_BOARDS,
+                    )
+        except Exception as e:
+            print(f"❌ [DB] Troubleshooter turbine copy failed: {e}")
             sentry_sdk.capture_exception(e)
 
     except Exception as e:

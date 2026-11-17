@@ -5,11 +5,7 @@ from pathlib import Path
 import sentry_sdk
 from dotenv import load_dotenv
 
-from turbine_troubleshooter import (
-    example_content,
-    start_troubleshooter_bot,
-    stop_troubleshooter_bot,
-)
+from turbine_troubleshooter import start_troubleshooter_bot, stop_troubleshooter_bot
 
 
 async def main():
@@ -17,7 +13,6 @@ async def main():
     sentry_sdk.init(dsn=os.environ.get("TROUBLESHOOTER_SENTRY_DSN"))
     try:
         await start_troubleshooter_bot(
-            content=example_content,
             files_dir=Path(os.environ.get("TROUBLESHOOTER_FILES_DIR", "media")),
         )
     except ValueError as e:

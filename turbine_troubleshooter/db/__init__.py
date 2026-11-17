@@ -59,6 +59,10 @@ from .users import (
     user_revoke,
     users_get,
 )
+from .wtgs import (
+    WTGS_MIGRATED,
+    wtgs_migrate,
+)
 
 __all__ = [
     "fault_code_add",
@@ -100,4 +104,6 @@ __all__ = [
     "user_notifications_toggle",
     "user_revoke",
     "users_get",
+    "WTGS_MIGRATED",
+    "wtgs_migrate",
 ]

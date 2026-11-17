@@ -50,12 +50,11 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
 | `files_dir` | — | Folder that `file:` references in the content resolve against |
-| `content` | — | Fallback turbine map and IO boards when the database has none (see below) |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `content`, `menu_nodes` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
+MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `content`, `menu_nodes` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
 
@@ -80,7 +79,7 @@ Undo only works while the item still has the text the admin saved; if it's been 
 
 ## Content
 
-The turbine map is loaded from the `content` table's `WTG_MAP` row, stored as JSON text. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
+Turbines live in `wtgs`, one row per turbine with its serial and IP, used by **🔢 WTG Info**. On the first start with this table, the bot copies the `WTG_MAP` row of `content` into it once and leaves that row untouched. On a new database there's nothing to copy, so there are no turbines.
 
 IO board pin-outs live in `io_boards`, one row per pin with its board's key, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **IO Boards** and **🔢 WTG Info** buttons only appear once there's at least one board or turbine.
 
@@ -146,7 +145,7 @@ Everything else is optional. Access requests and change notices go to `TROUBLESH
 python -m turbine_troubleshooter
 ```
 
-Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start. The menus start empty, and while the database has no turbine map or IO boards the bot uses the made-up [`example_content.py`](turbine_troubleshooter/example_content.py). Add codes, parts and menu items from **Admin Panel → Add Code / Add Part / Add Content**. Stop with Ctrl+C.
+Open your test bot in Telegram and send `/start`. As the owner you get the admin panel. Tables are created on first start, and a new database starts empty: no menus, IO boards or turbines. Add codes, parts and menu items from **Admin Panel → Add Code / Add Part / Add Content**. Stop with Ctrl+C.
 
 ## Development
 
