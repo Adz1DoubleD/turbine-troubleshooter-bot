@@ -63,7 +63,7 @@ MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's 
 
 ### Photos and PDFs on menu pages
 
-In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **Admin Panel → 📋 Edit Menus**, then the page, **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.
+In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **Admin Panel → 📋 Edit Menus**, then the page, **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. When an admin adds one, the alerts chat gets **↩️ Undo**, which lets the owner take it off the page again. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.
 
 A new file works in the troubleshooter bot straight away. The bot also sends it to the alerts chat with the path to save it as in `files_dir` (for example `pdf/manual.pdf`), and lists it under **Admin Panel → 📎 Pending Files** until it's there. Hosts show files from `files_dir`, so until it's saved a host shows "This document isn't available right now". On each start the bot marks pending files it finds in `files_dir` as saved.
 

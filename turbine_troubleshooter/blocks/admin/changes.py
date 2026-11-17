@@ -6,6 +6,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.db import (
+    attachments_remove,
     delete_entry,
     delete_request_add,
     delete_request_remove,
@@ -169,6 +170,36 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     _, _, kind, item_id, index = query.data.split(":")
+    if kind == "file":
+        attachments = (SETTINGS.menu or {}).get("attachments", [])
+        added = next((a for a in attachments if str(a.get("id")) == item_id), None)
+        if not added or any(
+            a["node_id"] == added["node_id"] and a is not added for a in attachments
+        ):
+            await query.answer(
+                "⚠️ That file has been removed or replaced since, so this can't "
+                "be undone.",
+                show_alert=True,
+            )
+            return
+        await attachments_remove(added["node_id"])
+        attachments[:] = [a for a in attachments if a is not added]
+        page = next(
+            (n for n in SETTINGS.menu["nodes"] if n["id"] == added["node_id"]), {}
+        )
+        await send_notification_troubleshooter(
+            query.from_user,
+            "menu_edited",
+            page.get("title", ""),
+            message="File removed (undone)",
+        )
+        await query.answer("↩️ Undone. The file is off the page.", show_alert=True)
+        await query.edit_message_reply_markup(
+            InlineKeyboardMarkup(
+                [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+            )
+        )
+        return
     if kind == "menu":
         item = next(
             (
