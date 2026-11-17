@@ -40,14 +40,16 @@ async def send_to_owner(context, attachment):
                 [
                     [
                         InlineKeyboardButton(
-                            "💾 Save to Repo",
+                            "💾 Save to Repo"
+                            if SETTINGS.files_repo and SETTINGS.files_repo_token
+                            else "💾 Save to Files Folder",
                             callback_data="troubleshooter:menu_files:save:"
                             f"{attachment['id']}",
                         )
                     ]
                 ]
             )
-            if SETTINGS.files_repo and SETTINGS.files_repo_token
+            if (SETTINGS.files_repo and SETTINGS.files_repo_token) or SETTINGS.files_dir
             else None,
         )
     except Exception as e:
@@ -201,8 +203,28 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer("📤 Sent." if chosen else "Already saved.")
             return
         if len(bits) == 4 and bits[2] == "save":
-            if not chosen or not repo:
+            if not chosen or not (repo or SETTINGS.files_dir):
                 await query.answer("Already saved.")
+                return
+            if not repo:
+                await query.answer("💾 Saving…")
+                target = Path(SETTINGS.files_dir) / chosen["path"]
+                try:
+                    data = await (
+                        await own_bot(context).get_file(chosen["file_id"])
+                    ).download_as_bytearray()
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(bytes(data))
+                    await attachment_status(chosen["id"], "saved")
+                    chosen["status"] = "saved"
+                    reply = f"💾 Saved {chosen['path']} in the files folder."
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    reply = (
+                        f"⚠️ Couldn't save {chosen['path']} in the files folder. "
+                        "Try again later."
+                    )
+                await own_bot(context).send_message(SETTINGS.owner_id, reply)
                 return
             await query.answer("💾 Saving to the repo…")
             status = None
@@ -261,10 +283,12 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "These were added in the bot but aren't in the files folder yet. "
             + (
                 "Tap 💾 to save one to the repo, or save it yourself as shown. "
+                "The bot marks it saved when it next starts."
                 if repo
-                else "Save each one as shown. "
+                else "Tap 💾 to save one in the files folder, or save it yourself "
+                "as shown."
             )
-            + "The bot marks it saved when it next starts.\n\n"
+            + "\n\n"
             + (
                 "\n".join(
                     f"• {escape_markdown(where(a['node_id']))}: `{a['path']}`"
@@ -292,7 +316,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         callback_data=f"troubleshooter:menu_files:save:{a['id']}",
                     )
                 ]
-                if repo
+                if repo or SETTINGS.files_dir
                 else []
             )
             for a in pending[:20]

@@ -267,6 +267,24 @@ async def init_troubleshooter_db(application):
                         and SETTINGS.files_dir
                         and (Path(SETTINGS.files_dir) / a["path"]).is_file()
                     ]
+                    lost = [
+                        a
+                        for a in attachments
+                        if a["status"] == "saved"
+                        and a["file_id"]
+                        and a["path"]
+                        and SETTINGS.files_dir
+                        and not (Path(SETTINGS.files_dir) / a["path"]).is_file()
+                    ]
+                    if lost:
+                        await cur.execute(
+                            "UPDATE attachments SET status = 'pending' WHERE id IN ("
+                            + ", ".join(["%s"] * len(lost))
+                            + ")",
+                            [a["id"] for a in lost],
+                        )
+                        for a in lost:
+                            a["status"] = "pending"
                     if saved:
                         await cur.execute(
                             "UPDATE attachments SET status = 'saved' WHERE id IN ("

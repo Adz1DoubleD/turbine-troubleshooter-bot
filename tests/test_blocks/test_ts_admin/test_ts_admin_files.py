@@ -344,6 +344,7 @@ async def test_pending_files_list_and_resend(db):
     assert "• Safety: `pdf/safety.pdf`" in args.args[0]
     assert buttons(args.kwargs["reply_markup"]) == [
         "troubleshooter:menu_files:send:9",
+        "troubleshooter:menu_files:save:9",
         "troubleshooter:admin_menu",
     ]
 

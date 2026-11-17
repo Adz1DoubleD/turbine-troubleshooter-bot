@@ -216,30 +216,84 @@ async def test_admins_cannot_save_to_the_repo(github):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("configured", [True, False])
-async def test_save_buttons_only_when_the_repo_is_set(monkeypatch, github, configured):
-    if not configured:
+@pytest.mark.parametrize(
+    "repo,folder,label",
+    [
+        (True, True, "💾 Save to Repo"),
+        (False, True, "💾 Save to Files Folder"),
+        (False, False, None),
+    ],
+    ids=["repo", "folder-only", "neither"],
+)
+async def test_the_save_button_says_where_it_saves(
+    monkeypatch, github, repo, folder, label
+):
+    if not repo:
         monkeypatch.setattr(SETTINGS, "files_repo_token", None)
+    if not folder:
+        monkeypatch.setattr(SETTINGS, "files_dir", None)
     user, context = make()
 
-    query = await press("troubleshooter:menu_files", user, context, text="x")
-    text = query.edit_message_text.await_args.args[0]
-    callbacks = [
-        b.callback_data
-        for row in query.edit_message_text.await_args.kwargs[
-            "reply_markup"
-        ].inline_keyboard
-        for b in row
-    ]
-
-    assert ("troubleshooter:menu_files:save:8" in callbacks) is configured
-    assert "troubleshooter:menu_files:send:8" in callbacks
-    assert not any(c.endswith(":9") for c in callbacks)
-    assert "(in the repo, live after the next deploy)" in text
-
     await files.send_to_owner(context, SETTINGS.menu["attachments"][0])
+
     markup = context.bot.send_document.await_args.kwargs["reply_markup"]
-    assert (markup is not None) is configured
+    assert (markup and markup.inline_keyboard[0][0].text) == label
+    if folder:
+        query = await press("troubleshooter:menu_files", user, context, text="x")
+        text = query.edit_message_text.await_args.args[0]
+        callbacks = [
+            b.callback_data
+            for row in query.edit_message_text.await_args.kwargs[
+                "reply_markup"
+            ].inline_keyboard
+            for b in row
+        ]
+        assert "troubleshooter:menu_files:save:8" in callbacks
+        assert not any(c.endswith(":9") for c in callbacks)
+        assert "(in the repo, live after the next deploy)" in text
+
+
+@pytest.mark.asyncio
+async def test_without_a_repo_save_writes_to_the_files_folder(
+    monkeypatch, tmp_path, github
+):
+    monkeypatch.setattr(SETTINGS, "files_repo_token", None)
+    monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
+    user, context = make()
+
+    query = await press("troubleshooter:menu_files:save:8", user, context)
+
+    query.answer.assert_awaited_once_with("💾 Saving…")
+    assert (tmp_path / "pdf" / "safety.pdf").read_bytes() == b"%PDF-1"
+    assert github.puts == []
+    assert github.saved == [(8, "saved")]
+    assert SETTINGS.menu["attachments"][0]["status"] == "saved"
+    assert (
+        context.bot.send_message.await_args.args[1]
+        == "💾 Saved pdf/safety.pdf in the files folder."
+    )
+
+
+@pytest.mark.asyncio
+async def test_a_folder_that_cannot_be_written_keeps_the_file_pending(
+    monkeypatch, tmp_path, github
+):
+    blocked = tmp_path / "pdf"
+    blocked.write_text("not a folder")
+    monkeypatch.setattr(SETTINGS, "files_repo_token", None)
+    monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
+    reported = MagicMock()
+    monkeypatch.setattr(files.sentry_sdk, "capture_exception", reported)
+    user, context = make()
+
+    await press("troubleshooter:menu_files:save:8", user, context)
+
+    reported.assert_called_once()
+    assert github.saved == []
+    assert SETTINGS.menu["attachments"][0]["status"] == "pending"
+    assert context.bot.send_message.await_args.args[1].startswith(
+        "⚠️ Couldn't save pdf/safety.pdf"
+    )
 
 
 @pytest.mark.asyncio
@@ -292,3 +346,73 @@ async def test_start_marks_committed_files_saved_once_deployed(
         [8],
     ) in cur.calls
     assert SETTINGS.menu["attachments"][0]["status"] == "saved"
+
+
+@pytest.mark.asyncio
+async def test_start_puts_vanished_files_back_in_pending(
+    monkeypatch, tmp_path, make_cursor, patch_session
+):
+    import turbine_troubleshooter.db as ts
+
+    monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
+    rows = [
+        {
+            "id": 8,
+            "node_id": 3,
+            "type": "document",
+            "file_id": "F8",
+            "file_unique_id": "U8",
+            "path": "pdf/gone.pdf",
+            "status": "saved",
+        },
+        {
+            "id": 5,
+            "node_id": 3,
+            "type": "document",
+            "file_id": None,
+            "file_unique_id": None,
+            "path": "pdf/old.pdf",
+            "status": "saved",
+        },
+    ]
+
+    class Cursor(make_cursor):
+        async def _fetchone(self):
+            return (
+                {"value": 1}
+                if self.calls[-1][0].startswith("SELECT value FROM settings")
+                else {"t": 1}
+            )
+
+        async def _fetchall(self):
+            sql = self.calls[-1][0]
+            if "FROM attachments" in sql:
+                return [dict(r) for r in rows]
+            if "FROM menus" in sql:
+                return [
+                    {
+                        "id": 3,
+                        "parent_id": None,
+                        "type": "page",
+                        "title": "S",
+                        "body": "",
+                        "sort_order": 1,
+                        "edits": None,
+                    }
+                ]
+            return []
+
+    async def nothing(_):
+        return 0
+
+    for name in ("menu_migrate", "io_boards_migrate", "wtgs_migrate"):
+        monkeypatch.setattr(ts.schema, name, nothing)
+    cur = patch_session(ts, Cursor())
+
+    await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
+
+    assert (
+        "UPDATE attachments SET status = 'pending' WHERE id IN (%s)",
+        [8],
+    ) in cur.calls
+    assert [a["status"] for a in SETTINGS.menu["attachments"]] == ["pending", "saved"]
