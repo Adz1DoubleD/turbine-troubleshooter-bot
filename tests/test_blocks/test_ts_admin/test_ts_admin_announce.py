@@ -67,7 +67,7 @@ async def test_owner_is_offered_the_note_once(marks):
         ({"WHATS_NEW": {}}, False),
         ({"test_mode": True}, False),
         ({"announce_updates": "0"}, False),
-        ({"approved": set()}, True),
+        ({"approved": set()}, False),
     ],
     ids=["no-note", "test-mode", "turned-off", "nobody-to-tell"],
 )
@@ -126,7 +126,7 @@ async def test_send_broadcasts_once(monkeypatch, marks):
     assert notify.await_args.args[1] == "broadcast"
     assert (
         notify.await_args.kwargs["message"]
-        == "What's new in version 9.9.0:\n\n• Something new"
+        == f"What's new in {SETTINGS.name}:\n\n• Something new"
     )
     assert (
         query.edit_message_text.await_args.args[0]
