@@ -315,22 +315,12 @@ async def send_notification_troubleshooter(
         if undo
         else None
     )
-    alerts_is_owner = str(SETTINGS.alerts_chat_id) == str(SETTINGS.owner_id)
-
-    if to_alerts:
+    if to_alerts or undo:
         await bot.send_message(
             chat_id=SETTINGS.alerts_chat_id,
-            text=owner_text if undo and alerts_is_owner else text,
-            parse_mode=parse_mode,
-            reply_markup=owner_markup if undo and alerts_is_owner else reply_markup,
-        )
-
-    if undo and not (to_alerts and alerts_is_owner):
-        await bot.send_message(
-            chat_id=SETTINGS.owner_id,
             text=owner_text,
             parse_mode=parse_mode,
-            reply_markup=owner_markup,
+            reply_markup=owner_markup or reply_markup,
         )
 
     if target_id:

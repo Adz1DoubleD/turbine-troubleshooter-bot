@@ -115,7 +115,13 @@ async def press(data, user, context, text=None):
         from_user=user,
         answer=AsyncMock(),
         edit_message_text=AsyncMock(),
-        message=SimpleNamespace(text=text, message_id=3, chat_id=user.id),
+        edit_message_caption=AsyncMock(),
+        message=SimpleNamespace(
+            text=text,
+            caption=None if text else "📎 File to save",
+            message_id=3,
+            chat_id=user.id,
+        ),
     )
     await turbine_troubleshooter.handle_button(
         SimpleNamespace(callback_query=query, effective_user=user), context
@@ -142,10 +148,10 @@ async def test_owner_saves_a_file_to_the_repo(github):
     assert body["message"] == "Add pdf/safety.pdf from the troubleshooter bot"
     assert github.saved == [(8, "committed")]
     assert SETTINGS.menu["attachments"][0]["status"] == "committed"
-    reply = context.bot.send_message.await_args.args
-    assert reply[0] == str(OWNER) and reply[1].startswith(
+    assert query.edit_message_caption.await_args.kwargs["caption"].startswith(
         "💾 Saved pdf/safety.pdf to the repo."
     )
+    context.bot.send_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -167,9 +173,9 @@ async def test_failed_saves_explain_why_and_keep_the_file_pending(
     monkeypatch.setattr(files.sentry_sdk, "capture_message", reported)
     user, context = make()
 
-    await press("troubleshooter:menu_files:save:8", user, context)
+    query = await press("troubleshooter:menu_files:save:8", user, context)
 
-    reply = context.bot.send_message.await_args.args[1]
+    reply = query.edit_message_caption.await_args.kwargs["caption"]
     assert (
         reply.startswith("⚠️ Couldn't save pdf/safety.pdf to the repo.")
         and reason in reply
@@ -186,10 +192,10 @@ async def test_network_errors_go_to_sentry(monkeypatch, github):
     monkeypatch.setattr(files.sentry_sdk, "capture_exception", reported)
     user, context = make()
 
-    await press("troubleshooter:menu_files:save:8", user, context)
+    query = await press("troubleshooter:menu_files:save:8", user, context)
 
     assert str(reported.call_args.args[0]) == "offline"
-    assert "Try again later" in context.bot.send_message.await_args.args[1]
+    assert "Try again later" in query.edit_message_caption.await_args.kwargs["caption"]
 
 
 @pytest.mark.asyncio
@@ -269,7 +275,7 @@ async def test_without_a_repo_save_writes_to_the_files_folder(
     assert github.saved == [(8, "saved")]
     assert SETTINGS.menu["attachments"][0]["status"] == "saved"
     assert (
-        context.bot.send_message.await_args.args[1]
+        query.edit_message_caption.await_args.kwargs["caption"]
         == "💾 Saved pdf/safety.pdf in the files folder."
     )
 
@@ -286,12 +292,12 @@ async def test_a_folder_that_cannot_be_written_keeps_the_file_pending(
     monkeypatch.setattr(files.sentry_sdk, "capture_exception", reported)
     user, context = make()
 
-    await press("troubleshooter:menu_files:save:8", user, context)
+    query = await press("troubleshooter:menu_files:save:8", user, context)
 
     reported.assert_called_once()
     assert github.saved == []
     assert SETTINGS.menu["attachments"][0]["status"] == "pending"
-    assert context.bot.send_message.await_args.args[1].startswith(
+    assert query.edit_message_caption.await_args.kwargs["caption"].startswith(
         "⚠️ Couldn't save pdf/safety.pdf"
     )
 
@@ -425,11 +431,32 @@ async def test_a_files_folder_outside_the_bots_folder_cannot_go_to_the_repo(
     monkeypatch.setattr(SETTINGS, "files_dir", tmp_path.parent / "elsewhere")
     user, context = make()
 
-    await press("troubleshooter:menu_files:save:8", user, context)
+    query = await press("troubleshooter:menu_files:save:8", user, context)
 
     assert github.puts == []
     assert (
         "its place in the repo can't be worked out"
-        in context.bot.send_message.await_args.args[1]
+        in query.edit_message_caption.await_args.kwargs["caption"]
     )
     assert SETTINGS.menu["attachments"][0]["status"] == "pending"
+
+
+@pytest.mark.asyncio
+async def test_saving_from_the_list_shows_the_result_on_the_list(github):
+    user, context = make()
+
+    query = await press("troubleshooter:menu_files:save:8", user, context, text="x")
+
+    query.edit_message_caption.assert_not_awaited()
+    context.bot.send_message.assert_not_awaited()
+    text = query.edit_message_text.await_args.args[0]
+    assert text.startswith("💾 Saved pdf/safety.pdf to the repo.")
+    assert "📎 *Pending Files*" in text
+    callbacks = [
+        b.callback_data
+        for row in query.edit_message_text.await_args.kwargs[
+            "reply_markup"
+        ].inline_keyboard
+        for b in row
+    ]
+    assert "troubleshooter:menu_files:save:8" not in callbacks

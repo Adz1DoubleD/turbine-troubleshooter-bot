@@ -42,7 +42,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `wtg_prefix` | `TROUBLESHOOTER_WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
 | `token` | `TROUBLESHOOTER_BOT_TOKEN` | Bot token from @BotFather (see [Create your Telegram bot](#create-your-telegram-bot)) |
 | `owner_id` | `TROUBLESHOOTER_OWNER_ID` | Your Telegram user ID; the owner approves access and admins ([how to find it](#your-telegram-user-id)) |
-| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for new-user, access-request and change notifications. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
+| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for everything the bot reports: new users, access requests, change notices, feedback, delete requests, ↩️ Undo, files to save and the *What's new* note. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
 | `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
 | `test_mode` | `TROUBLESHOOTER_TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
 | `announce_updates` | `TROUBLESHOOTER_ANNOUNCE_UPDATES` | `0` to stop the owner being offered each release's *What's new* note. On by default ([release notes](#release-notes-for-users)) |
@@ -65,9 +65,9 @@ MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's 
 
 In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.
 
-A new file works in the troubleshooter bot straight away. The bot also sends it to the owner with the path to save it as in `files_dir` (for example `pdf/manual.pdf`), and lists it under **Admin Panel → 📎 Pending Files** until it's there. Hosts show files from `files_dir`, so until it's saved a host shows "This document isn't available right now". On each start the bot marks pending files it finds in `files_dir` as saved.
+A new file works in the troubleshooter bot straight away. The bot also sends it to the alerts chat with the path to save it as in `files_dir` (for example `pdf/manual.pdf`), and lists it under **Admin Panel → 📎 Pending Files** until it's there. Hosts show files from `files_dir`, so until it's saved a host shows "This document isn't available right now". On each start the bot marks pending files it finds in `files_dir` as saved.
 
-The owner can tap **💾 Save** on that message, or in Pending Files, instead of saving it by hand. Without repo settings it saves the file straight into `files_dir`, which is all a bot on an ordinary server needs. On hosts that reset their disk on each restart, such as Heroku, a file saved that way only lasts until the next restart; the bot then notices it's gone and puts it back in Pending Files.
+The owner can tap **💾 Save** on that message, or in Pending Files, instead of saving it by hand; the result replaces the message's caption or shows at the top of the list. Without repo settings it saves the file straight into `files_dir`, which is all a bot on an ordinary server needs. On hosts that reset their disk on each restart, such as Heroku, a file saved that way only lasts until the next restart; the bot then notices it's gone and puts it back in Pending Files.
 
 For those hosts, if `files_dir` is deployed from a GitHub repo, set `TROUBLESHOOTER_FILES_REPO` and `TROUBLESHOOTER_FILES_REPO_TOKEN` and the button becomes **💾 Save to Repo**: it commits the file to the same place in the repo, worked out from where `files_dir` sits under the folder the bot runs from (for a bot started from the top of its repo, `app/media` stays `app/media`), so it's in `files_dir` after the host's next deploy. Use a fine-grained token limited to that one repo with *Contents: read and write*; keep it in the host's environment, never in a file. If GitHub refuses (wrong token, missing folder, a file with that name already there), the owner is told why and the file stays pending.
 
@@ -79,8 +79,8 @@ The same rules cover fault codes, spare parts and menu items:
 |---|---|---|---|
 | View | ✅ | ✅ | ✅ |
 | Add | ✅ | ✅ Live at once | ❌ |
-| Edit | ✅ | ✅ Live at once; the owner gets the old text with **↩️ Undo** | ❌ |
-| Delete | ✅ | Asks the owner, who approves or keeps it from the message or **Admin Panel → 📥 Requests** (which also lists access and admin requests) | ❌ |
+| Edit | ✅ | ✅ Live at once; the alerts chat gets the old text with **↩️ Undo** for the owner | ❌ |
+| Delete | ✅ | Asks the owner in the alerts chat; the owner approves or keeps it from that message or **Admin Panel → 📥 Requests** (which also lists access and admin requests) | ❌ |
 
 Undo only works while the item still has the text the admin saved; if it's been changed again since, the bot says so. Edits made before this version can't be undone, because their old text wasn't kept.
 
@@ -143,7 +143,7 @@ Content lives only in the database, so keep a copy: **Admin Panel → 📤 Expor
 
 ## Release notes for users
 
-A release can come with a short, plain-language *What's new* note in [`whats_new.py`](turbine_troubleshooter/whats_new.py). The first time the bot starts on that version, it sends the owner the note with **📢 Send to Everyone** and **❌ Skip**; nothing reaches users until the owner taps Send, and it can only be sent once. The bot doesn't offer it in test mode, or when it has no approved users yet.
+A release can come with a short, plain-language *What's new* note in [`whats_new.py`](turbine_troubleshooter/whats_new.py). The first time the bot starts on that version, it sends the note to the alerts chat with **📢 Send to Everyone** and **❌ Skip**; nothing reaches users until the owner taps Send, and it can only be sent once. The bot doesn't offer it in test mode, or when it has no approved users yet.
 
 ## Create your Telegram bot
 
@@ -167,6 +167,8 @@ Notifications go to the owner's private chat unless you set `TROUBLESHOOTER_ALER
 1. Add the bot to the group. For a channel, add it as an admin that can post messages; it can't post in a channel otherwise.
 2. Find the chat's ID. With the bot stopped, open `https://api.telegram.org/bot<your token>/getUpdates` in a browser and look for `"chat":{"id":-100...` from adding the bot. If the list is empty, remove the bot and add it again, then reload.
 3. Put the ID, including the minus sign, in `TROUBLESHOOTER_ALERTS_CHAT_ID`.
+
+Everything the bot reports goes there, including the old text of edits, files waiting to be saved and the owner's buttons (**↩️ Undo**, **✅ Delete**, **💾 Save**, **📢 Send to Everyone**). Anyone in the chat can see them, but only the owner can press those buttons. Use a chat only you, or you and people you trust, can see.
 
 If the host's own bot is also in that group or channel, it receives the troubleshooter's alerts and edits as updates too. Make sure it ignores channel posts and edited channel posts (`~filters.UpdateType.CHANNEL_POSTS` in python-telegram-bot).
 

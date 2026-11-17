@@ -49,7 +49,7 @@ async def ask_owner_to_delete(update, context, kind, target, label):
     }
     try:
         await own_bot(context).send_message(
-            SETTINGS.owner_id,
+            SETTINGS.alerts_chat_id,
             f"🗑 *Delete request*\n\n{escape_markdown(name)} wants to delete the "
             f"{KINDS[kind]}: {escape_markdown(label)}",
             parse_mode="Markdown",

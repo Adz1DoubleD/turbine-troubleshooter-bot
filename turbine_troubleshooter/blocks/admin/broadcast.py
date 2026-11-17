@@ -197,7 +197,7 @@ async def offer_update_note(application):
     if not await setting_mark(f"offered_{current}"):
         return
     await application.bot.send_message(
-        SETTINGS.owner_id,
+        SETTINGS.alerts_chat_id,
         f"📢 *What's new in {escape_markdown(SETTINGS.name)} {current}*\n\n"
         f"{escape_markdown(note)}\n\nSend this to everyone?",
         parse_mode="Markdown",

@@ -5,6 +5,7 @@ from pathlib import Path
 import httpx
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.db import (
@@ -30,7 +31,7 @@ async def send_to_owner(context, attachment):
     )
     try:
         await send(
-            SETTINGS.owner_id,
+            SETTINGS.alerts_chat_id,
             attachment["file_id"],
             caption=f"📎 *File to save*\n\nFor: "
             f"{escape_markdown(where(attachment['node_id']))}\n"
@@ -187,6 +188,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if a["status"] in ("pending", "committed")
         ]
         repo = SETTINGS.files_repo and SETTINGS.files_repo_token
+        done = ""
         chosen = next(
             (
                 a
@@ -206,8 +208,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not chosen or not (repo or SETTINGS.files_dir):
                 await query.answer("Already saved.")
                 return
+            await query.answer("💾 Saving to the repo…" if repo else "💾 Saving…")
             if not repo:
-                await query.answer("💾 Saving…")
                 target = Path(SETTINGS.files_dir) / chosen["path"]
                 try:
                     data = await (
@@ -224,71 +226,81 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         f"⚠️ Couldn't save {chosen['path']} in the files folder. "
                         "Try again later."
                     )
-                await own_bot(context).send_message(SETTINGS.owner_id, reply)
-                return
-            await query.answer("💾 Saving to the repo…")
-            try:
-                folder = (
-                    Path(SETTINGS.files_dir)
-                    .resolve()
-                    .relative_to(Path.cwd().resolve())
-                    .as_posix()
-                )
-            except (TypeError, ValueError):
-                await own_bot(context).send_message(
-                    SETTINGS.owner_id,
-                    f"⚠️ Couldn't save {chosen['path']} to the repo. The files folder "
-                    "isn't inside the folder the bot runs from, so its place in the "
-                    "repo can't be worked out.",
-                )
-                return
-            status = None
-            try:
-                data = await (
-                    await own_bot(context).get_file(chosen["file_id"])
-                ).download_as_bytearray()
-                async with httpx.AsyncClient(timeout=60) as client:
-                    response = await client.put(
-                        f"https://api.github.com/repos/{SETTINGS.files_repo}/contents/"
-                        + "/".join(
-                            p for p in (folder, chosen["path"]) if p not in ("", ".")
-                        ),
-                        headers={
-                            "Authorization": f"Bearer {SETTINGS.files_repo_token}",
-                            "Accept": "application/vnd.github+json",
-                        },
-                        json={
-                            "message": f"Add {chosen['path']} from the troubleshooter bot",
-                            "content": base64.b64encode(bytes(data)).decode(),
-                            "branch": SETTINGS.files_repo_branch or "main",
-                        },
-                    )
-                status = response.status_code
-            except Exception as e:
-                sentry_sdk.capture_exception(e)
-            if status in (200, 201):
-                await attachment_status(chosen["id"], "committed")
-                chosen["status"] = "committed"
-                reply = (
-                    f"💾 Saved {chosen['path']} to the repo. It's in the files folder "
-                    "after the next deploy."
-                )
             else:
-                if status:
-                    sentry_sdk.capture_message(
-                        f"Troubleshooter file save to repo failed: HTTP {status}",
-                        level="warning",
+                try:
+                    folder = (
+                        Path(SETTINGS.files_dir)
+                        .resolve()
+                        .relative_to(Path.cwd().resolve())
+                        .as_posix()
                     )
-                reply = f"⚠️ Couldn't save {chosen['path']} to the repo. " + {
-                    401: "The token isn't valid.",
-                    403: "The token can't write to that repo.",
-                    404: "The repo, folder or branch wasn't found.",
-                    409: "The branch changed while saving. Try again.",
-                    422: "A file with that name is already there.",
-                }.get(status, "Try again later.")
-            await own_bot(context).send_message(SETTINGS.owner_id, reply)
-            return
-        text = (
+                except (TypeError, ValueError):
+                    folder = None
+                    reply = (
+                        f"⚠️ Couldn't save {chosen['path']} to the repo. The files "
+                        "folder isn't inside the folder the bot runs from, so its "
+                        "place in the repo can't be worked out."
+                    )
+                if folder is not None:
+                    status = None
+                    try:
+                        data = await (
+                            await own_bot(context).get_file(chosen["file_id"])
+                        ).download_as_bytearray()
+                        async with httpx.AsyncClient(timeout=60) as client:
+                            response = await client.put(
+                                "https://api.github.com/repos/"
+                                f"{SETTINGS.files_repo}/contents/"
+                                + "/".join(
+                                    p
+                                    for p in (folder, chosen["path"])
+                                    if p not in ("", ".")
+                                ),
+                                headers={
+                                    "Authorization": "Bearer "
+                                    f"{SETTINGS.files_repo_token}",
+                                    "Accept": "application/vnd.github+json",
+                                },
+                                json={
+                                    "message": f"Add {chosen['path']} from the "
+                                    "troubleshooter bot",
+                                    "content": base64.b64encode(bytes(data)).decode(),
+                                    "branch": SETTINGS.files_repo_branch or "main",
+                                },
+                            )
+                        status = response.status_code
+                    except Exception as e:
+                        sentry_sdk.capture_exception(e)
+                    if status in (200, 201):
+                        await attachment_status(chosen["id"], "committed")
+                        chosen["status"] = "committed"
+                        reply = (
+                            f"💾 Saved {chosen['path']} to the repo. It's in the "
+                            "files folder after the next deploy."
+                        )
+                    else:
+                        if status:
+                            sentry_sdk.capture_message(
+                                "Troubleshooter file save to repo failed: "
+                                f"HTTP {status}",
+                                level="warning",
+                            )
+                        reply = f"⚠️ Couldn't save {chosen['path']} to the repo. " + {
+                            401: "The token isn't valid.",
+                            403: "The token can't write to that repo.",
+                            404: "The repo, folder or branch wasn't found.",
+                            409: "The branch changed while saving. Try again.",
+                            422: "A file with that name is already there.",
+                        }.get(status, "Try again later.")
+            if query.message.caption is not None:
+                try:
+                    await query.edit_message_caption(caption=reply)
+                except BadRequest:
+                    pass
+                return
+            done = f"{escape_markdown(reply)}\n\n"
+            pending = [a for a in pending if a["status"] in ("pending", "committed")]
+        text = done + (
             f"📎 *Pending Files* ({len(pending)})\n\n"
             "These were added in the bot but aren't in the files folder yet. "
             + (
