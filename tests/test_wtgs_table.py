@@ -162,7 +162,7 @@ async def test_export_reads_the_new_table_once_it_exists(make_cursor, patch_sess
     rows = [{"name": "WTA01", "serial": "1", "ip": "192.0.2.1"}]
     cur = patch_session(ts, make_cursor(fetchone=[{"t": "wtgs"}], fetchall=[rows]))
 
-    assert await ts.db_tables("wtg_map") == rows
+    assert await ts.db_tables("wtgs") == rows
 
     assert (
         cur.calls[-1][0]

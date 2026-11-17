@@ -1,3 +1,5 @@
+import io
+import zipfile
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -19,6 +21,39 @@ async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     table = query.data.split(":", 2)[2]
     chat_id = update.effective_chat.id
+    if table == "all":
+        if not is_owner(query.from_user.id):
+            await query.answer("⚠️ Only the owner can do that.", show_alert=True)
+            return
+        await query.answer("📦 Packing everything…")
+        archive = io.BytesIO()
+        counts = []
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
+            for name, filename in (
+                ("menus", "menus.csv"),
+                ("io_boards", "io_boards.csv"),
+                ("wtgs", "wtgs.csv"),
+                ("codes", "codes.csv"),
+                ("parts", "parts.csv"),
+            ):
+                rows = await db_tables(name)
+                if rows:
+                    z.writestr(filename, db_export(rows).getvalue())
+                counts.append(f"{EXPORT_LABELS[name]}: {len(rows or [])}")
+        archive.seek(0)
+        await context.bot.send_document(
+            chat_id=chat_id,
+            document=archive,
+            filename=f"troubleshooter_content_{datetime.now():%Y%m%d_%H%M}.zip",
+            caption="📦 *Everything exported*\n\n"
+            + "\n".join(counts)
+            + "\n\nPhotos and PDFs aren't included: they're the files in your files "
+            "folder, listed in menus.csv.",
+            parse_mode="Markdown",
+            reply_markup=error_kb(),
+        )
+        return
+
     rows = await db_tables(table)
     if not rows:
         text = f"Unknown table: {table}" if rows is None else f"{table} is empty."
@@ -43,8 +78,8 @@ EXPORT_LABELS = {
     "parts": "Spare Parts",
     "io_boards": "IO Boards",
     "users": "Users",
-    "modules_map": "Modules",
-    "wtg_map": "WTG Data",
+    "menus": "Menus",
+    "wtgs": "Turbines",
 }
 
 
@@ -62,6 +97,15 @@ async def button_export_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
         ]
         for table, label in EXPORT_LABELS.items()
     ]
+    if is_owner(query.from_user.id):
+        kb.insert(
+            0,
+            [
+                InlineKeyboardButton(
+                    "📦 Everything (ZIP)", callback_data="troubleshooter:export:all"
+                )
+            ],
+        )
     kb.append(
         [InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:admin_menu")]
     )

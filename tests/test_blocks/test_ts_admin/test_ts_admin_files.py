@@ -483,7 +483,7 @@ async def test_start_marks_files_that_are_now_saved(
             sql = self.calls[-1][0]
             if "FROM attachments" in sql:
                 return rows
-            if "FROM menu_nodes" in sql:
+            if "FROM menus" in sql:
                 return [
                     {
                         "id": 3,

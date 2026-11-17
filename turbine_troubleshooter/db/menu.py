@@ -7,12 +7,12 @@ from .core import db_session
 MENU_MIGRATED = "menu_migrated"
 
 
-async def menu_migrate(modules_map_json):
+async def menu_migrate(menus_json):
     async with db_session() as cur:
-        await cur.execute("SHOW TABLES LIKE 'menu_nodes'")
+        await cur.execute("SHOW TABLES LIKE 'menus'")
         if not await cur.fetchone():
             await cur.execute("""
-                CREATE TABLE menu_nodes (
+                CREATE TABLE menus (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     parent_id INT NULL,
                     type VARCHAR(10) NOT NULL,
@@ -28,7 +28,7 @@ async def menu_migrate(modules_map_json):
                     legacy_key VARCHAR(512) NULL UNIQUE,
                     edits JSON NULL,
                     KEY parent_order (parent_id, sort_order),
-                    FOREIGN KEY (parent_id) REFERENCES menu_nodes (id)
+                    FOREIGN KEY (parent_id) REFERENCES menus (id)
                 ) DEFAULT CHARSET=utf8mb4
             """)
 
@@ -49,7 +49,7 @@ async def menu_migrate(modules_map_json):
                     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     KEY node_order (node_id, sort_order),
                     KEY file_unique (file_unique_id),
-                    FOREIGN KEY (node_id) REFERENCES menu_nodes (id)
+                    FOREIGN KEY (node_id) REFERENCES menus (id)
                         ON DELETE CASCADE
                 ) DEFAULT CHARSET=utf8mb4
             """)
@@ -59,7 +59,7 @@ async def menu_migrate(modules_map_json):
         )
         if await cur.fetchone():
             return 0
-        if not modules_map_json:
+        if not menus_json:
             await cur.execute(
                 "INSERT INTO settings (name, value) VALUES (%s, 1)", (MENU_MIGRATED,)
             )
@@ -68,9 +68,7 @@ async def menu_migrate(modules_map_json):
         owner = int(SETTINGS.owner_id) if SETTINGS.owner_id else None
         queue = [
             (None, (), title, data, order)
-            for order, (title, data) in enumerate(
-                json.loads(modules_map_json).items(), 1
-            )
+            for order, (title, data) in enumerate(json.loads(menus_json).items(), 1)
         ]
 
         await cur.execute("START TRANSACTION")
@@ -84,7 +82,7 @@ async def menu_migrate(modules_map_json):
                     kind, body = "page", data
 
                 await cur.execute(
-                    "INSERT INTO menu_nodes (parent_id, type, title, body, "
+                    "INSERT INTO menus (parent_id, type, title, body, "
                     "sort_order, created_by, updated_by, legacy_key) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                     (
@@ -140,13 +138,13 @@ async def menu_migrate(modules_map_json):
 async def menu_node_add(parent_id, kind, title, body, user_id):
     async with db_session() as cur:
         await cur.execute(
-            "SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM menu_nodes "
+            "SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM menus "
             "WHERE parent_id <=> %s",
             (parent_id,),
         )
         order = (await cur.fetchone())["n"]
         await cur.execute(
-            "INSERT INTO menu_nodes (parent_id, type, title, body, sort_order, "
+            "INSERT INTO menus (parent_id, type, title, body, sort_order, "
             "created_by, updated_by) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             (parent_id, kind, title, body, order, user_id, user_id),
         )
@@ -168,7 +166,7 @@ async def menu_node_update(node_id, field, value, user_id, edited_by, edited_at,
     async with db_session() as cur:
         await cur.execute(
             f"""
-            UPDATE menu_nodes SET
+            UPDATE menus SET
                 `{field}` = %s,
                 updated_by = %s,
                 edits = JSON_ARRAY_APPEND(
@@ -192,7 +190,7 @@ async def menu_node_update(node_id, field, value, user_id, edited_by, edited_at,
 
 async def menu_node_delete(node_id):
     async with db_session() as cur:
-        await cur.execute("DELETE FROM menu_nodes WHERE id = %s", (node_id,))
+        await cur.execute("DELETE FROM menus WHERE id = %s", (node_id,))
         return cur.rowcount > 0
 
 

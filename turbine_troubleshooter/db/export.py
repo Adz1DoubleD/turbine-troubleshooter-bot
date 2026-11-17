@@ -11,8 +11,8 @@ EXPORT_TABLES = (
     "parts",
     "users",
     "io_boards",
-    "modules_map",
-    "wtg_map",
+    "menus",
+    "wtgs",
 )
 
 
@@ -62,16 +62,54 @@ async def db_tables(table):
 
     async with db_session() as cur:
         await cur.execute("SHOW TABLES LIKE 'wtgs'")
-        if table == "wtg_map" and await cur.fetchone():
+        if table == "wtgs" and await cur.fetchone():
             await cur.execute(
                 "SELECT wtg AS name, serial, ip FROM wtgs ORDER BY sort_order, wtg"
             )
             return await cur.fetchall() or None
 
-        if table in ("modules_map", "wtg_map"):
+        if table == "menus":
+            await cur.execute("SHOW TABLES LIKE 'menus'")
+            if await cur.fetchone():
+                await cur.execute(
+                    "SELECT id, parent_id, type, title, body, sort_order "
+                    "FROM menus ORDER BY sort_order, id"
+                )
+                children = {}
+                for n in await cur.fetchall():
+                    children.setdefault(n["parent_id"], []).append(n)
+                await cur.execute(
+                    "SELECT node_id, path FROM attachments ORDER BY sort_order, id"
+                )
+                files = {}
+                for a in await cur.fetchall():
+                    files.setdefault(a["node_id"], []).append(a["path"] or "")
+                rows = []
+                stack = [(n, (n["title"],)) for n in reversed(children.get(None, []))]
+                while stack:
+                    n, path = stack.pop()
+                    rows.append(
+                        {
+                            "id": n["id"],
+                            "path": " › ".join(path),
+                            "type": n["type"],
+                            "title": n["title"],
+                            "body": n["body"],
+                            "files": ", ".join(files.get(n["id"], [])),
+                            "parent_id": n["parent_id"],
+                            "position": n["sort_order"],
+                        }
+                    )
+                    stack += [
+                        (c, (*path, c["title"]))
+                        for c in reversed(children.get(n["id"], []))
+                    ]
+                return rows or None
+
+        if table in ("menus", "wtgs"):
             content_name = {
-                "modules_map": "MODULES_MAP",
-                "wtg_map": "WTG_MAP",
+                "menus": "MODULES_MAP",
+                "wtgs": "WTG_MAP",
             }[table]
 
             await cur.execute(

@@ -5,7 +5,7 @@ from .core import db_session
 WTGS_MIGRATED = "wtgs_migrated"
 
 
-async def wtgs_migrate(wtg_map_json):
+async def wtgs_migrate(wtgs_json):
     async with db_session() as cur:
         await cur.execute("SHOW TABLES LIKE 'wtgs'")
         if not await cur.fetchone():
@@ -32,7 +32,7 @@ async def wtgs_migrate(wtg_map_json):
                 order,
             )
             for order, (wtg, info) in enumerate(
-                (json.loads(wtg_map_json) if wtg_map_json else {}).items(), 1
+                (json.loads(wtgs_json) if wtgs_json else {}).items(), 1
             )
             if isinstance(info, dict)
         ]
