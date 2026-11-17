@@ -15,6 +15,7 @@ async def init_troubleshooter_db(application):
     admins = {}
     parts = []
     requests = {"access": {}, "admin": {}}
+    delete_requests = {}
 
     try:
         async with db_session() as cur:
@@ -189,6 +190,28 @@ async def init_troubleshooter_db(application):
                     uid = int(r["user_id"])
                     requests[r["kind"]][uid] = r["name"] or str(uid)
 
+            await cur.execute("SHOW TABLES LIKE 'delete_requests'")
+            if not await cur.fetchone():
+                await cur.execute("""
+                    CREATE TABLE delete_requests (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        kind VARCHAR(10) NOT NULL,
+                        target VARCHAR(64) NOT NULL,
+                        label VARCHAR(255) NOT NULL,
+                        user_id BIGINT NOT NULL,
+                        name VARCHAR(255) DEFAULT NULL,
+                        requested_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE KEY kind_target (kind, target)
+                    ) DEFAULT CHARSET=utf8mb4
+                """)
+
+            await cur.execute(
+                "SELECT id, kind, target, label, user_id, name "
+                "FROM delete_requests ORDER BY id"
+            )
+            for r in await cur.fetchall():
+                delete_requests[int(r["id"])] = r
+
         application.bot_data["codes"] = codes
         application.bot_data["io_boards"] = io_boards
         application.bot_data["troubleshooter_admins"] = admins
@@ -196,6 +219,7 @@ async def init_troubleshooter_db(application):
         application.bot_data["parts"] = parts
         application.bot_data["pending_access_requests"] = requests["access"]
         application.bot_data["pending_admin_requests"] = requests["admin"]
+        application.bot_data["pending_delete_requests"] = delete_requests
 
         print(
             f"✅ Troubleshooter database initialised:\n"

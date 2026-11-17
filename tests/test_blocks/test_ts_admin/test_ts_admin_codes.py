@@ -29,6 +29,13 @@ def frozen_clock(monkeypatch):
     monkeypatch.setattr(admin, "datetime", FrozenDatetime)
 
 
+@pytest.fixture(autouse=True)
+def owner_is_the_user(monkeypatch):
+    from turbine_troubleshooter.settings import SETTINGS
+
+    monkeypatch.setattr(SETTINGS, "owner_id", "5")
+
+
 @pytest.fixture
 def db(monkeypatch):
     m = SimpleNamespace(added=[], deleted=[], notes=[], blocks=[])
@@ -402,7 +409,11 @@ async def test_save_writes_edit_history_and_notifies(db):
     assert saved["advice"] == "New advice"
     assert saved["edits"] == [
         {"by": "@bob", "at": "x"},
-        {"by": "@editor", "at": "2026-07-02 00:30"},
+        {
+            "by": "@editor",
+            "at": "2026-07-02 00:30",
+            "changes": {"advice": ["Check the fuse", "New advice"]},
+        },
     ]
     assert "code_edit_buffer" not in context.user_data
     assert db.notes == [
@@ -425,7 +436,7 @@ async def test_save_first_edit_starts_history(db):
     await admin_codes.button_code_edit_save(update, context)
 
     assert context.bot_data["codes"]["14040"]["edits"] == [
-        {"by": "Ed Itor", "at": "2026-07-02 00:30"}
+        {"by": "Ed Itor", "at": "2026-07-02 00:30", "changes": {}}
     ]
 
 

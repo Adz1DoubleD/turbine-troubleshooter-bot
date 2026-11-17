@@ -54,9 +54,22 @@ The settings below are read from the environment; any keyword passed to `start_t
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `menu_nodes` and `attachments` (the menus, below), `settings` and `requests` (access and admin requests waiting for the owner).
+MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, one table per IO board, `content`, `menu_nodes` and `attachments` (the menus, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
+
+## Who can change what
+
+The same rules cover fault codes, spare parts and menu items:
+
+| | Owner | Admin | Approved user |
+|---|---|---|---|
+| View | ✅ | ✅ | ✅ |
+| Add | ✅ | ✅ Live at once | ❌ |
+| Edit | ✅ | ✅ Live at once; the owner gets the old text with **↩️ Undo** | ❌ |
+| Delete | ✅ | Asks the owner, who approves or keeps it from the message or **Admin Panel → 🗑 Delete Requests** | ❌ |
+
+Undo only works while the item still has the text the admin saved; if it's been changed again since, the bot says so. Edits made before this version can't be undone, because their old text wasn't kept.
 
 ## Content
 

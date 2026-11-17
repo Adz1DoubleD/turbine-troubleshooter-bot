@@ -146,6 +146,17 @@ async def handle_block(
     ]
 
     if owner:
+        deletes = len(context.bot_data.get("pending_delete_requests", {}))
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    f"🗑 Delete Requests ({deletes})"
+                    if deletes
+                    else "🗑 Delete Requests",
+                    callback_data="troubleshooter:delreq",
+                )
+            ]
+        )
         kb.append(
             [
                 InlineKeyboardButton(

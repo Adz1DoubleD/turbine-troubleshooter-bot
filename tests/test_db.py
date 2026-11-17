@@ -20,6 +20,7 @@ async def test_fault_code_add_success(make_cursor, patch_session):
         "added_at": None,
         "edited_by": None,
         "edited_at": None,
+        "changes": None,
     }
 
 
@@ -275,7 +276,14 @@ async def test_part_update_with_editor_appends_history(make_cursor, patch_sessio
     sql, params = cur.execute.call_args.args
     assert "`description` = %s" in sql
     assert "JSON_ARRAY_APPEND" in sql
-    assert params == ("new", "@bob", "2026-07-02 00:30", 7)
+    assert "CAST(%s AS JSON)" in sql
+    assert params == (
+        "new",
+        "@bob",
+        "2026-07-02 00:30",
+        '{"description": [null, "new"]}',
+        7,
+    )
 
 
 @pytest.mark.asyncio
@@ -462,3 +470,27 @@ async def test_content_table_created_only_when_missing(make_cursor, patch_sessio
     assert sql[0] == "SHOW TABLES LIKE 'content'"
     assert sql[1].startswith("CREATE TABLE content")
     assert not any("IF NOT EXISTS" in s for s in sql)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("rowcount,expected", [(1, 7), (0, None)])
+async def test_delete_request_add(make_cursor, patch_session, rowcount, expected):
+    cur = make_cursor(rowcount=rowcount)
+    patch_session(ts, cur)
+
+    assert await ts.delete_request_add("part", 12, "PN – Pump", 5, "@ann") == expected
+    sql, params = cur.execute.call_args.args
+    assert sql.startswith("INSERT IGNORE INTO delete_requests")
+    assert params == ("part", "12", "PN – Pump", 5, "@ann")
+
+
+@pytest.mark.asyncio
+async def test_delete_request_remove(make_cursor, patch_session):
+    cur = make_cursor(rowcount=1)
+    patch_session(ts, cur)
+
+    assert await ts.delete_request_remove(9) is True
+    assert cur.execute.call_args.args == (
+        "DELETE FROM delete_requests WHERE id = %s",
+        (9,),
+    )

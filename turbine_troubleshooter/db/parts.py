@@ -1,3 +1,5 @@
+import json
+
 from .core import db_session
 
 
@@ -11,7 +13,7 @@ async def part_add(part_no, description, section="", added_by=None):
         return cur.lastrowid if cur.rowcount else None
 
 
-async def part_update(part_id, field, value, edited_by=None, edited_at=None):
+async def part_update(part_id, field, value, edited_by=None, edited_at=None, old=None):
     if field not in ("part_no", "description", "section"):
         raise ValueError(f"Unknown part field: {field}")
     async with db_session() as cur:
@@ -23,11 +25,19 @@ async def part_update(part_id, field, value, edited_by=None, edited_at=None):
                     edits = JSON_ARRAY_APPEND(
                         COALESCE(edits, JSON_ARRAY()),
                         '$',
-                        JSON_OBJECT('by', %s, 'at', %s)
+                        JSON_OBJECT(
+                            'by', %s, 'at', %s, 'changes', CAST(%s AS JSON)
+                        )
                     )
                 WHERE id = %s
                 """,
-                (value, edited_by, edited_at, part_id),
+                (
+                    value,
+                    edited_by,
+                    edited_at,
+                    json.dumps({field: [old, value]}, ensure_ascii=False),
+                    part_id,
+                ),
             )
         else:
             await cur.execute(

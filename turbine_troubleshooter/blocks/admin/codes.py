@@ -5,10 +5,11 @@ from turbine_troubleshooter.db import (
     delete_entry,
     fault_code_add,
 )
-from turbine_troubleshooter.helpers import escape_markdown
+from turbine_troubleshooter.helpers import escape_markdown, is_owner
 
 from ...tools import send_notification_troubleshooter, user_is_admin
 from . import handle_block, local_now
+from .changes import ask_owner_to_delete
 
 
 async def button_code_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,6 +47,11 @@ async def button_code_delete(update: Update, context: ContextTypes.DEFAULT_TYPE)
     data = query.data
     code_to_del = data.split(":")[-1]
 
+    if not is_owner(query.from_user.id):
+        return await ask_owner_to_delete(
+            update, context, "code", code_to_del, code_to_del
+        )
+
     if await delete_entry("codes", "code", code_to_del):
         if code_to_del in context.bot_data.get("codes", {}):
             del context.bot_data["codes"][code_to_del]
@@ -74,17 +80,19 @@ async def button_code_delete_confirm(
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     code_to_del = data.split(":")[-1]
+    owner = is_owner(query.from_user.id)
     keyboard = [
         [
             InlineKeyboardButton("❌ No, Cancel", callback_data="troubleshooter:home"),
             InlineKeyboardButton(
-                "✅ Yes, Delete",
+                "✅ Yes, Delete" if owner else "✅ Yes, Ask the Owner",
                 callback_data=f"troubleshooter:code_delete:{code_to_del}",
             ),
         ]
     ]
     await query.edit_message_text(
-        f"⚠️ *Are you sure?*\n\nYou are about to delete code: `{code_to_del}`",
+        f"⚠️ *Are you sure?*\n\nYou are about to delete code: `{code_to_del}`"
+        + ("" if owner else "\n\nThe owner has to approve it before it's removed."),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
@@ -158,18 +166,34 @@ async def button_code_edit_save(update: Update, context: ContextTypes.DEFAULT_TY
     entry["edited_by"] = editor
     edited_at = local_now().strftime("%Y-%m-%d %H:%M")
 
-    await fault_code_add(**entry, edited_at=edited_at)
+    before = context.bot_data["codes"].get(entry["code"]) or {}
+    changes = {
+        f: [before.get(f), entry.get(f)]
+        for f in ("advice", "parts")
+        if (before.get(f) or "") != (entry.get(f) or "")
+    }
 
-    entry["edits"] = (entry.get("edits") or []) + [{"by": editor, "at": edited_at}]
+    await fault_code_add(**entry, edited_at=edited_at, changes=changes)
+
+    entry["edits"] = (entry.get("edits") or []) + [
+        {"by": editor, "at": edited_at, "changes": changes}
+    ]
     context.bot_data["codes"][entry["code"]] = entry
     context.user_data.pop("code_edit_buffer", None)
 
+    undo = bool(changes) and not is_owner(user.id)
     await send_notification_troubleshooter(
         user,
         "code_edited",
         entry["code"],
         entry.get("advice"),
         entry.get("parts"),
+        undo=f"troubleshooter:undo:code:{entry['id']}:{len(entry['edits']) - 1}"
+        if undo
+        else None,
+        was="\n".join(
+            f"{f.capitalize()}: {old or 'None'}" for f, (old, _) in changes.items()
+        ),
     )
 
     return "✅ *Saved*", entry["code"]

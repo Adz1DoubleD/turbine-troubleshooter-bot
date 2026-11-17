@@ -25,6 +25,7 @@ from . import weather
 from .blocks import admin as admin_menu
 from .blocks import codes, handle_block, io_boards, parts, user, wtg
 from .blocks.admin import broadcast as admin_broadcast
+from .blocks.admin import changes as admin_changes
 from .blocks.admin import codes as admin_codes
 from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
@@ -288,6 +289,12 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "troubleshooter:notifications:alert":
         await user.button_alert_toggle(update, context)
 
+    elif data.startswith("troubleshooter:delreq"):
+        await admin_changes.button_delete_requests(update, context)
+
+    elif data.startswith("troubleshooter:undo:"):
+        await admin_changes.button_undo(update, context)
+
     elif admin and data.startswith("troubleshooter:code_confirm_del:"):
         await admin_codes.button_code_delete_confirm(update, context)
 
@@ -463,6 +470,7 @@ async def start_troubleshooter_bot(share_with=None, **options):
         "troubleshooter_approved": set(),
         "pending_access_requests": {},
         "pending_admin_requests": {},
+        "pending_delete_requests": {},
     }
     for key, default in shared.items():
         value = application.bot_data.setdefault(key, default)

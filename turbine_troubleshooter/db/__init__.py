@@ -13,6 +13,10 @@ from .core import (
     get_db_pool,
     get_neighbours,
 )
+from .deletes import (
+    delete_request_add,
+    delete_request_remove,
+)
 from .export import (
     EXPORT_TABLES,
     db_export,
@@ -56,6 +60,8 @@ __all__ = [
     "delete_entry",
     "get_db_pool",
     "get_neighbours",
+    "delete_request_add",
+    "delete_request_remove",
     "EXPORT_TABLES",
     "db_export",
     "db_tables",

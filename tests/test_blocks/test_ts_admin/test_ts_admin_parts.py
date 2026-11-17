@@ -13,6 +13,13 @@ NOW = datetime(2026, 7, 2, 0, 30)
 
 
 @pytest.fixture(autouse=True)
+def owner_is_the_user(monkeypatch):
+    from turbine_troubleshooter.settings import SETTINGS
+
+    monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
+
+
+@pytest.fixture(autouse=True)
 def frozen_clock(monkeypatch):
     monkeypatch.setattr(admin, "local_now", lambda: NOW)
     monkeypatch.setattr(parts, "local_now", lambda: NOW)
@@ -167,7 +174,7 @@ async def test_part_edit_saves_field(
 ):
     saved = []
 
-    async def fake_update(part_id, f, value, edited_by=None, edited_at=None):
+    async def fake_update(part_id, f, value, edited_by=None, edited_at=None, old=None):
         saved.append((part_id, f, value, edited_by, edited_at))
         return True
 
@@ -181,7 +188,9 @@ async def test_part_edit_saves_field(
     part = context.bot_data["parts"][0]
     assert saved == [(7, field, saved_value, "@editor", "2026-07-02 00:30")]
     assert part[field] == saved_value
-    assert part["edits"] == [{"by": "@editor", "at": "2026-07-02 00:30"}]
+    assert part["edits"][0]["by"] == "@editor"
+    assert part["edits"][0]["at"] == "2026-07-02 00:30"
+    assert part["edits"][0]["changes"][field][1] == saved_value
     assert "✅ *Saved*" in bot_edits[0]["text"]
     assert bot_edits[0]["message_id"] == 55
     assert context.user_data["state"] is None
@@ -193,7 +202,7 @@ async def test_part_edit_saves_field(
                 part["part_no"],
                 part["description"],
             ),
-            {"message": change},
+            {"message": change, "undo": None},
         )
     ]
 
@@ -202,7 +211,7 @@ async def test_part_edit_saves_field(
 async def test_part_edit_adding_a_section_shows_none_as_old_value(
     monkeypatch, part_notes
 ):
-    async def fake_update(*args):
+    async def fake_update(*args, **kwargs):
         return True
 
     monkeypatch.setattr(parts, "part_update", fake_update)
@@ -213,7 +222,7 @@ async def test_part_edit_adding_a_section_shows_none_as_old_value(
         update, context, "Spares", "troubleshooter:part_await_edit:section:8"
     )
 
-    assert part_notes[0][1] == {"message": "Section: None → Spares"}
+    assert part_notes[0][1] == {"message": "Section: None → Spares", "undo": None}
 
 
 @pytest.mark.asyncio
@@ -248,7 +257,7 @@ async def test_part_edit_refuses_bad_values(
 
 @pytest.mark.asyncio
 async def test_part_edit_db_failure_leaves_part_unchanged(monkeypatch, part_notes):
-    async def fake_update(*args):
+    async def fake_update(*args, **kwargs):
         raise RuntimeError("offline")
 
     monkeypatch.setattr(parts, "part_update", fake_update)
@@ -414,7 +423,7 @@ async def test_part_delete_not_found_does_not_notify(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_part_edit_adds_to_existing_history(monkeypatch, part_notes):
-    async def fake_update(*args):
+    async def fake_update(*args, **kwargs):
         return True
 
     monkeypatch.setattr(parts, "part_update", fake_update)
@@ -428,7 +437,11 @@ async def test_part_edit_adds_to_existing_history(monkeypatch, part_notes):
 
     assert context.bot_data["parts"][0]["edits"] == [
         {"by": "@bob", "at": "x"},
-        {"by": "@editor", "at": "2026-07-02 00:30"},
+        {
+            "by": "@editor",
+            "at": "2026-07-02 00:30",
+            "changes": {"description": ["YAW MOTOR", "New desc"]},
+        },
     ]
 
 
