@@ -428,7 +428,7 @@ def test_missing_file_is_reported(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_no_content_anywhere_gives_empty_menus(
+async def test_new_database_gives_empty_menus_without_an_error(
     monkeypatch, make_cursor, patch_session
 ):
     from unittest.mock import MagicMock
@@ -456,7 +456,7 @@ async def test_no_content_anywhere_gives_empty_menus(
     assert SETTINGS.content.MODULES_MAP == {}
     assert SETTINGS.content.IO_BOARDS == {}
     assert "E1" in app.bot_data["codes"]
-    assert "missing" in reported.call_args.args[0]
+    reported.assert_not_called()
 
 
 @pytest.mark.asyncio
