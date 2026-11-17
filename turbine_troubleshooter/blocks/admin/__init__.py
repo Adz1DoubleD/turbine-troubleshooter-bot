@@ -185,7 +185,7 @@ async def handle_block(
         [InlineKeyboardButton("🔩 Add Part", callback_data="troubleshooter:part_add")],
         [
             InlineKeyboardButton(
-                "📝 Add Content", callback_data="troubleshooter:menu_add"
+                "📋 Edit Menus", callback_data="troubleshooter:menu_manage:0"
             )
         ],
         [InlineKeyboardButton("👥 Users", callback_data="troubleshooter:user_list")],

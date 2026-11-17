@@ -173,24 +173,6 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     for k in item["items"]
                 ]
                 kb = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
-                if admin and data.startswith("troubleshooter:menu:"):
-                    node_id = data.split(":")[2]
-                    kb.append(
-                        [
-                            InlineKeyboardButton(
-                                "➕ Add Here",
-                                callback_data=f"troubleshooter:menu_add:in:{node_id}",
-                            ),
-                            InlineKeyboardButton(
-                                "✏️ Rename",
-                                callback_data=f"troubleshooter:menu_edit:{node_id}",
-                            ),
-                            InlineKeyboardButton(
-                                "🗑 Delete",
-                                callback_data=f"troubleshooter:menu_del:{node_id}",
-                            ),
-                        ]
-                    )
                 kb.append(
                     [
                         InlineKeyboardButton(
@@ -220,27 +202,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         content_body = item.get("content", "")
         caption = f"*{item['title']}*\n\n{content_body}"
-        node_id = (
-            data.split(":")[2] if data.startswith("troubleshooter:menu:") else None
-        )
         kb = InlineKeyboardMarkup(
-            (
-                [
-                    [
-                        InlineKeyboardButton(
-                            "✏️ Edit",
-                            callback_data=f"troubleshooter:menu_edit:{node_id}",
-                        ),
-                        InlineKeyboardButton(
-                            "🗑 Delete",
-                            callback_data=f"troubleshooter:menu_del:{node_id}",
-                        ),
-                    ]
-                ]
-                if admin and node_id
-                else []
-            )
-            + [
+            [
                 [
                     InlineKeyboardButton(
                         "🔙 Back",

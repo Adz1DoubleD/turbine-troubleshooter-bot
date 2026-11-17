@@ -168,12 +168,14 @@ def shown(query):
 async def test_admin_adds_a_page_inside_a_submenu(db):
     user, context = make()
 
-    text, buttons = shown(await press("troubleshooter:menu_add", user, context))
-    assert "Where should it go?" in text
+    text, buttons = shown(await press("troubleshooter:menu_manage:1", user, context))
+    assert text.startswith("📋 *Edit Menus* · Torque")
     assert buttons == [
-        "troubleshooter:menu_add:in:0",
+        "troubleshooter:menu_manage:2",
         "troubleshooter:menu_add:in:1",
-        "troubleshooter:admin_menu",
+        "troubleshooter:menu_edit:1",
+        "troubleshooter:menu_del:1",
+        "troubleshooter:menu_manage:0",
     ]
 
     text, _ = shown(await press("troubleshooter:menu_add:in:1", user, context))
@@ -192,7 +194,11 @@ async def test_admin_adds_a_page_inside_a_submenu(db):
     assert db.added == [(1, "page", "Blade bolts", "Torque to *500 Nm*", ADMIN)]
     assert SETTINGS.menu["nodes"][-1]["id"] == 50
     assert db.notes[0][0][1:] == ("menu_added", "Torque › Blade bolts")
-    assert buttons == ["troubleshooter:menu:50", "troubleshooter:admin_menu"]
+    assert buttons == [
+        "troubleshooter:menu:50",
+        "troubleshooter:menu_manage:50",
+        "troubleshooter:admin_menu",
+    ]
     assert "menu_draft" not in context.user_data
 
 
@@ -270,7 +276,7 @@ async def test_editing_a_page_text(db, who, undo):
         "troubleshooter:menu_edit:title:3",
         "troubleshooter:menu_edit:body:3",
         "troubleshooter:menu_edit:file:3",
-        "troubleshooter:menu:3",
+        "troubleshooter:menu_manage:3",
     ]
 
     text, _ = shown(await press("troubleshooter:menu_edit:body:3", user, context))
@@ -296,7 +302,10 @@ async def test_submenus_only_offer_a_new_title(db):
 
     _, buttons = shown(await press("troubleshooter:menu_edit:1", user, context))
 
-    assert buttons == ["troubleshooter:menu_edit:title:1", "troubleshooter:menu:1"]
+    assert buttons == [
+        "troubleshooter:menu_edit:title:1",
+        "troubleshooter:menu_manage:1",
+    ]
 
 
 @pytest.mark.asyncio
@@ -315,14 +324,17 @@ async def test_owner_deletes_a_page(db):
 
     text, buttons = shown(await press("troubleshooter:menu_del:4", user, context))
     assert "Delete Map" in text
-    assert buttons == ["troubleshooter:menu:4", "troubleshooter:menu_del:yes:4"]
+    assert buttons == [
+        "troubleshooter:menu_manage:4",
+        "troubleshooter:menu_del:yes:4",
+    ]
     text, buttons = shown(await press("troubleshooter:menu_del:yes:4", user, context))
 
     assert db.deleted == [4]
     assert [n["id"] for n in SETTINGS.menu["nodes"]] == [1, 2, 3]
     assert SETTINGS.menu["attachments"] == []
     assert db.notes[0][0][1:] == ("menu_deleted", "Map")
-    assert buttons == ["troubleshooter:home"]
+    assert buttons == ["troubleshooter:menu_manage:0"]
 
 
 @pytest.mark.asyncio
@@ -355,31 +367,21 @@ async def test_nothing_can_change_before_the_copy(db, monkeypatch):
     monkeypatch.setattr(SETTINGS, "menu", None)
     user, context = make(OWNER)
 
-    query = await press("troubleshooter:menu_add", user, context)
+    query = await press("troubleshooter:menu_manage:0", user, context)
 
     assert "copied to the menu tables" in query.answer.await_args.args[0]
 
 
 @pytest.mark.asyncio
-async def test_screens_show_admin_buttons_only_to_admins(db):
+async def test_menus_have_no_edit_buttons_even_for_admins(db):
     user, context = make(ADMIN)
     _, page = shown(await press("troubleshooter:menu:3", user, context))
     _, sub = shown(await press("troubleshooter:menu:1", user, context))
     viewer, plain = make(9, {"is_admin": False})
     _, plain_page = shown(await press("troubleshooter:menu:3", viewer, plain))
 
-    assert page == [
-        "troubleshooter:menu_edit:3",
-        "troubleshooter:menu_del:3",
-        "troubleshooter:home",
-    ]
-    assert sub == [
-        "troubleshooter:menu:2",
-        "troubleshooter:menu_add:in:1",
-        "troubleshooter:menu_edit:1",
-        "troubleshooter:menu_del:1",
-        "troubleshooter:home",
-    ]
+    assert page == ["troubleshooter:home"]
+    assert sub == ["troubleshooter:menu:2", "troubleshooter:home"]
     assert plain_page == ["troubleshooter:home"]
 
 
@@ -468,4 +470,55 @@ async def test_admin_panel_has_add_content():
     await admin.handle_block(update, context)
 
     _, buttons = shown(query)
-    assert "troubleshooter:menu_add" in buttons
+    assert "troubleshooter:menu_manage:0" in buttons
+    assert "troubleshooter:menu_add" not in buttons
+
+
+@pytest.mark.asyncio
+async def test_edit_menus_starts_at_the_main_menu(db):
+    user, context = make()
+    context.user_data["state"] = "troubleshooter:menu_add:title"
+
+    text, buttons = shown(await press("troubleshooter:menu_manage:0", user, context))
+
+    assert text.startswith("📋 *Edit Menus* · Main menu")
+    assert buttons == [
+        "troubleshooter:menu_manage:1",
+        "troubleshooter:menu_manage:3",
+        "troubleshooter:menu_manage:4",
+        "troubleshooter:menu_add:in:0",
+        "troubleshooter:admin_menu",
+    ]
+    assert context.user_data["state"] is None
+
+
+@pytest.mark.asyncio
+async def test_edit_menus_shows_a_page_with_its_files(db):
+    user, context = make()
+
+    text, buttons = shown(await press("troubleshooter:menu_manage:4", user, context))
+
+    assert text == "📋 *Edit Menus* · Map\n\n📄 Page · 📎 1 file\n\nThe map"
+    assert buttons == [
+        "troubleshooter:menu_edit:4",
+        "troubleshooter:menu_del:4",
+        "troubleshooter:menu_manage:0",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_edit_menus_page_inside_a_submenu_goes_back_to_it(db):
+    user, context = make()
+
+    _, buttons = shown(await press("troubleshooter:menu_manage:2", user, context))
+
+    assert buttons[-1] == "troubleshooter:menu_manage:1"
+
+
+@pytest.mark.asyncio
+async def test_edit_menus_is_for_admins_only(db):
+    viewer, context = make(9, {"is_admin": False})
+
+    query = await press("troubleshooter:menu_manage:0", viewer, context)
+
+    query.edit_message_text.assert_not_awaited()

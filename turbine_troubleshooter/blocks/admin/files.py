@@ -109,7 +109,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ) + [
             [
                 InlineKeyboardButton(
-                    "❌ Cancel", callback_data=f"troubleshooter:menu:{node['id']}"
+                    "❌ Cancel",
+                    callback_data=f"troubleshooter:menu_manage:{node['id']}",
                 )
             ]
         ]
@@ -139,7 +140,11 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 InlineKeyboardButton(
                     "👀 Open It", callback_data=f"troubleshooter:menu:{node['id']}"
-                )
+                ),
+                InlineKeyboardButton(
+                    "📋 Edit Menus",
+                    callback_data=f"troubleshooter:menu_manage:{node['id']}",
+                ),
             ],
             [TO_PANEL],
         ]
@@ -154,7 +159,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         "❌ No, Cancel",
-                        callback_data=f"troubleshooter:menu:{node['id']}",
+                        callback_data=f"troubleshooter:menu_manage:{node['id']}",
                     ),
                     InlineKeyboardButton(
                         "✅ Yes, Remove",
@@ -176,7 +181,11 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         "👀 Open It", callback_data=f"troubleshooter:menu:{node['id']}"
-                    )
+                    ),
+                    InlineKeyboardButton(
+                        "📋 Edit Menus",
+                        callback_data=f"troubleshooter:menu_manage:{node['id']}",
+                    ),
                 ],
                 [TO_PANEL],
             ]
@@ -402,9 +411,8 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             "❌ Cancel",
-                            callback_data=f"troubleshooter:menu:{node['id']}"
-                            if node
-                            else "troubleshooter:admin_menu",
+                            callback_data="troubleshooter:menu_manage:"
+                            f"{node['id'] if node else draft.get('parent') or 0}",
                         )
                     ]
                 ]
