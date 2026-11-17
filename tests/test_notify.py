@@ -63,7 +63,7 @@ async def test_setting_toggle_flips_and_caches(make_cursor, patch_session):
     assert await db.setting_toggle("notify_added") == 0
 
     assert "ON DUPLICATE KEY UPDATE value = 1 - value" in cur.calls[0][0]
-    assert cur.calls[0][1] == ("notify_added",)
+    assert cur.calls[0][1] == ("notify_added", 0)
     assert SETTINGS.notify_settings["notify_added"] == 0
 
 
@@ -79,7 +79,7 @@ async def test_notify_screen_shows_each_setting(monkeypatch):
     toggle.assert_not_awaited()
     assert buttons(query) == [
         ("✅ ➕ Added", "troubleshooter:notify_users:added"),
-        ("✅ ✏️ Edited", "troubleshooter:notify_users:edited"),
+        ("❌ ✏️ Edited", "troubleshooter:notify_users:edited"),
         ("❌ 🗑️ Deleted", "troubleshooter:notify_users:deleted"),
         ("🔙 Back", "troubleshooter:admin_menu"),
     ]
@@ -87,7 +87,7 @@ async def test_notify_screen_shows_each_setting(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_notify_button_toggles_setting(monkeypatch):
-    async def toggle(name):
+    async def toggle(name, default):
         SETTINGS.notify_settings[name] = 0
 
     monkeypatch.setattr(SETTINGS, "notify_settings", {})
@@ -125,3 +125,14 @@ async def test_notify_routes_for_admins(monkeypatch):
     await turbine_troubleshooter.handle_button(update, context)
 
     called.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_a_setting_that_starts_off_is_turned_on_first(make_cursor, patch_session):
+    cur = make_cursor(fetchone=[{"value": 1}])
+    patch_session(db, cur)
+
+    assert await db.setting_toggle("notify_edited", 0) == 1
+
+    assert cur.calls[0][1] == ("notify_edited", 1)
+    assert SETTINGS.notify_settings["notify_edited"] == 1

@@ -674,7 +674,8 @@ async def test_broadcast_has_close_button(users, monkeypatch):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["part_added", "part_edited", "part_deleted"])
-async def test_part_change_alerts_and_users(sent, users, action):
+async def test_part_change_alerts_and_users(sent, users, monkeypatch, action):
+    monkeypatch.setattr(SETTINGS, "notify_settings", {"notify_edited": 1})
     users(
         [
             {"user_id": 1, "username": "alice", "notifications_enabled": 1},
@@ -834,5 +835,73 @@ async def test_part_edited_follows_edited_setting(sent, users, monkeypatch):
     await notify.send_notification_troubleshooter(
         editor, "part_edited", "PN123", "New pump", message="Description: a → b"
     )
+
+    assert sent == [SETTINGS.alerts_chat_id, 1]
+
+
+@pytest.mark.asyncio
+async def test_edits_tell_only_admins_unless_turned_on(sent, users, monkeypatch):
+    monkeypatch.setattr(SETTINGS, "notify_settings", {})
+    users(
+        [
+            {"user_id": 1, "username": "alice", "is_admin": 1},
+            {"user_id": 4, "username": "bob", "is_admin": 0},
+        ]
+    )
+    editor = SimpleNamespace(id=5, username="editor", full_name="Ed Itor")
+
+    await notify.send_notification_troubleshooter(
+        editor, "code_edited", "E1", "New advice"
+    )
+
+    assert sent == [SETTINGS.alerts_chat_id, 1]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "action,message,told",
+    [
+        ("menu_added", None, True),
+        ("menu_edited", "File added", True),
+        ("menu_edited", "File replaced", False),
+        ("menu_edited", "Title: A → B", False),
+        ("menu_deleted", None, False),
+    ],
+    ids=["page-added", "file-added", "file-replaced", "edited", "deleted"],
+)
+async def test_users_hear_about_new_menu_pages_and_files(
+    sent, users, monkeypatch, action, message, told
+):
+    monkeypatch.setattr(SETTINGS, "notify_settings", {})
+    users(
+        [
+            {"user_id": 1, "username": "alice"},
+            {"user_id": 4, "username": "bob", "notifications_enabled": 0},
+            {"user_id": 5, "username": "editor"},
+        ]
+    )
+    editor = SimpleNamespace(id=5, username="editor", full_name="Ed Itor")
+
+    await notify.send_notification_troubleshooter(
+        editor, action, "Torque › Hub", message=message
+    )
+
+    assert sent == [SETTINGS.alerts_chat_id] + ([1] if told else [])
+
+
+@pytest.mark.asyncio
+async def test_new_menu_pages_tell_only_admins_when_added_is_off(
+    sent, users, monkeypatch
+):
+    monkeypatch.setattr(SETTINGS, "notify_settings", {"notify_added": 0})
+    users(
+        [
+            {"user_id": 1, "username": "alice", "is_admin": 1},
+            {"user_id": 4, "username": "bob", "is_admin": 0},
+        ]
+    )
+    editor = SimpleNamespace(id=5, username="editor", full_name="Ed Itor")
+
+    await notify.send_notification_troubleshooter(editor, "menu_added", "Hub")
 
     assert sent == [SETTINGS.alerts_chat_id, 1]

@@ -59,7 +59,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 
 MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `content`, `menus` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
 
-`settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`; on unless a row says `0`), set from **Admin Panel → 🔔 Notify Users**. When one is off, that kind of code or part change is only sent to admins.
+`settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`), set from **Admin Panel → 🔔 Notify Users**. Added and Deleted start on and Edited starts off, so small fixes don't message everyone; a row in `settings` overrides that. When one is off, that kind of code or part change is only sent to admins. Users are also told when a menu page or a file on one is added, following the Added toggle; other menu changes only go to the alerts chat. Users can turn notifications off for themselves from any notice or their User Menu.
 
 ### Photos and PDFs on menu pages
 
