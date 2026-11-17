@@ -1,3 +1,7 @@
+import logging
+import os
+import subprocess
+import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
@@ -188,3 +192,33 @@ async def test_channel_posts_reach_no_message_handler(monkeypatch, fake_app, kin
     ]
     assert len(handlers) == 2
     assert not any(h.check_update(update) for h in handlers)
+
+
+def test_importing_changes_nothing_in_the_host():
+    code = (
+        "import logging, os; "
+        "import turbine_troubleshooter; "
+        "print(os.environ.get('PTB_TIMEDELTA'), "
+        "len(logging.getLogger('telegram').filters), "
+        "len(logging.getLogger('httpx').filters))"
+    )
+    env = {k: v for k, v in os.environ.items() if k != "PTB_TIMEDELTA"}
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, env=env
+    )
+
+    assert out.stdout.split() == ["None", "0", "0"], out.stderr
+
+
+@pytest.mark.asyncio
+async def test_start_adds_noise_filters(monkeypatch, fake_app):
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
+    for name in ("telegram", "httpx"):
+        monkeypatch.setattr(logging.getLogger(name), "filters", [])
+
+    await turbine_troubleshooter.start_troubleshooter_bot()
+
+    for name in ("telegram", "httpx"):
+        assert turbine_troubleshooter.error_handler_noise_filter in (
+            logging.getLogger(name).filters
+        )

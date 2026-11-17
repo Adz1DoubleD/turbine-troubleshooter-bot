@@ -10,7 +10,7 @@ from turbine_troubleshooter.settings import SETTINGS
 
 @pytest.fixture(autouse=True)
 def not_local(monkeypatch):
-    monkeypatch.setattr(notify, "is_local", lambda: False)
+    monkeypatch.setattr(notify, "is_test_mode", lambda: False)
 
 
 @pytest.fixture

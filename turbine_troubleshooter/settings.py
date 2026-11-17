@@ -1,8 +1,6 @@
 import os
 from types import SimpleNamespace
 
-os.environ.setdefault("PTB_TIMEDELTA", "1")
-
 NOISE_FILTERS = (
     "httpx.ReadError",
     "RemoteProtocolError",
@@ -34,6 +32,7 @@ ENV_VARS = {
     "windquest_location": "TROUBLESHOOTER_WINDQUEST_LOCATION",
     "windquest_api_key": "WINDQUEST_API_KEY",
     "windquest_api_token": "WINDQUEST_API_TOKEN",
+    "test_mode": "TROUBLESHOOTER_TEST_MODE",
 }
 
 SETTINGS = SimpleNamespace(
@@ -51,6 +50,7 @@ SETTINGS = SimpleNamespace(
     windquest_api_key=None,
     windquest_api_token=None,
     windquest_location=None,
+    test_mode=False,
 )
 
 

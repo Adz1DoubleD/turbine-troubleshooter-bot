@@ -21,7 +21,7 @@ def crashed_update(error):
 def reported(monkeypatch):
     mock = MagicMock()
     monkeypatch.setattr(helpers.sentry_sdk, "capture_exception", mock)
-    monkeypatch.setattr(helpers, "is_local", lambda: False)
+    monkeypatch.setattr(helpers, "is_test_mode", lambda: False)
     return mock
 
 

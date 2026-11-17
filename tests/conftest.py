@@ -1,3 +1,4 @@
+import os
 import sys
 from unittest.mock import AsyncMock
 
@@ -5,6 +6,8 @@ import pytest
 
 from turbine_troubleshooter import example_content
 from turbine_troubleshooter.settings import SETTINGS
+
+os.environ.setdefault("PTB_TIMEDELTA", "1")
 
 NOISE_FILTERS = [
     "httpx.ReadError",
@@ -111,6 +114,7 @@ def troubleshooter_settings(monkeypatch):
         "windquest_api_key": None,
         "windquest_api_token": None,
         "windquest_location": None,
+        "test_mode": False,
     }.items():
         monkeypatch.setattr(SETTINGS, name, value)
     return SETTINGS

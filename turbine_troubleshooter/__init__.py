@@ -36,8 +36,6 @@ from .tools import (
     set_user_roles,
 )
 
-logging.getLogger("telegram").addFilter(error_handler_noise_filter)
-logging.getLogger("httpx").addFilter(error_handler_noise_filter)
 application = None
 
 
@@ -457,6 +455,10 @@ async def start_troubleshooter_bot(share_with=None, **options):
         raise ValueError(f"Troubleshooter needs these settings: {', '.join(missing)}")
     if not SETTINGS.alerts_chat_id:
         SETTINGS.alerts_chat_id = SETTINGS.owner_id
+
+    os.environ.setdefault("PTB_TIMEDELTA", "1")
+    logging.getLogger("telegram").addFilter(error_handler_noise_filter)
+    logging.getLogger("httpx").addFilter(error_handler_noise_filter)
 
     application = Application.builder().token(SETTINGS.token).build()
     application.bot_data["is_troubleshooter"] = True
