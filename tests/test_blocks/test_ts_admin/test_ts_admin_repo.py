@@ -151,6 +151,8 @@ async def test_owner_saves_a_file_to_the_repo(github):
     assert query.edit_message_caption.await_args.kwargs["caption"].startswith(
         "💾 Saved pdf/safety.pdf to the repo."
     )
+    caption_markup = query.edit_message_caption.await_args.kwargs["reply_markup"]
+    assert caption_markup.inline_keyboard[0][0].callback_data == "cancel"
     context.bot.send_message.assert_not_awaited()
 
 
@@ -243,7 +245,8 @@ async def test_the_save_button_says_where_it_saves(
     await files.send_to_owner(context, SETTINGS.menu["attachments"][0])
 
     markup = context.bot.send_document.await_args.kwargs["reply_markup"]
-    assert (markup and markup.inline_keyboard[0][0].text) == label
+    texts = [b.text for row in markup.inline_keyboard for b in row]
+    assert texts == ([label] if label else []) + ["❌ Close"]
     if folder:
         query = await press("troubleshooter:menu_files", user, context, text="x")
         text = query.edit_message_text.await_args.args[0]
