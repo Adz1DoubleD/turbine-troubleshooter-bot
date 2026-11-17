@@ -19,6 +19,7 @@ from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner
 from turbine_troubleshooter.settings import SETTINGS
 
 from ...tools import send_notification_troubleshooter, user_is_admin
+from ..suggest import own_bot
 
 PAGE_SIZE = 10
 SORTS = ("name", "added", "edits", "login")
@@ -103,7 +104,7 @@ async def edit(query, text, kb):
 
 async def tell_user(context, user_id, text, reply_markup=None):
     try:
-        await context.bot.send_message(
+        await own_bot(context).send_message(
             user_id, text, reply_markup=reply_markup or error_kb(None)
         )
     except Exception:
