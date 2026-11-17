@@ -262,7 +262,7 @@ async def init_troubleshooter_db(application):
                     saved = [
                         a
                         for a in attachments
-                        if a["status"] == "pending"
+                        if a["status"] in ("pending", "committed")
                         and a["path"]
                         and SETTINGS.files_dir
                         and (Path(SETTINGS.files_dir) / a["path"]).is_file()
