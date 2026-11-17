@@ -7,7 +7,7 @@ import pytest
 
 import turbine_troubleshooter
 import turbine_troubleshooter.db as ts
-from turbine_troubleshooter.blocks.admin import content, files
+from turbine_troubleshooter.blocks.admin import changes, content, files
 from turbine_troubleshooter.settings import SETTINGS
 
 OWNER = 1
@@ -267,6 +267,7 @@ async def test_admin_attaches_a_file_to_a_page_without_one(db):
     assert db.removed == []
     assert db.files == [(3, "document", "F1", "U1", "pdf/safety.pdf", ADMIN)]
     assert db.notes[0][1]["message"] == "File added"
+    assert db.notes[0][1]["undo"] == "troubleshooter:undo:file:70:0"
     assert SETTINGS.menu["nodes"][0]["body"] == "Be safe"
 
 
@@ -297,6 +298,7 @@ async def test_owner_replaces_a_file(db):
     assert db.removed == [4]
     assert [a["file_id"] for a in SETTINGS.menu["attachments"]] == ["F1"]
     assert db.notes[0][1]["message"] == "File replaced"
+    assert db.notes[0][1]["undo"] is None
 
 
 @pytest.mark.asyncio
@@ -574,3 +576,83 @@ async def test_a_rejected_file_id_falls_back_to_the_saved_file(
         with pytest.raises(BadRequest):
             await turbine_troubleshooter.handle_button(update, context)
         assert sent == ["OLD"]
+
+
+async def press_undo(user, data="troubleshooter:undo:file:8:0"):
+    query = SimpleNamespace(
+        data=data,
+        from_user=user,
+        answer=AsyncMock(),
+        edit_message_reply_markup=AsyncMock(),
+    )
+    await changes.button_undo(SimpleNamespace(callback_query=query), None)
+    return query
+
+
+@pytest.fixture
+def undo_db(monkeypatch):
+    m = SimpleNamespace(removed=[], notes=[])
+
+    async def remove(node_id):
+        m.removed.append(node_id)
+        return 1
+
+    async def notify(*args, **kwargs):
+        m.notes.append((args, kwargs))
+
+    monkeypatch.setattr(changes, "attachments_remove", remove)
+    monkeypatch.setattr(changes, "send_notification_troubleshooter", notify)
+    return m
+
+
+@pytest.mark.asyncio
+async def test_owner_undoes_a_file_an_admin_added(undo_db):
+    user, _ = make(OWNER)
+
+    query = await press_undo(user)
+
+    assert undo_db.removed == [4]
+    assert SETTINGS.menu["attachments"] == []
+    assert undo_db.notes[0][0][1:] == ("menu_edited", "Map")
+    assert undo_db.notes[0][1]["message"] == "File removed (undone)"
+    query.answer.assert_awaited_once_with(
+        "↩️ Undone. The file is off the page.", show_alert=True
+    )
+    markup = query.edit_message_reply_markup.await_args.args[0]
+    assert buttons(markup) == ["cancel"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "data,extra",
+    [
+        ("troubleshooter:undo:file:99:0", None),
+        (
+            "troubleshooter:undo:file:8:0",
+            {"id": 9, "node_id": 4, "type": "photo", "path": "images/new.jpg"},
+        ),
+    ],
+    ids=["already-removed", "replaced-since"],
+)
+async def test_file_undo_refuses_when_things_changed(undo_db, data, extra):
+    if extra:
+        SETTINGS.menu["attachments"].append(extra)
+    user, _ = make(OWNER)
+
+    query = await press_undo(user, data)
+
+    assert undo_db.removed == []
+    assert "can't be undone" in query.answer.await_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_only_the_owner_undoes_a_file(undo_db):
+    user, _ = make(ADMIN)
+
+    query = await press_undo(user)
+
+    assert undo_db.removed == []
+    assert len(SETTINGS.menu["attachments"]) == 1
+    query.answer.assert_awaited_once_with(
+        "⚠️ Only the owner can do that.", show_alert=True
+    )

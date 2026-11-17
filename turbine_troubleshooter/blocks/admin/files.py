@@ -69,6 +69,7 @@ async def attach(context, user, node, file):
     )
     SETTINGS.menu["attachments"].append(attachment)
     await send_to_owner(context, attachment)
+    return attachment
 
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -127,13 +128,16 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for a in SETTINGS.menu["attachments"]
             if not replaced or a["node_id"] != node["id"]
         ]
-        await attach(context, user, node, draft["file"])
+        added = await attach(context, user, node, draft["file"])
         context.user_data.pop("menu_draft", None)
         await send_notification_troubleshooter(
             user,
             "menu_edited",
             where(node["id"]),
             message="File replaced" if replaced else "File added",
+            undo=None
+            if is_owner(user.id)
+            else f"troubleshooter:undo:file:{added['id']}:0",
         )
         text = f"✅ *Saved* · {escape_markdown(where(node['id']))}"
         kb = [
