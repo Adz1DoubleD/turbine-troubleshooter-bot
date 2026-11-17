@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.2](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.0.1...v2.0.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* show pending access and admin requests in a host bot ([cea6050](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/cea605085bfee817d1a04747cba2fad329f12a1b))
+* show pending access and admin requests in a host bot ([486ef91](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/486ef9119be1e1453826e8346c527aebcb38853f))
+* tell users about decisions made from a host bot ([3715dce](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/3715dce11be3c0efb4ece4930af4b2a21dbd35c9))
+* tell users about decisions made from a host bot ([890196c](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/890196c7e708b70f95255f8eb206d849f7471594))
+
 ## [2.0.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.0.0...v2.0.1) (2026-11-17)
 
 
