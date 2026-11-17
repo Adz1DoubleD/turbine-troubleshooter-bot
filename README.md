@@ -128,6 +128,10 @@ The menus live in `menu_nodes`, one row per button, with photos and PDFs in `att
 
 Admins add menu items from **Admin Panel → 📝 Add Content**: pick where it goes, then a page (text) or a submenu (more buttons), a title and the text. The bot shows a preview before saving, and sends the text back if Telegram can't show its formatting. Opening a menu item as an admin shows **✏️ Edit** and **🗑 Delete**, and a submenu also shows **➕ Add Here**. A submenu can only be deleted once it's empty. Titles are up to 60 characters, can't contain `*`, `_`, `` ` `` or `[`, and must differ from the others in the same menu.
 
+### Backups
+
+Content lives only in the database, so keep a copy: **Admin Panel → 📤 Export → 📦 Everything (ZIP)** (owner only) sends one ZIP with a CSV each for menus, IO boards, turbines, codes and parts. The turbine and IO board files are in the import format. Photos and PDFs aren't in it; they're the files in `files_dir`, listed in `menus.csv`.
+
 ## Release notes for users
 
 A release can come with a short, plain-language *What's new* note in [`whats_new.py`](turbine_troubleshooter/whats_new.py). The first time the bot starts on that version, it sends the owner the note with **📢 Send to Everyone** and **❌ Skip**; nothing reaches users until the owner taps Send, and it can only be sent once. The bot doesn't offer it in test mode, or when it has no approved users yet.
