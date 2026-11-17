@@ -65,7 +65,7 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
     if admin:
         row.append(
             InlineKeyboardButton(
-                "🔐 Admin Menu", callback_data="troubleshooter:admin_menu"
+                "⚙️ Admin Panel", callback_data="troubleshooter:admin_menu"
             )
         )
     if row:

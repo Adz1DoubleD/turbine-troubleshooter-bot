@@ -142,7 +142,7 @@ async def grant_admin(context, user_id, name):
             [
                 [
                     InlineKeyboardButton(
-                        "🔐 Admin Menu", callback_data="troubleshooter:admin_menu"
+                        "⚙️ Admin Panel", callback_data="troubleshooter:admin_menu"
                     )
                 ],
                 [InlineKeyboardButton("❌ Close", callback_data="cancel")],
