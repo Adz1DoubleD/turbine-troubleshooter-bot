@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.3...v2.0.0) (2026-11-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* hosts that relied on local runs being detected automatically must pass test_mode=True (or set TROUBLESHOOTER_TEST_MODE=1) when testing, or notifications reach real users.
+
+### Bug Fixes
+
+* let the host choose test mode instead of guessing from Heroku ([1d13c8b](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/1d13c8b46a135ca275f379ff2a34aaf567162b8e))
+
 ## [1.1.3](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v1.1.2...v1.1.3) (2026-11-16)
 
 
