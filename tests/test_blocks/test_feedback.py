@@ -53,14 +53,15 @@ def labels(markup):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("own", [True, False], ids=["own-bot", "host-bot"])
-async def test_home_menu_has_feedback(own):
+async def test_feedback_is_only_in_the_troubleshooter_bot(own):
     context = SimpleNamespace(
         bot_data={"is_troubleshooter": own}, user_data={"is_admin": False}
     )
 
     block = await handle_block(context)
 
-    assert ("💬 Feedback", "troubleshooter:feedback") in labels(block["reply_markup"])
+    shown = ("💬 Feedback", "troubleshooter:feedback") in labels(block["reply_markup"])
+    assert shown is own
 
 
 @pytest.mark.asyncio

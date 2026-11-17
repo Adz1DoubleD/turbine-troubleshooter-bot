@@ -64,7 +64,7 @@ async def test_main_menu_shows_part_count():
 
     labels = button_labels((await blocks.handle_block(context))["reply_markup"])
 
-    assert "🔩 Search 3 Spare Parts" in labels
+    assert "🔍 Search 3 Spare Parts" in labels
 
 
 @pytest.mark.asyncio
@@ -86,5 +86,73 @@ async def test_io_boards_and_wtg_info_only_show_when_there_are_some(monkeypatch,
     block = await blocks.handle_block(context)
     labels = button_labels(block["reply_markup"])
 
-    assert ("IO Boards" in labels) is have
-    assert ("🔢 WTG Info" in labels) is have
+    assert ("🔌 IO Boards" in labels) is have
+    assert ("🔍 Search 1 WTGs" in labels) is have
+    assert "IO Boards" not in labels
+
+
+def rows(markup):
+    return [[b.text for b in row] for row in markup.inline_keyboard]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "own,admin,bottom",
+    [
+        (True, False, [["💬 Feedback", "👤 User Menu"], ["❌ Close"]]),
+        (
+            True,
+            True,
+            [["💬 Feedback", "👤 User Menu"], ["⚙️ Admin Panel"], ["❌ Close"]],
+        ),
+        (False, True, [["⚙️ Admin Panel"], ["❌ Close"]]),
+    ],
+    ids=["user", "admin", "host-bot"],
+)
+async def test_home_menu_layout(monkeypatch, own, admin, bottom):
+    from turbine_troubleshooter.settings import SETTINGS
+
+    monkeypatch.setattr(blocks.weather, "is_enabled", lambda: False)
+    monkeypatch.setattr(
+        SETTINGS,
+        "content",
+        SimpleNamespace(
+            MODULES_MAP={},
+            WTG_MAP={"WTA01": {}, "WTA02": {}},
+            IO_BOARDS={"io1": {"name": "IO Board 1", "can": ""}},
+        ),
+    )
+    monkeypatch.setattr(
+        SETTINGS,
+        "menu",
+        {
+            "nodes": [
+                {
+                    "id": i,
+                    "parent_id": None,
+                    "type": "page",
+                    "title": title,
+                    "body": "x",
+                    "sort_order": i,
+                }
+                for i, title in enumerate(["Alpha", "Bravo", "Charlie"], 1)
+            ],
+            "attachments": [],
+        },
+    )
+    context = SimpleNamespace(
+        bot_data={"is_troubleshooter": own, "codes": {"E1": {}}, "parts": [{}]},
+        user_data={"is_admin": admin},
+    )
+
+    layout = rows((await blocks.handle_block(context))["reply_markup"])
+
+    assert layout[:6] == [
+        ["Alpha", "Bravo"],
+        ["Charlie"],
+        ["🔌 IO Boards"],
+        ["🔍 Search 2 WTGs"],
+        ["🔍 Search 1 Spare Parts"],
+        ["🔍 Search 1 Codes"],
+    ]
+    assert layout[6:] == bottom
