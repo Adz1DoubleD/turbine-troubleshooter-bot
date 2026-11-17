@@ -385,6 +385,12 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif admin and data.startswith("troubleshooter:part_delete:"):
         await admin_parts.button_part_delete(update, context)
 
+    else:
+        await query.answer(
+            "This button is out of date. Send /start for the latest menu.",
+            show_alert=True,
+        )
+
 
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (update.message.text or "").strip()

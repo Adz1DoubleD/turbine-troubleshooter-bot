@@ -2,6 +2,7 @@ import asyncio
 import difflib
 import re
 from datetime import timedelta
+from pathlib import Path
 
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -27,6 +28,41 @@ def find_wtg(text):
 
 def get_troubleshooter_content():
     content = {"troubleshooter:ioboard": {"type": "menu", "title": "IO Boards"}}
+
+    if SETTINGS.menu is not None:
+        attached = {}
+        for a in SETTINGS.menu["attachments"]:
+            attached.setdefault(a["node_id"], []).append(a)
+
+        for n in sorted(
+            SETTINGS.menu["nodes"], key=lambda n: (n["sort_order"], n["id"])
+        ):
+            parent = n["parent_id"] and f"troubleshooter:menu:{n['parent_id']}"
+            if n["type"] == "submenu":
+                item = {
+                    "type": "menu",
+                    "title": n["title"],
+                    "items": [],
+                    "parent": parent,
+                }
+            else:
+                files = attached.get(n["id"], [])
+                paths = [Path(SETTINGS.files_dir) / a["path"] for a in files]
+                item = {
+                    "type": files[0]["type"] if files else "text",
+                    "title": n["title"],
+                    "content": n["body"] or "",
+                    "file": (paths[0] if len(paths) == 1 else paths) or None,
+                    "parent": parent,
+                }
+            content[f"troubleshooter:menu:{n['id']}"] = item
+
+        for key, item in list(content.items()):
+            if item.get("parent") in content:
+                content[item["parent"]]["items"].append(key)
+
+        return dict(sorted(content.items(), key=lambda kv: kv[1]["title"].lower()))
+
     queue = [
         (None, title, data) for title, data in SETTINGS.content.MODULES_MAP.items()
     ]

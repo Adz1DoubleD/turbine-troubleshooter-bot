@@ -23,6 +23,10 @@ MADE_UP_MENU = {
         }
     },
     "Contacts": {"menu": {"Control room": "Call 0000"}},
+    "Manuals": {
+        "text": "Both parts",
+        "document": ["file:pdf/m1.pdf", "file:pdf/m2.pdf"],
+    },
 }
 
 
@@ -40,39 +44,57 @@ def inserted(cur, table):
     return [c[1] for c in cur.calls if c[0].startswith(f"INSERT INTO {table}")]
 
 
+def screens(content):
+    def path(key):
+        item = content[key]
+        return (
+            (*path(item["parent"]), item["title"])
+            if item.get("parent")
+            else (item["title"],)
+        )
+
+    return {
+        path(k): (
+            item["type"],
+            item.get("content"),
+            item.get("file"),
+            [path(c) for c in item.get("items", [])],
+        )
+        for k, item in content.items()
+    }, [path(k) for k, item in content.items() if not item.get("parent")]
+
+
+def menu_from(cur):
+    return {
+        "nodes": [
+            dict(
+                zip(
+                    ("id", "parent_id", "type", "title", "body", "sort_order"),
+                    (i, *row[:5]),
+                )
+            )
+            for i, row in enumerate(inserted(cur, "menu_nodes"), 1)
+        ],
+        "attachments": [
+            {
+                "node_id": a[0],
+                "type": a[1],
+                "path": a[2],
+                "file_id": None,
+                "status": "saved",
+            }
+            for a in inserted(cur, "attachments")
+        ],
+    }
+
+
 @pytest.mark.asyncio
 async def test_menus_built_from_rows_match_the_json(
     monkeypatch, tmp_path, make_cursor, patch_session
 ):
     monkeypatch.setattr(SETTINGS, "files_dir", tmp_path)
-    monkeypatch.setattr(SETTINGS, "owner_id", "42")
     cur = patch_session(ts, migrate_cursor(make_cursor))
-
     count = await ts.menu_migrate(json.dumps(MADE_UP_MENU))
-
-    nodes = {
-        i: dict(zip(("parent", "type", "title", "body", "order"), row[:5]))
-        for i, row in enumerate(inserted(cur, "menu_nodes"), 1)
-    }
-    files = {node: (kind, path) for node, kind, path, _ in inserted(cur, "attachments")}
-
-    def build(parent):
-        tree = {}
-        for i in sorted(
-            (i for i, n in nodes.items() if n["parent"] == parent),
-            key=lambda i: nodes[i]["order"],
-        ):
-            n = nodes[i]
-            if n["type"] == "submenu":
-                tree[n["title"]] = {"menu": build(i)}
-            elif i in files:
-                tree[n["title"]] = {
-                    "text": n["body"],
-                    files[i][0]: tmp_path / files[i][1],
-                }
-            else:
-                tree[n["title"]] = n["body"]
-        return tree
 
     monkeypatch.setattr(
         SETTINGS,
@@ -80,11 +102,17 @@ async def test_menus_built_from_rows_match_the_json(
         SimpleNamespace(MODULES_MAP=ts.content_from_json(json.dumps(MADE_UP_MENU))),
     )
     from_json = get_troubleshooter_content()
-    monkeypatch.setattr(SETTINGS, "content", SimpleNamespace(MODULES_MAP=build(None)))
+    monkeypatch.setattr(SETTINGS, "menu", menu_from(cur))
     from_rows = get_troubleshooter_content()
 
-    assert count == len(nodes) == 9
-    assert list(from_rows.items()) == list(from_json.items())
+    assert count == 10
+    assert len(from_rows) == len(from_json) == 11
+    assert screens(from_rows) == screens(from_json)
+    assert all(
+        k.startswith("troubleshooter:menu:")
+        for k in from_rows
+        if k != "troubleshooter:ioboard"
+    )
 
 
 @pytest.mark.asyncio
@@ -97,17 +125,20 @@ async def test_copy_keeps_order_nesting_owner_and_legacy_keys(
     await ts.menu_migrate(json.dumps(MADE_UP_MENU))
 
     rows = inserted(cur, "menu_nodes")
-    assert [(r[0], r[2], r[4]) for r in rows[:3]] == [
+    assert [(r[0], r[2], r[4]) for r in rows[:4]] == [
         (None, "Safety", 1),
         (None, "Électrique", 2),
         (None, "Contacts", 3),
+        (None, "Manuals", 4),
     ]
-    assert rows[3][:3] == (2, "submenu", "Diagrams")
+    assert rows[4][:3] == (2, "submenu", "Diagrams")
     assert all(r[5] == r[6] == 42 for r in rows)
-    assert json.loads(rows[6][7]) == ["Électrique", "Diagrams", "Overview"]
+    assert json.loads(rows[7][7]) == ["Électrique", "Diagrams", "Overview"]
     assert inserted(cur, "attachments") == [
-        (7, "document", "pdf/o.pdf", 42),
-        (8, "photo", "img/c.jpg", 42),
+        (4, "document", "pdf/m1.pdf", 1, 42),
+        (4, "document", "pdf/m2.pdf", 2, 42),
+        (8, "document", "pdf/o.pdf", 1, 42),
+        (9, "photo", "img/c.jpg", 1, 42),
     ]
 
 
@@ -213,3 +244,125 @@ async def test_startup_copies_the_stored_menu(monkeypatch, make_cursor, patch_se
     await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
 
     assert seen == [stored]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("copied", [True, False])
+async def test_rows_are_used_only_once_the_copy_is_done(
+    monkeypatch, make_cursor, patch_session, copied
+):
+    node = {"id": 1, "parent_id": None, "type": "page", "title": "Note"}
+
+    class Cursor(make_cursor):
+        async def _fetchone(self):
+            if self.calls[-1][0].startswith("SELECT value FROM settings"):
+                return {"value": 1} if copied else None
+            return {"t": 1}
+
+        async def _fetchall(self):
+            return [node] if "FROM menu_nodes" in self.calls[-1][0] else []
+
+    async def nothing_to_copy(_):
+        return 0
+
+    monkeypatch.setattr(ts.schema, "menu_migrate", nothing_to_copy)
+    patch_session(ts, Cursor())
+
+    await ts.init_troubleshooter_db(SimpleNamespace(bot_data={}))
+
+    assert SETTINGS.menu == ({"nodes": [node], "attachments": []} if copied else None)
+
+
+@pytest.mark.asyncio
+async def test_tapping_through_a_menu_built_from_rows(monkeypatch):
+    import turbine_troubleshooter
+
+    monkeypatch.setattr(
+        SETTINGS,
+        "menu",
+        {
+            "nodes": [
+                {
+                    "id": 5,
+                    "parent_id": None,
+                    "type": "submenu",
+                    "title": "Torque",
+                    "body": None,
+                    "sort_order": 1,
+                },
+                {
+                    "id": 7,
+                    "parent_id": 5,
+                    "type": "page",
+                    "title": "Tower",
+                    "body": "tower text",
+                    "sort_order": 2,
+                },
+                {
+                    "id": 6,
+                    "parent_id": 5,
+                    "type": "page",
+                    "title": "Hub",
+                    "body": "hub text",
+                    "sort_order": 1,
+                },
+            ],
+            "attachments": [],
+        },
+    )
+    edits = []
+
+    async def edit_message_text(text, **kwargs):
+        edits.append(
+            (
+                text,
+                [
+                    b.callback_data
+                    for row in kwargs["reply_markup"].inline_keyboard
+                    for b in row
+                ],
+            )
+        )
+
+    for data in ("troubleshooter:menu:5", "troubleshooter:menu:6"):
+        query = SimpleNamespace(
+            data=data,
+            from_user=SimpleNamespace(id=1),
+            message=SimpleNamespace(text="menu"),
+            edit_message_text=edit_message_text,
+        )
+        await turbine_troubleshooter.handle_button(
+            SimpleNamespace(callback_query=query),
+            SimpleNamespace(bot_data={}, user_data={}),
+        )
+
+    assert edits == [
+        (
+            "*Torque*\n\nSelect an option:",
+            ["troubleshooter:menu:6", "troubleshooter:menu:7", "troubleshooter:home"],
+        ),
+        ("*Hub*\n\nhub text", ["troubleshooter:menu:5"]),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_an_old_menu_button_says_it_is_out_of_date():
+    from unittest.mock import AsyncMock
+
+    import turbine_troubleshooter
+
+    query = SimpleNamespace(
+        data="troubleshooter:torque:hub",
+        from_user=SimpleNamespace(id=1),
+        answer=AsyncMock(),
+    )
+
+    await turbine_troubleshooter.handle_button(
+        SimpleNamespace(callback_query=query),
+        SimpleNamespace(bot_data={}, user_data={}),
+    )
+
+    query.answer.assert_awaited_once_with(
+        "This button is out of date. Send /start for the latest menu.",
+        show_alert=True,
+    )

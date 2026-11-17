@@ -45,6 +45,7 @@ SETTINGS = SimpleNamespace(
     noise_filters=NOISE_FILTERS,
     notify_settings={},
     content=None,
+    menu=None,
     files_dir=None,
     cefas_buoy=None,
     windquest_api_key=None,

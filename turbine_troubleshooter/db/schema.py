@@ -6,7 +6,7 @@ import sentry_sdk
 from ..settings import SETTINGS
 from .content import CONTENT_ITEMS, content_from_json
 from .core import db_session
-from .menu import menu_migrate
+from .menu import MENU_MIGRATED, menu_migrate
 
 
 async def init_troubleshooter_db(application):
@@ -238,6 +238,24 @@ async def init_troubleshooter_db(application):
             )
             if migrated:
                 print(f"✅ Troubleshooter menu copied to menu_nodes: {migrated} items")
+            async with db_session() as cur:
+                await cur.execute(
+                    "SELECT value FROM settings WHERE name = %s", (MENU_MIGRATED,)
+                )
+                if await cur.fetchone():
+                    await cur.execute(
+                        "SELECT id, parent_id, type, title, body, sort_order "
+                        "FROM menu_nodes ORDER BY sort_order, id"
+                    )
+                    nodes = await cur.fetchall()
+                    await cur.execute(
+                        "SELECT node_id, type, file_id, path, status FROM attachments "
+                        "WHERE node_id IS NOT NULL ORDER BY sort_order, id"
+                    )
+                    SETTINGS.menu = {
+                        "nodes": nodes,
+                        "attachments": await cur.fetchall(),
+                    }
         except Exception as e:
             print(f"❌ [DB] Troubleshooter menu copy failed: {e}")
             sentry_sdk.capture_exception(e)

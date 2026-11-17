@@ -101,15 +101,24 @@ async def menu_migrate(modules_map_json):
                     ]
                     continue
 
-                for media in ("photo", "document"):
-                    file = data.get(media) if isinstance(data, dict) else None
-                    if isinstance(file, str) and file.startswith(FILE_PREFIX):
-                        await cur.execute(
-                            "INSERT INTO attachments (node_id, type, path, status, "
-                            "sort_order, created_by) "
-                            "VALUES (%s, %s, %s, 'saved', 1, %s)",
-                            (node_id, media, file[len(FILE_PREFIX) :], owner),
-                        )
+                files = [
+                    (media, file)
+                    for media in ("photo", "document")
+                    if isinstance(data, dict)
+                    for file in (
+                        data.get(media)
+                        if isinstance(data.get(media), list)
+                        else [data.get(media)]
+                    )
+                    if isinstance(file, str) and file.startswith(FILE_PREFIX)
+                ]
+                for order, (media, file) in enumerate(files, 1):
+                    await cur.execute(
+                        "INSERT INTO attachments (node_id, type, path, status, "
+                        "sort_order, created_by) "
+                        "VALUES (%s, %s, %s, 'saved', %s, %s)",
+                        (node_id, media, file[len(FILE_PREFIX) :], order, owner),
+                    )
 
             await cur.execute(
                 "INSERT INTO settings (name, value) VALUES (%s, 1)", (MENU_MIGRATED,)
