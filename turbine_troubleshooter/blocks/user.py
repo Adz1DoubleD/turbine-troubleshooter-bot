@@ -39,7 +39,11 @@ async def button_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     if not admin:
         kb.append(
-            [InlineKeyboardButton("🙋 Request Admin", callback_data="admin:request")]
+            [
+                InlineKeyboardButton(
+                    "🙋 Request Admin", callback_data="troubleshooter:admin:request"
+                )
+            ]
         )
     kb.append([InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")])
 
