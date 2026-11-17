@@ -483,9 +483,9 @@ async def test_edit_menus_starts_at_the_main_menu(db):
 
     assert text.startswith("📋 *Edit Menus* · Main menu")
     assert buttons == [
-        "troubleshooter:menu_manage:1",
-        "troubleshooter:menu_manage:3",
         "troubleshooter:menu_manage:4",
+        "troubleshooter:menu_manage:3",
+        "troubleshooter:menu_manage:1",
         "troubleshooter:menu_add:in:0",
         "troubleshooter:admin_menu",
     ]
@@ -522,3 +522,42 @@ async def test_edit_menus_is_for_admins_only(db):
     query = await press("troubleshooter:menu_manage:0", viewer, context)
 
     query.edit_message_text.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_edit_menus_lists_items_in_the_same_order_as_the_menus(db):
+    SETTINGS.menu["nodes"].insert(
+        1,
+        {
+            "id": 7,
+            "parent_id": 1,
+            "type": "page",
+            "title": "Blades",
+            "body": "b",
+            "sort_order": 2,
+            "edits": [],
+        },
+    )
+    user, context = make()
+    viewer, plain = make(9, {"is_admin": False})
+
+    _, top = shown(await press("troubleshooter:menu_manage:0", user, context))
+    from turbine_troubleshooter.blocks import handle_block
+
+    live_top = [
+        b.callback_data
+        for row in (await handle_block(plain))["reply_markup"].inline_keyboard
+        for b in row
+    ]
+    _, inside = shown(await press("troubleshooter:menu_manage:1", user, context))
+    _, live_inside = shown(await press("troubleshooter:menu:1", viewer, plain))
+
+    def ids(callbacks, prefix):
+        return [c.rsplit(":", 1)[1] for c in callbacks if c.startswith(prefix)]
+
+    assert ids(top, "troubleshooter:menu_manage:") == ids(
+        live_top, "troubleshooter:menu:"
+    )
+    assert ids(inside, "troubleshooter:menu_manage:")[:-1] == ids(
+        live_inside, "troubleshooter:menu:"
+    )

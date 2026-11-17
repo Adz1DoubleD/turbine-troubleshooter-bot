@@ -108,7 +108,14 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"{'📁' if n['type'] == 'submenu' else '📄'} {n['title']}",
                     callback_data=f"troubleshooter:menu_manage:{n['id']}",
                 )
-                for n in nodes
+                for n in sorted(
+                    nodes,
+                    key=lambda n: (
+                        (n["title"].lower(),)
+                        if not here
+                        else (n["sort_order"], n["id"])
+                    ),
+                )
                 if (n["parent_id"] or 0) == here
             ]
             text = f"📋 *Edit Menus* · {escape_markdown(where(node and here))}\n\n" + (
