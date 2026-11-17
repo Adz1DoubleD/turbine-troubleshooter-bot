@@ -222,3 +222,28 @@ async def test_start_adds_noise_filters(monkeypatch, fake_app):
         assert turbine_troubleshooter.error_handler_noise_filter in (
             logging.getLogger(name).filters
         )
+
+
+@pytest.mark.asyncio
+async def test_host_shares_every_piece_of_data_the_package_uses(monkeypatch, fake_app):
+    import re
+    from pathlib import Path
+
+    monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", AsyncMock())
+    host = SimpleNamespace(bot_data={})
+    source = "".join(
+        p.read_text(encoding="utf-8")
+        for p in Path(turbine_troubleshooter.__file__).parent.rglob("*.py")
+    )
+    used = set(re.findall(r'bot_data(?:\.\w+\()?\[?"(\w+)"', source))
+    used |= {
+        f"pending_{kind}_requests"
+        for kind in ("access", "admin")
+        if "pending_{kind}_requests" in source
+    }
+
+    await turbine_troubleshooter.start_troubleshooter_bot(share_with=host)
+
+    assert used - {"is_troubleshooter"} <= set(host.bot_data)
+    for key in host.bot_data:
+        assert host.bot_data[key] is fake_app.bot_data[key]

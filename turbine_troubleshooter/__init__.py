@@ -471,6 +471,8 @@ async def start_troubleshooter_bot(share_with=None, **options):
         "troubleshooter_admins": {},
         "troubleshooter_approved": set(),
         "pending_suggestions": {},
+        "pending_access_requests": {},
+        "pending_admin_requests": {},
     }
     for key, default in shared.items():
         value = application.bot_data.setdefault(key, default)
