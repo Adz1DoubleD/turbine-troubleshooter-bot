@@ -344,6 +344,7 @@ async def test_pending_files_list_and_resend(db):
     assert "• Safety: `pdf/safety.pdf`" in args.args[0]
     assert buttons(args.kwargs["reply_markup"]) == [
         "troubleshooter:menu_files:send:9",
+        "troubleshooter:menu_files:save:9",
         "troubleshooter:admin_menu",
     ]
 
@@ -521,3 +522,53 @@ async def test_attachment_add_sql(make_cursor, patch_session):
     assert params == (3, "photo", "F", "U", "images/x.jpg", 5)
     assert saved["status"] == "pending" and saved["id"] == 7
     assert json.dumps(saved)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("on_disk", [True, False])
+async def test_a_rejected_file_id_falls_back_to_the_saved_file(
+    monkeypatch, tmp_path, on_disk
+):
+    from unittest.mock import MagicMock
+
+    from telegram.error import BadRequest
+
+    if on_disk:
+        (tmp_path / "images").mkdir()
+        (tmp_path / "images" / "map.jpg").write_bytes(b"x")
+    reported = MagicMock()
+    monkeypatch.setattr(turbine_troubleshooter.sentry_sdk, "capture_message", reported)
+    user, context = make(9)
+    context.user_data["is_admin"] = False
+    sent = []
+
+    async def reply_photo(**kwargs):
+        sent.append(kwargs["photo"])
+        if kwargs["photo"] == "OLD":
+            raise BadRequest("Wrong file identifier/http url specified")
+
+    query = SimpleNamespace(
+        data="troubleshooter:menu:4",
+        from_user=user,
+        answer=AsyncMock(),
+        edit_message_text=AsyncMock(),
+        message=SimpleNamespace(
+            text="menu",
+            message_id=3,
+            chat_id=9,
+            reply_photo=reply_photo,
+            delete=AsyncMock(),
+        ),
+    )
+    update = SimpleNamespace(
+        callback_query=query, effective_user=user, effective_chat=SimpleNamespace(id=9)
+    )
+
+    if on_disk:
+        await turbine_troubleshooter.handle_button(update, context)
+        assert sent == ["OLD", Path(tmp_path) / "images/map.jpg"]
+        assert "file id rejected" in reported.call_args.args[0]
+    else:
+        with pytest.raises(BadRequest):
+            await turbine_troubleshooter.handle_button(update, context)
+        assert sent == ["OLD"]

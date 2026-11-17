@@ -1,11 +1,17 @@
+import base64
 import re
 from pathlib import Path
 
+import httpx
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from turbine_troubleshooter.db import attachment_add, attachments_remove
+from turbine_troubleshooter.db import (
+    attachment_add,
+    attachment_status,
+    attachments_remove,
+)
 from turbine_troubleshooter.helpers import escape_markdown, is_owner, own_bot
 from turbine_troubleshooter.settings import SETTINGS
 
@@ -30,6 +36,21 @@ async def send_to_owner(context, attachment):
             f"{escape_markdown(where(attachment['node_id']))}\n"
             f"Save it in the files folder as:\n`{attachment['path']}`",
             parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "💾 Save to Repo"
+                            if SETTINGS.files_repo and SETTINGS.files_repo_token
+                            else "💾 Save to Files Folder",
+                            callback_data="troubleshooter:menu_files:save:"
+                            f"{attachment['id']}",
+                        )
+                    ]
+                ]
+            )
+            if (SETTINGS.files_repo and SETTINGS.files_repo_token) or SETTINGS.files_dir
+            else None,
         )
     except Exception as e:
         sentry_sdk.capture_exception(e)
@@ -160,21 +181,132 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
 
     elif action == "menu_files" and is_owner(user.id):
-        pending = [a for a in SETTINGS.menu["attachments"] if a["status"] == "pending"]
-        if len(bits) == 4:
-            chosen = next((a for a in pending if a["id"] == int(bits[3])), None)
+        pending = [
+            a
+            for a in SETTINGS.menu["attachments"]
+            if a["status"] in ("pending", "committed")
+        ]
+        repo = SETTINGS.files_repo and SETTINGS.files_repo_token
+        chosen = next(
+            (
+                a
+                for a in pending
+                if len(bits) == 4
+                and a["id"] == int(bits[3])
+                and a["status"] == "pending"
+            ),
+            None,
+        )
+        if len(bits) == 4 and bits[2] == "send":
             if chosen:
                 await send_to_owner(context, chosen)
             await query.answer("📤 Sent." if chosen else "Already saved.")
             return
+        if len(bits) == 4 and bits[2] == "save":
+            if not chosen or not (repo or SETTINGS.files_dir):
+                await query.answer("Already saved.")
+                return
+            if not repo:
+                await query.answer("💾 Saving…")
+                target = Path(SETTINGS.files_dir) / chosen["path"]
+                try:
+                    data = await (
+                        await own_bot(context).get_file(chosen["file_id"])
+                    ).download_as_bytearray()
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(bytes(data))
+                    await attachment_status(chosen["id"], "saved")
+                    chosen["status"] = "saved"
+                    reply = f"💾 Saved {chosen['path']} in the files folder."
+                except Exception as e:
+                    sentry_sdk.capture_exception(e)
+                    reply = (
+                        f"⚠️ Couldn't save {chosen['path']} in the files folder. "
+                        "Try again later."
+                    )
+                await own_bot(context).send_message(SETTINGS.owner_id, reply)
+                return
+            await query.answer("💾 Saving to the repo…")
+            try:
+                folder = (
+                    Path(SETTINGS.files_dir)
+                    .resolve()
+                    .relative_to(Path.cwd().resolve())
+                    .as_posix()
+                )
+            except (TypeError, ValueError):
+                await own_bot(context).send_message(
+                    SETTINGS.owner_id,
+                    f"⚠️ Couldn't save {chosen['path']} to the repo. The files folder "
+                    "isn't inside the folder the bot runs from, so its place in the "
+                    "repo can't be worked out.",
+                )
+                return
+            status = None
+            try:
+                data = await (
+                    await own_bot(context).get_file(chosen["file_id"])
+                ).download_as_bytearray()
+                async with httpx.AsyncClient(timeout=60) as client:
+                    response = await client.put(
+                        f"https://api.github.com/repos/{SETTINGS.files_repo}/contents/"
+                        + "/".join(
+                            p for p in (folder, chosen["path"]) if p not in ("", ".")
+                        ),
+                        headers={
+                            "Authorization": f"Bearer {SETTINGS.files_repo_token}",
+                            "Accept": "application/vnd.github+json",
+                        },
+                        json={
+                            "message": f"Add {chosen['path']} from the troubleshooter bot",
+                            "content": base64.b64encode(bytes(data)).decode(),
+                            "branch": SETTINGS.files_repo_branch or "main",
+                        },
+                    )
+                status = response.status_code
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
+            if status in (200, 201):
+                await attachment_status(chosen["id"], "committed")
+                chosen["status"] = "committed"
+                reply = (
+                    f"💾 Saved {chosen['path']} to the repo. It's in the files folder "
+                    "after the next deploy."
+                )
+            else:
+                if status:
+                    sentry_sdk.capture_message(
+                        f"Troubleshooter file save to repo failed: HTTP {status}",
+                        level="warning",
+                    )
+                reply = f"⚠️ Couldn't save {chosen['path']} to the repo. " + {
+                    401: "The token isn't valid.",
+                    403: "The token can't write to that repo.",
+                    404: "The repo, folder or branch wasn't found.",
+                    409: "The branch changed while saving. Try again.",
+                    422: "A file with that name is already there.",
+                }.get(status, "Try again later.")
+            await own_bot(context).send_message(SETTINGS.owner_id, reply)
+            return
         text = (
             f"📎 *Pending Files* ({len(pending)})\n\n"
             "These were added in the bot but aren't in the files folder yet. "
-            "Save each one as shown; the bot marks it saved when it next starts."
-            "\n\n"
+            + (
+                "Tap 💾 to save one to the repo, or save it yourself as shown. "
+                "The bot marks it saved when it next starts."
+                if repo
+                else "Tap 💾 to save one in the files folder, or save it yourself "
+                "as shown."
+            )
+            + "\n\n"
             + (
                 "\n".join(
                     f"• {escape_markdown(where(a['node_id']))}: `{a['path']}`"
+                    + (
+                        " (in the repo, live after the next deploy)"
+                        if a["status"] == "committed"
+                        else ""
+                    )
                     for a in pending
                 )
                 or "Nothing waiting."
@@ -183,11 +315,22 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         kb = [
             [
                 InlineKeyboardButton(
-                    f"📤 {where(a['node_id'])[:40]}",
+                    f"📤 {where(a['node_id'])[:30]}",
                     callback_data=f"troubleshooter:menu_files:send:{a['id']}",
                 )
             ]
+            + (
+                [
+                    InlineKeyboardButton(
+                        "💾 Save",
+                        callback_data=f"troubleshooter:menu_files:save:{a['id']}",
+                    )
+                ]
+                if repo or SETTINGS.files_dir
+                else []
+            )
             for a in pending[:20]
+            if a["status"] == "pending"
         ] + [[TO_PANEL]]
 
     markup = InlineKeyboardMarkup(kb)

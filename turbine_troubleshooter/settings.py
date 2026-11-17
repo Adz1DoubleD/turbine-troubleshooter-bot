@@ -34,6 +34,9 @@ ENV_VARS = {
     "windquest_api_token": "WINDQUEST_API_TOKEN",
     "test_mode": "TROUBLESHOOTER_TEST_MODE",
     "announce_updates": "TROUBLESHOOTER_ANNOUNCE_UPDATES",
+    "files_repo": "TROUBLESHOOTER_FILES_REPO",
+    "files_repo_branch": "TROUBLESHOOTER_FILES_REPO_BRANCH",
+    "files_repo_token": "TROUBLESHOOTER_FILES_REPO_TOKEN",
 }
 
 SETTINGS = SimpleNamespace(
@@ -54,6 +57,9 @@ SETTINGS = SimpleNamespace(
     windquest_location=None,
     test_mode=False,
     announce_updates=True,
+    files_repo=None,
+    files_repo_branch="main",
+    files_repo_token=None,
 )
 
 

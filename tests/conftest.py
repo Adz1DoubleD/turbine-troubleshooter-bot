@@ -117,6 +117,9 @@ def troubleshooter_settings(monkeypatch):
         "windquest_location": None,
         "test_mode": False,
         "announce_updates": True,
+        "files_repo": None,
+        "files_repo_branch": "main",
+        "files_repo_token": None,
     }.items():
         monkeypatch.setattr(SETTINGS, name, value)
     return SETTINGS

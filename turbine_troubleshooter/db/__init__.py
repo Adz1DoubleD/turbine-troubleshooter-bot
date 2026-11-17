@@ -30,6 +30,7 @@ from .io_boards import (
 from .menu import (
     MENU_MIGRATED,
     attachment_add,
+    attachment_status,
     attachments_remove,
     menu_migrate,
     menu_node_add,
@@ -86,6 +87,7 @@ __all__ = [
     "io_boards_replace",
     "MENU_MIGRATED",
     "attachment_add",
+    "attachment_status",
     "attachments_remove",
     "menu_migrate",
     "menu_node_add",

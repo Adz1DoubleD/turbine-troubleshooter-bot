@@ -217,3 +217,11 @@ async def attachments_remove(node_id):
     async with db_session() as cur:
         await cur.execute("DELETE FROM attachments WHERE node_id = %s", (node_id,))
         return cur.rowcount
+
+
+async def attachment_status(attachment_id, status):
+    async with db_session() as cur:
+        await cur.execute(
+            "UPDATE attachments SET status = %s WHERE id = %s", (status, attachment_id)
+        )
+        return cur.rowcount > 0
