@@ -62,6 +62,8 @@ SETTINGS = SimpleNamespace(
     files_repo_token=None,
 )
 
+NOTIFY_DEFAULTS = {"added": 1, "edited": 0, "deleted": 1}
+
 
 def setup(**options):
     unknown = set(options) - set(vars(SETTINGS)) | (

@@ -12,7 +12,7 @@ from telegram.ext import ContextTypes
 import turbine_troubleshooter
 from turbine_troubleshooter.db import users_get
 from turbine_troubleshooter.helpers import escape_markdown, is_owner, is_test_mode
-from turbine_troubleshooter.settings import SETTINGS, SKIPPED_WORDS
+from turbine_troubleshooter.settings import NOTIFY_DEFAULTS, SETTINGS, SKIPPED_WORDS
 
 
 def find_wtg(text):
@@ -278,7 +278,9 @@ async def send_notification_troubleshooter(
             user_markup = alert_markup()
             to_alerts, to_users = True, True
 
-            if not int(SETTINGS.notify_settings.get(f"notify_{verb}", 1)):
+            if not int(
+                SETTINGS.notify_settings.get(f"notify_{verb}", NOTIFY_DEFAULTS[verb])
+            ):
                 audience = "admins"
 
         case "menu_added" | "menu_edited" | "menu_deleted":
@@ -288,7 +290,14 @@ async def send_notification_troubleshooter(
                 text += f"• Change: {escape_markdown(message)}\n"
             text += f"\n• By: {name}"
             parse_mode, reply_markup = "Markdown", close_markup
-            to_alerts, to_users = True, False
+            user_markup = alert_markup()
+            to_alerts = True
+            to_users = verb == "added" or message == "File added"
+
+            if not int(
+                SETTINGS.notify_settings.get("notify_added", NOTIFY_DEFAULTS["added"])
+            ):
+                audience = "admins"
 
         case "feedback":
             text = f"💬 *Feedback*\n\n{escape_markdown(message)}\n\n• From: {name}"

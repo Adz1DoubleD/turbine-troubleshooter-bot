@@ -8,7 +8,7 @@ from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.db import db_export, db_tables, setting_toggle
 from turbine_troubleshooter.helpers import error_kb, is_owner
-from turbine_troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.settings import NOTIFY_DEFAULTS, SETTINGS
 
 from ...tools import user_is_admin
 
@@ -128,12 +128,12 @@ async def button_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     verb = query.data.removeprefix("troubleshooter:notify_users").lstrip(":")
     if verb in NOTIFY_LABELS:
-        await setting_toggle(f"notify_{verb}")
+        await setting_toggle(f"notify_{verb}", NOTIFY_DEFAULTS[verb])
 
     kb = [
         [
             InlineKeyboardButton(
-                f"{'✅' if int(SETTINGS.notify_settings.get(f'notify_{v}', 1)) else '❌'}"
+                f"{'✅' if int(SETTINGS.notify_settings.get(f'notify_{v}', NOTIFY_DEFAULTS[v])) else '❌'}"
                 f" {label}",
                 callback_data=f"troubleshooter:notify_users:{v}",
             )
@@ -147,7 +147,8 @@ async def button_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(
         "🔔 *Notify Users*\n\n"
         "When a code or part is added, edited or deleted, users are told if it's ✅. "
-        "If it's ❌, only admins are told.",
+        "If it's ❌, only admins are told.\n\n"
+        "➕ Added also covers new menu pages and files.",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(kb),
     )
