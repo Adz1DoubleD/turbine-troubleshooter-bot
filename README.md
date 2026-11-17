@@ -53,7 +53,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
 | `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
-| `files_dir` | — | Folder that `file:` references in the content resolve against |
+| `files_dir` | `TROUBLESHOOTER_FILES_DIR` (standalone) | Folder the menus' photos and PDFs are kept in, e.g. `pdf/manual.pdf` inside it |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
