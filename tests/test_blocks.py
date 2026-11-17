@@ -65,3 +65,26 @@ async def test_main_menu_shows_part_count():
     labels = button_labels((await blocks.handle_block(context))["reply_markup"])
 
     assert "🔩 Search 3 Spare Parts" in labels
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("have", [True, False])
+async def test_io_boards_and_wtg_info_only_show_when_there_are_some(monkeypatch, have):
+    from turbine_troubleshooter.settings import SETTINGS
+
+    monkeypatch.setattr(
+        SETTINGS,
+        "content",
+        SimpleNamespace(
+            MODULES_MAP={},
+            WTG_MAP={"WTA01": {"serial": 1, "ip": "192.0.2.1"}} if have else {},
+            IO_BOARDS={"io1": {"name": "IO Board 1", "can": ""}} if have else {},
+        ),
+    )
+    context = SimpleNamespace(bot_data={"codes": {}}, user_data={"is_admin": False})
+
+    block = await blocks.handle_block(context)
+    labels = button_labels(block["reply_markup"])
+
+    assert ("IO Boards" in labels) is have
+    assert ("🔢 WTG Info" in labels) is have

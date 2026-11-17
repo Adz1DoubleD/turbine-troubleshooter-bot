@@ -82,7 +82,7 @@ Undo only works while the item still has the text the admin saved; if it's been 
 
 The turbine map is loaded from the `content` table's `WTG_MAP` row, stored as JSON text. See [`turbine_troubleshooter/example_content.py`](turbine_troubleshooter/example_content.py) for the shape.
 
-IO board pin-outs live in `io_boards`, one row per pin with its board's key, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards.
+IO board pin-outs live in `io_boards`, one row per pin with its board's key, name and CAN node, in the order they're shown. On the first start with this table, the bot copies the `IO_BOARDS` row of `content` and the older one-table-per-board tables into it once, and leaves those untouched. On a new database there's nothing to copy, so there are no boards. The **IO Boards** and **🔢 WTG Info** buttons only appear once there's at least one board or turbine.
 
 The menus live in `menu_nodes`, one row per button, with photos and PDFs in `attachments`. On the first start with these tables, the bot copies the `MODULES_MAP` row of `content` into them once, keeping the order and nesting, and leaves the `MODULES_MAP` row untouched. Documents and photos are files in `files_dir`; `MODULES_MAP` refers to them as `file:<path relative to files_dir>`. On a new database there's nothing to copy, so the menus start empty.
 

@@ -33,9 +33,14 @@ async def handle_block(context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🌦 Weather", callback_data="troubleshooter:weather")]
         )
 
-    kb.append(
-        [InlineKeyboardButton("🔢 WTG Info", callback_data="troubleshooter:wtg_search")]
-    )
+    if getattr(SETTINGS.content, "WTG_MAP", None):
+        kb.append(
+            [
+                InlineKeyboardButton(
+                    "🔢 WTG Info", callback_data="troubleshooter:wtg_search"
+                )
+            ]
+        )
 
     kb.append(
         [

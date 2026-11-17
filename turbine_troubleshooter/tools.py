@@ -27,7 +27,11 @@ def find_wtg(text):
 
 
 def get_troubleshooter_content():
-    content = {"troubleshooter:ioboard": {"type": "menu", "title": "IO Boards"}}
+    content = (
+        {"troubleshooter:ioboard": {"type": "menu", "title": "IO Boards"}}
+        if getattr(SETTINGS.content, "IO_BOARDS", None)
+        else {}
+    )
 
     if SETTINGS.menu is not None:
         attached = {}
