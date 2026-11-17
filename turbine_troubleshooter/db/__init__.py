@@ -20,6 +20,10 @@ from .export import (
     db_export,
     db_tables,
 )
+from .menu import (
+    MENU_MIGRATED,
+    menu_migrate,
+)
 from .parts import (
     part_add,
     part_update,
@@ -63,6 +67,8 @@ __all__ = [
     "EXPORT_TABLES",
     "db_export",
     "db_tables",
+    "MENU_MIGRATED",
+    "menu_migrate",
     "part_add",
     "part_update",
     "init_troubleshooter_db",

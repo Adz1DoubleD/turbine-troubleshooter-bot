@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -35,6 +36,7 @@ def make_update(data, user_id=123):
         data=data,
         from_user=SimpleNamespace(id=user_id),
         edit_message_text=edit_message_text,
+        answer=AsyncMock(),
     )
     return SimpleNamespace(callback_query=query), edits
 

@@ -109,6 +109,7 @@ def troubleshooter_settings(monkeypatch):
         "noise_filters": NOISE_FILTERS,
         "notify_settings": {},
         "content": example_content,
+        "menu": None,
         "files_dir": None,
         "cefas_buoy": None,
         "windquest_api_key": None,
