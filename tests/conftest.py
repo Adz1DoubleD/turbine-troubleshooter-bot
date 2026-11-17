@@ -118,7 +118,6 @@ def troubleshooter_settings(monkeypatch):
         "test_mode": False,
         "announce_updates": True,
         "files_repo": None,
-        "files_repo_dir": "",
         "files_repo_branch": "main",
         "files_repo_token": None,
     }.items():

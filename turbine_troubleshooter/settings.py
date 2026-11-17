@@ -35,7 +35,6 @@ ENV_VARS = {
     "test_mode": "TROUBLESHOOTER_TEST_MODE",
     "announce_updates": "TROUBLESHOOTER_ANNOUNCE_UPDATES",
     "files_repo": "TROUBLESHOOTER_FILES_REPO",
-    "files_repo_dir": "TROUBLESHOOTER_FILES_REPO_DIR",
     "files_repo_branch": "TROUBLESHOOTER_FILES_REPO_BRANCH",
     "files_repo_token": "TROUBLESHOOTER_FILES_REPO_TOKEN",
 }
@@ -59,7 +58,6 @@ SETTINGS = SimpleNamespace(
     test_mode=False,
     announce_updates=True,
     files_repo=None,
-    files_repo_dir="",
     files_repo_branch="main",
     files_repo_token=None,
 )

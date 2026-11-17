@@ -47,7 +47,6 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `test_mode` | `TROUBLESHOOTER_TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
 | `announce_updates` | `TROUBLESHOOTER_ANNOUNCE_UPDATES` | `0` to stop the owner being offered each release's *What's new* note. On by default ([release notes](#release-notes-for-users)) |
 | `files_repo` | `TROUBLESHOOTER_FILES_REPO` | GitHub repo that holds `files_dir`, as `owner/name`. With a token, **💾 Save** commits new photos and PDFs there instead of to `files_dir` ([details](#photos-and-pdfs-on-menu-pages)) |
-| `files_repo_dir` | `TROUBLESHOOTER_FILES_REPO_DIR` | Folder in that repo that `files_dir` is deployed from, e.g. `app/media` |
 | `files_repo_branch` | `TROUBLESHOOTER_FILES_REPO_BRANCH` | Branch to save to. Default `main` |
 | `files_repo_token` | `TROUBLESHOOTER_FILES_REPO_TOKEN` | Fine-grained GitHub token with *Contents: read and write* on that one repo only |
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
@@ -70,7 +69,7 @@ A new file works in the troubleshooter bot straight away. The bot also sends it 
 
 The owner can tap **💾 Save** on that message, or in Pending Files, instead of saving it by hand. Without repo settings it saves the file straight into `files_dir`, which is all a bot on an ordinary server needs. On hosts that reset their disk on each restart, such as Heroku, a file saved that way only lasts until the next restart; the bot then notices it's gone and puts it back in Pending Files.
 
-For those hosts, if `files_dir` is deployed from a GitHub repo, set the four `files_repo` settings and the button becomes **💾 Save to Repo**: it commits the file to that folder of the repo, so it's in `files_dir` after the host's next deploy. Use a fine-grained token limited to that one repo with *Contents: read and write*; keep it in the host's environment, never in a file. If GitHub refuses (wrong token, missing folder, a file with that name already there), the owner is told why and the file stays pending.
+For those hosts, if `files_dir` is deployed from a GitHub repo, set `TROUBLESHOOTER_FILES_REPO` and `TROUBLESHOOTER_FILES_REPO_TOKEN` and the button becomes **💾 Save to Repo**: it commits the file to the same place in the repo, worked out from where `files_dir` sits under the folder the bot runs from (for a bot started from the top of its repo, `app/media` stays `app/media`), so it's in `files_dir` after the host's next deploy. Use a fine-grained token limited to that one repo with *Contents: read and write*; keep it in the host's environment, never in a file. If GitHub refuses (wrong token, missing folder, a file with that name already there), the owner is told why and the file stays pending.
 
 ## Who can change what
 

@@ -227,6 +227,21 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await own_bot(context).send_message(SETTINGS.owner_id, reply)
                 return
             await query.answer("💾 Saving to the repo…")
+            try:
+                folder = (
+                    Path(SETTINGS.files_dir)
+                    .resolve()
+                    .relative_to(Path.cwd().resolve())
+                    .as_posix()
+                )
+            except (TypeError, ValueError):
+                await own_bot(context).send_message(
+                    SETTINGS.owner_id,
+                    f"⚠️ Couldn't save {chosen['path']} to the repo. The files folder "
+                    "isn't inside the folder the bot runs from, so its place in the "
+                    "repo can't be worked out.",
+                )
+                return
             status = None
             try:
                 data = await (
@@ -236,12 +251,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     response = await client.put(
                         f"https://api.github.com/repos/{SETTINGS.files_repo}/contents/"
                         + "/".join(
-                            p
-                            for p in (
-                                SETTINGS.files_repo_dir.strip("/"),
-                                chosen["path"],
-                            )
-                            if p
+                            p for p in (folder, chosen["path"]) if p not in ("", ".")
                         ),
                         headers={
                             "Authorization": f"Bearer {SETTINGS.files_repo_token}",

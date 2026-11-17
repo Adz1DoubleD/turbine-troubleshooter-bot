@@ -37,11 +37,11 @@ def attachments():
 
 
 @pytest.fixture(autouse=True)
-def setup(monkeypatch):
+def setup(monkeypatch, tmp_path):
     monkeypatch.setattr(SETTINGS, "owner_id", str(OWNER))
     monkeypatch.setattr(SETTINGS, "files_repo", "owner/host-bot")
-    monkeypatch.setattr(SETTINGS, "files_dir", "media")
-    monkeypatch.setattr(SETTINGS, "files_repo_dir", "app/media/")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(SETTINGS, "files_dir", tmp_path / "app" / "media")
     monkeypatch.setattr(SETTINGS, "files_repo_token", TOKEN)
     monkeypatch.setattr(
         SETTINGS,
@@ -416,3 +416,20 @@ async def test_start_puts_vanished_files_back_in_pending(
         [8],
     ) in cur.calls
     assert [a["status"] for a in SETTINGS.menu["attachments"]] == ["pending", "saved"]
+
+
+@pytest.mark.asyncio
+async def test_a_files_folder_outside_the_bots_folder_cannot_go_to_the_repo(
+    monkeypatch, tmp_path, github
+):
+    monkeypatch.setattr(SETTINGS, "files_dir", tmp_path.parent / "elsewhere")
+    user, context = make()
+
+    await press("troubleshooter:menu_files:save:8", user, context)
+
+    assert github.puts == []
+    assert (
+        "its place in the repo can't be worked out"
+        in context.bot.send_message.await_args.args[1]
+    )
+    assert SETTINGS.menu["attachments"][0]["status"] == "pending"
