@@ -251,7 +251,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         files = item.get("file")
-        files = files if isinstance(files, list) else [files]
+        saved = files = files if isinstance(files, list) else [files]
         if context.bot_data.get("is_troubleshooter") and item.get("file_ids"):
             files = [fid or f for f, fid in zip(files, item["file_ids"])]
         if item["type"] in ("document", "photo") and any(
@@ -276,27 +276,33 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(
                 caption, parse_mode="Markdown", reply_markup=kb
             )
+            return
 
-        elif item["type"] == "document":
-            await close_message(query)
-
-            for i, doc in enumerate(files):
-                is_last = i == len(files) - 1
-                await query.message.reply_document(
-                    document=doc,
-                    caption=caption if is_last else None,
-                    parse_mode="Markdown",
-                    reply_markup=kb if is_last else error_kb(None),
+        await close_message(query)
+        kind = "photo" if item["type"] == "photo" else "document"
+        attempts = (
+            [files, saved]
+            if files != saved
+            and all(isinstance(f, Path) and f.is_file() for f in saved)
+            else [files]
+        )
+        for attempt in attempts:
+            try:
+                for i, f in enumerate(attempt):
+                    await getattr(query.message, f"reply_{kind}")(
+                        **{kind: f},
+                        caption=caption if i == len(attempt) - 1 else None,
+                        parse_mode="Markdown",
+                        reply_markup=kb if i == len(attempt) - 1 else error_kb(None),
+                    )
+                break
+            except BadRequest:
+                if attempt is attempts[-1]:
+                    raise
+                sentry_sdk.capture_message(
+                    "Troubleshooter file id rejected; sent the saved file",
+                    level="warning",
                 )
-
-        elif item["type"] == "photo":
-            await close_message(query)
-            await query.message.reply_photo(
-                photo=files[0],
-                caption=caption,
-                parse_mode="Markdown",
-                reply_markup=kb,
-            )
         return
 
     elif data.startswith("troubleshooter:ioboard:"):
