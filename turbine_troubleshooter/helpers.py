@@ -4,6 +4,7 @@ import traceback
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
+from telegram.ext import ContextTypes
 
 import turbine_troubleshooter
 from turbine_troubleshooter.settings import SETTINGS
@@ -68,7 +69,7 @@ async def close_message(query, title=None, reopen="troubleshooter:home"):
             pass
 
 
-async def error_handler(update, context):
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error = context.error
     if any(noise.lower() in str(error).lower() for noise in SETTINGS.noise_filters):
         return

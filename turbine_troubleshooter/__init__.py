@@ -71,7 +71,7 @@ async def command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def callback_handler(update: Update, context):
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await set_user_roles(context, query.from_user.id)
     data = query.data
@@ -94,7 +94,7 @@ async def callback_handler(update: Update, context):
     await handle_button(update, context)
 
 
-async def text_handler(update: Update, context):
+async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user is None or context.user_data is None:
         return
     await set_user_roles(context, update.effective_user.id)
@@ -103,7 +103,7 @@ async def text_handler(update: Update, context):
     await handle_text_input(update, context)
 
 
-async def file_handler(update: Update, context):
+async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user is None or context.user_data is None:
         return
     await set_user_roles(context, update.effective_user.id)
