@@ -25,7 +25,9 @@ def _find_part(context, part_id):
     )
 
 
-async def _show_part(context, chat_id, msg_id, part, status=None):
+async def _show_part(
+    context: ContextTypes.DEFAULT_TYPE, chat_id, msg_id, part, status=None
+):
     section = escape_markdown(part["section"]) if part.get("section") else "_None_"
     text = (f"{status}\n\n" if status else "") + (
         f"🔩 *Edit Part*\n\n"

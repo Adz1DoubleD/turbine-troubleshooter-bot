@@ -101,7 +101,13 @@ async def edit(query, text, kb):
             raise
 
 
-async def tell_user(context, user_id, text, reply_markup=None, parse_mode=None):
+async def tell_user(
+    context: ContextTypes.DEFAULT_TYPE,
+    user_id,
+    text,
+    reply_markup=None,
+    parse_mode=None,
+):
     try:
         await own_bot(context).send_message(
             user_id,
@@ -118,7 +124,7 @@ def clear_request(context, user_id):
         context.bot_data.get(f"pending_{kind}_requests", {}).pop(user_id, None)
 
 
-async def grant_access(context, user_id):
+async def grant_access(context: ContextTypes.DEFAULT_TYPE, user_id):
     await user_approve(user_id)
     context.bot_data.setdefault("troubleshooter_approved", set()).add(user_id)
     clear_request(context, user_id)
@@ -145,7 +151,7 @@ async def grant_access(context, user_id):
     )
 
 
-async def grant_admin(context, user_id, name):
+async def grant_admin(context: ContextTypes.DEFAULT_TYPE, user_id, name):
     await admin_add(user_id, name.lstrip("@"))
     context.bot_data.setdefault("troubleshooter_admins", {})[user_id] = name
     clear_request(context, user_id)
@@ -171,7 +177,7 @@ async def grant_admin(context, user_id, name):
     )
 
 
-async def remove_admin(context, user_id):
+async def remove_admin(context: ContextTypes.DEFAULT_TYPE, user_id):
     removed = await admin_remove(user_id)
     await user_approve(user_id)
     context.bot_data.get("troubleshooter_admins", {}).pop(user_id, None)
@@ -182,7 +188,7 @@ async def remove_admin(context, user_id):
         )
 
 
-async def remove_access(context, user_id):
+async def remove_access(context: ContextTypes.DEFAULT_TYPE, user_id):
     await admin_remove(user_id)
     removed = await user_revoke(user_id)
     context.bot_data.get("troubleshooter_admins", {}).pop(user_id, None)
@@ -193,7 +199,7 @@ async def remove_access(context, user_id):
         )
 
 
-async def deny_request(context, user_id, kind):
+async def deny_request(context: ContextTypes.DEFAULT_TYPE, user_id, kind):
     name = context.bot_data.get(f"pending_{kind}_requests", {}).pop(user_id, None)
     await request_remove(user_id)
     what = "admin request" if kind == "admin" else "access request"
@@ -208,7 +214,7 @@ def request_target(query):
     return int(parts[3]), parts[-1] == "p"
 
 
-async def lookup_name(context, user_id):
+async def lookup_name(context: ContextTypes.DEFAULT_TYPE, user_id):
     try:
         chat = await context.bot.get_chat(user_id)
     except Exception:
@@ -342,7 +348,7 @@ async def handle_user_search(update: Update, context: ContextTypes.DEFAULT_TYPE,
             raise
 
 
-async def users_list(context, viewer_id, sort_by, page):
+async def users_list(context: ContextTypes.DEFAULT_TYPE, viewer_id, sort_by, page):
     users = await users_get()
     total = len(users)
     search = context.user_data.get("user_search")

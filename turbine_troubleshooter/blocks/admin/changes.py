@@ -33,7 +33,9 @@ from .users import (
 KINDS = {"code": "code", "part": "part", "menu": "menu item"}
 
 
-async def ask_owner_to_delete(update, context, kind, target, label):
+async def ask_owner_to_delete(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, kind, target, label
+):
     user = update.effective_user
     name = f"@{user.username}" if user.username else user.full_name
     request_id = await delete_request_add(kind, target, label, user.id, name)

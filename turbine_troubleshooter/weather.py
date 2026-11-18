@@ -4,7 +4,8 @@ from zoneinfo import ZoneInfo
 
 import aiohttp
 import sentry_sdk
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.settings import SETTINGS
 
@@ -456,7 +457,7 @@ async def send_block(query, block):
     await message.reply_text(**text_args)
 
 
-async def handle_button(update, context):
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     block = await weather_block(is_tomorrow=query.data.endswith(":tomorrow"))
     await send_block(query, block)

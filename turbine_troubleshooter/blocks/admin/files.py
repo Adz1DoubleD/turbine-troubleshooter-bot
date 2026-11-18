@@ -23,7 +23,7 @@ MAX_FILE_BYTES = 20 * 1024 * 1024
 FOLDERS = {"document": ("pdf", "pdf"), "photo": ("images", "jpg")}
 
 
-async def send_to_owner(context, attachment):
+async def send_to_owner(context: ContextTypes.DEFAULT_TYPE, attachment):
     send = (
         own_bot(context).send_photo
         if attachment["type"] == "photo"
@@ -61,7 +61,7 @@ async def send_to_owner(context, attachment):
         sentry_sdk.capture_exception(e)
 
 
-async def attach(context, user, node, file):
+async def attach(context: ContextTypes.DEFAULT_TYPE, user, node, file):
     folder, ext = FOLDERS[file["type"]]
     base = re.sub(r"\W+", "_", node["title"].lower()).strip("_") or "file"
     taken = {a["path"] for a in SETTINGS.menu["attachments"]}
