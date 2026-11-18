@@ -336,14 +336,11 @@ async def init_troubleshooter_db(application):
             sentry_sdk.capture_exception(e)
 
         print(
-            f"✅ Troubleshooter database initialised:\n"
-            f"   Codes: {len(codes)}\n"
-            f"   Parts: {len(parts)}\n"
-            f"   Menu items: {len((SETTINGS.menu or {}).get('nodes', []))}\n"
-            f"   IO Boards: {len(io_boards)}\n"
-            f"   Turbines: {len(SETTINGS.content.WTG_MAP)}\n"
-            f"   Admins: {len(admins)}\n"
-            f"   Approved Users: {len(approved)}"
+            f"✅ Troubleshooter database ready: {len(codes)} codes, "
+            f"{len(parts)} parts, "
+            f"{len((SETTINGS.menu or {}).get('nodes', []))} menu items, "
+            f"{len(io_boards)} IO boards, {len(SETTINGS.content.WTG_MAP)} turbines, "
+            f"{len(admins)} admins, {len(approved)} approved users"
         )
 
         try:
