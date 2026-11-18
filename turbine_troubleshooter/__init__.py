@@ -20,6 +20,7 @@ from turbine_troubleshooter.helpers import (
     error_handler,
     error_handler_noise_filter,
     error_kb,
+    is_test_mode,
 )
 
 from . import weather
@@ -542,7 +543,10 @@ async def start_troubleshooter_bot(share_with=None, **options):
     except Exception as e:
         sentry_sdk.capture_exception(e)
     await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-    print("🚀 Troubleshooting Bot initialised and polling")
+    mode = "test mode" if is_test_mode() else "live"
+    print(
+        f"🚀 Troubleshooter running on its own bot @{application.bot.username} ({mode})"
+    )
     return application
 
 
