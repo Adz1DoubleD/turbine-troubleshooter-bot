@@ -17,24 +17,53 @@ def clean_env(monkeypatch):
 
 
 def test_setup_reads_its_own_environment(monkeypatch):
-    monkeypatch.setenv("TROUBLESHOOTER_NAME", "Site Troubleshooter")
-    monkeypatch.setenv("TROUBLESHOOTER_WTG_PREFIX", "ST")
-    monkeypatch.setenv("TROUBLESHOOTER_BOT_TOKEN", "123:abc")
-    monkeypatch.setenv("TROUBLESHOOTER_OWNER_ID", "42")
-    monkeypatch.setenv("TROUBLESHOOTER_ALERTS_CHAT_ID", "-100")
-    monkeypatch.setenv("TROUBLESHOOTER_TIMEZONE", "UTC")
-    monkeypatch.setenv("TROUBLESHOOTER_CEFAS_BUOY", "BUOY1")
-    monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_LOCATION", "Site 1")
-    monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_KEY", "key")
-    monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_TOKEN", "tok")
+    for var, value in {
+        "BOT_NAME": "Site Troubleshooter",
+        "WTG_PREFIX": "ST",
+        "BOT_TOKEN": "123:abc",
+        "OWNER_ID": "42",
+        "ALERTS_CHAT_ID": "-100",
+        "DB_URL": "mysql://u:p@h/ts",
+        "TIMEZONE": "UTC",
+        "CEFAS_BUOY": "BUOY1",
+        "WINDQUEST_LOCATION": "Site 1",
+        "WINDQUEST_API_KEY": "key",
+        "WINDQUEST_API_TOKEN": "tok",
+    }.items():
+        monkeypatch.setenv(var, value)
 
     setup()
 
     assert (SETTINGS.name, SETTINGS.wtg_prefix) == ("Site Troubleshooter", "ST")
     assert (SETTINGS.token, SETTINGS.owner_id) == ("123:abc", "42")
     assert (SETTINGS.alerts_chat_id, SETTINGS.timezone) == ("-100", "UTC")
+    assert SETTINGS.db_url == "mysql://u:p@h/ts"
     assert (SETTINGS.cefas_buoy, SETTINGS.windquest_location) == ("BUOY1", "Site 1")
     assert (SETTINGS.windquest_api_key, SETTINGS.windquest_api_token) == ("key", "tok")
+
+
+def test_the_old_troubleshooter_names_still_work(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "token", None)
+    monkeypatch.setattr(SETTINGS, "name", "Troubleshooter")
+    monkeypatch.setenv("TROUBLESHOOTER_BOT_TOKEN", "123:old")
+    monkeypatch.setenv("TROUBLESHOOTER_NAME", "Old Name")
+
+    setup()
+
+    assert (SETTINGS.token, SETTINGS.name) == ("123:old", "Old Name")
+
+
+def test_a_host_prefix_reads_only_the_prefixed_names(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "token", None)
+    monkeypatch.setattr(SETTINGS, "owner_id", None)
+    monkeypatch.setenv("BOT_TOKEN", "123:host-own")
+    monkeypatch.setenv("SITE_OWNER_ID", "42")
+
+    setup("SITE_")
+
+    assert SETTINGS.token is None
+    assert SETTINGS.owner_id == "42"
+    assert SETTINGS.env_prefix == "SITE_"
 
 
 def test_the_old_windquest_names_still_work(monkeypatch):
@@ -55,13 +84,13 @@ def test_the_new_windquest_names_win(monkeypatch):
     monkeypatch.setenv("WINDQUEST_API_KEY", "old-key")
     monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_KEY", "new-key")
 
-    setup()
+    setup("TROUBLESHOOTER_")
 
     assert SETTINGS.windquest_api_key == "new-key"
 
 
 def test_setup_arguments_override_environment(monkeypatch):
-    monkeypatch.setenv("TROUBLESHOOTER_NAME", "From Env")
+    monkeypatch.setenv("BOT_NAME", "From Env")
 
     setup(name="From Code", files_dir="/media")
 
@@ -71,7 +100,7 @@ def test_setup_arguments_override_environment(monkeypatch):
 
 def test_blank_environment_values_are_ignored(monkeypatch):
     monkeypatch.setattr(SETTINGS, "name", "Kept")
-    monkeypatch.setenv("TROUBLESHOOTER_NAME", "")
+    monkeypatch.setenv("BOT_NAME", "")
 
     setup()
 

@@ -1,10 +1,11 @@
 import asyncio
-import os
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
 import aiomysql
 import sentry_sdk
+
+from ..settings import SETTINGS
 
 DB_POOL_SIZE = 3
 DB_CONNECT_TIMEOUT = 10
@@ -17,9 +18,9 @@ async def get_db_pool():
     global _pool
     async with _pool_lock:
         if _pool is None:
-            url = os.environ.get("TROUBLESHOOTER_DB_URL")
+            url = SETTINGS.db_url
             if not url:
-                raise RuntimeError("TROUBLESHOOTER_DB_URL is not set")
+                raise RuntimeError(f"{SETTINGS.env_prefix}DB_URL is not set")
             db_url = urlparse(url)
             _pool = await aiomysql.create_pool(
                 host=db_url.hostname,
