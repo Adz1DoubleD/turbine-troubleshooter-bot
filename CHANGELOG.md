@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.3.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.2.0...v2.3.0) (2026-11-18)
+
+
+### Features
+
+* plain setting names on its own, TROUBLESHOOTER_ inside a host ([#64](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/64)) ([9fdf576](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/9fdf576807a0d8947ffeca32329f468ec4493429))
+* read the WindQuest keys from TROUBLESHOOTER_ names ([#63](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/63)) ([b5d4ef0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/b5d4ef0924deb04d334ef8c1830cb64b3c2d5bf6))
+
+
+### Bug Fixes
+
+* say which bot the troubleshooter runs on at startup ([#62](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/62)) ([ff00583](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/ff00583556fc635c3a5b3e0ec9dcd996cef315af))
+* show the startup summary on one line ([#60](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/60)) ([1ac2a6f](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/1ac2a6f0d9cffa6d9ff0c8a648918c245ec68818))
+
 ## [2.2.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.1.0...v2.2.0) (2026-11-17)
 
 
