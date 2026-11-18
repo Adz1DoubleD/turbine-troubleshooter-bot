@@ -1,12 +1,18 @@
 import pytest
 
 from turbine_troubleshooter.helpers import is_test_mode
-from turbine_troubleshooter.settings import ENV_VARS, NOISE_FILTERS, SETTINGS, setup
+from turbine_troubleshooter.settings import (
+    ENV_VARS,
+    NOISE_FILTERS,
+    OLD_ENV_VARS,
+    SETTINGS,
+    setup,
+)
 
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
-    for var in ENV_VARS.values():
+    for var in [*ENV_VARS.values(), *OLD_ENV_VARS.values()]:
         monkeypatch.delenv(var, raising=False)
 
 
@@ -19,8 +25,8 @@ def test_setup_reads_its_own_environment(monkeypatch):
     monkeypatch.setenv("TROUBLESHOOTER_TIMEZONE", "UTC")
     monkeypatch.setenv("TROUBLESHOOTER_CEFAS_BUOY", "BUOY1")
     monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_LOCATION", "Site 1")
-    monkeypatch.setenv("WINDQUEST_API_KEY", "key")
-    monkeypatch.setenv("WINDQUEST_API_TOKEN", "tok")
+    monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_KEY", "key")
+    monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_TOKEN", "tok")
 
     setup()
 
@@ -29,6 +35,29 @@ def test_setup_reads_its_own_environment(monkeypatch):
     assert (SETTINGS.alerts_chat_id, SETTINGS.timezone) == ("-100", "UTC")
     assert (SETTINGS.cefas_buoy, SETTINGS.windquest_location) == ("BUOY1", "Site 1")
     assert (SETTINGS.windquest_api_key, SETTINGS.windquest_api_token) == ("key", "tok")
+
+
+def test_the_old_windquest_names_still_work(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "windquest_api_key", None)
+    monkeypatch.setattr(SETTINGS, "windquest_api_token", None)
+    monkeypatch.setenv("WINDQUEST_API_KEY", "old-key")
+    monkeypatch.setenv("WINDQUEST_API_TOKEN", "old-tok")
+
+    setup()
+
+    assert (SETTINGS.windquest_api_key, SETTINGS.windquest_api_token) == (
+        "old-key",
+        "old-tok",
+    )
+
+
+def test_the_new_windquest_names_win(monkeypatch):
+    monkeypatch.setenv("WINDQUEST_API_KEY", "old-key")
+    monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_KEY", "new-key")
+
+    setup()
+
+    assert SETTINGS.windquest_api_key == "new-key"
 
 
 def test_setup_arguments_override_environment(monkeypatch):

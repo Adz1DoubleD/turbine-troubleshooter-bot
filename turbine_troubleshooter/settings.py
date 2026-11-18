@@ -30,13 +30,17 @@ ENV_VARS = {
     "timezone": "TROUBLESHOOTER_TIMEZONE",
     "cefas_buoy": "TROUBLESHOOTER_CEFAS_BUOY",
     "windquest_location": "TROUBLESHOOTER_WINDQUEST_LOCATION",
-    "windquest_api_key": "WINDQUEST_API_KEY",
-    "windquest_api_token": "WINDQUEST_API_TOKEN",
+    "windquest_api_key": "TROUBLESHOOTER_WINDQUEST_API_KEY",
+    "windquest_api_token": "TROUBLESHOOTER_WINDQUEST_API_TOKEN",
     "test_mode": "TROUBLESHOOTER_TEST_MODE",
     "announce_updates": "TROUBLESHOOTER_ANNOUNCE_UPDATES",
     "files_repo": "TROUBLESHOOTER_FILES_REPO",
     "files_repo_branch": "TROUBLESHOOTER_FILES_REPO_BRANCH",
     "files_repo_token": "TROUBLESHOOTER_FILES_REPO_TOKEN",
+}
+OLD_ENV_VARS = {
+    "windquest_api_key": "WINDQUEST_API_KEY",
+    "windquest_api_token": "WINDQUEST_API_TOKEN",
 }
 
 SETTINGS = SimpleNamespace(
@@ -72,7 +76,7 @@ def setup(**options):
     if unknown:
         raise TypeError(f"Unknown troubleshooter settings: {sorted(unknown)}")
     for name, var in ENV_VARS.items():
-        value = os.environ.get(var)
+        value = os.environ.get(var) or os.environ.get(OLD_ENV_VARS.get(name, ""))
         if value:
             setattr(SETTINGS, name, value)
     for name, value in options.items():

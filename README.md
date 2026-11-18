@@ -51,7 +51,7 @@ The settings below are read from the environment; any keyword passed to `start_t
 | `files_repo_token` | `TROUBLESHOOTER_FILES_REPO_TOKEN` | Fine-grained GitHub token with *Contents: read and write* on that one repo only |
 | `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
 | `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
-| `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
+| `windquest_api_key`, `windquest_api_token` | `TROUBLESHOOTER_WINDQUEST_API_KEY`, `TROUBLESHOOTER_WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides. The old `WINDQUEST_API_KEY` and `WINDQUEST_API_TOKEN` still work |
 | `files_dir` | `TROUBLESHOOTER_FILES_DIR` (standalone) | Folder the menus' photos and PDFs are kept in, e.g. `pdf/manual.pdf` inside it |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
