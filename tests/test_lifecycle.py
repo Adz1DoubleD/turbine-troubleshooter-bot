@@ -100,7 +100,7 @@ async def test_standalone_prints_missing_settings_without_traceback(
 ):
     import turbine_troubleshooter.__main__ as standalone
 
-    monkeypatch.setattr(standalone, "load_dotenv", lambda: None)
+    monkeypatch.setattr(standalone, "load_dotenv", lambda *a, **k: None)
     monkeypatch.setattr(standalone.sentry_sdk, "init", lambda **kwargs: None)
     monkeypatch.setattr(
         standalone,
