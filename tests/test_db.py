@@ -296,7 +296,7 @@ async def test_database_url_is_read_when_connecting(monkeypatch):
 
     monkeypatch.setattr(ts.core.aiomysql, "create_pool", create_pool)
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
-    monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@ts-host:3306/tsdb")
+    monkeypatch.setattr(ts.core.SETTINGS, "db_url", "mysql://u:p@ts-host:3306/tsdb")
     monkeypatch.setattr(ts.core, "_pool", None)
 
     await ts.get_db_pool()
@@ -309,7 +309,8 @@ async def test_host_database_is_never_used_as_a_fallback(monkeypatch):
     create_pool = AsyncMock()
     monkeypatch.setattr(ts.core.aiomysql, "create_pool", create_pool)
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/maindb")
-    monkeypatch.delenv("TROUBLESHOOTER_DB_URL", raising=False)
+    monkeypatch.setattr(ts.core.SETTINGS, "db_url", None)
+    monkeypatch.setattr(ts.core.SETTINGS, "env_prefix", "TROUBLESHOOTER_")
     monkeypatch.setattr(ts.core, "_pool", None)
 
     with pytest.raises(RuntimeError, match="TROUBLESHOOTER_DB_URL is not set"):

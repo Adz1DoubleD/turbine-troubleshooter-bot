@@ -22,23 +22,25 @@ NOISE_FILTERS = (
 )
 
 ENV_VARS = {
-    "name": "TROUBLESHOOTER_NAME",
-    "wtg_prefix": "TROUBLESHOOTER_WTG_PREFIX",
-    "token": "TROUBLESHOOTER_BOT_TOKEN",
-    "owner_id": "TROUBLESHOOTER_OWNER_ID",
-    "alerts_chat_id": "TROUBLESHOOTER_ALERTS_CHAT_ID",
-    "timezone": "TROUBLESHOOTER_TIMEZONE",
-    "cefas_buoy": "TROUBLESHOOTER_CEFAS_BUOY",
-    "windquest_location": "TROUBLESHOOTER_WINDQUEST_LOCATION",
-    "windquest_api_key": "TROUBLESHOOTER_WINDQUEST_API_KEY",
-    "windquest_api_token": "TROUBLESHOOTER_WINDQUEST_API_TOKEN",
-    "test_mode": "TROUBLESHOOTER_TEST_MODE",
-    "announce_updates": "TROUBLESHOOTER_ANNOUNCE_UPDATES",
-    "files_repo": "TROUBLESHOOTER_FILES_REPO",
-    "files_repo_branch": "TROUBLESHOOTER_FILES_REPO_BRANCH",
-    "files_repo_token": "TROUBLESHOOTER_FILES_REPO_TOKEN",
+    "name": "BOT_NAME",
+    "wtg_prefix": "WTG_PREFIX",
+    "token": "BOT_TOKEN",
+    "owner_id": "OWNER_ID",
+    "alerts_chat_id": "ALERTS_CHAT_ID",
+    "db_url": "DB_URL",
+    "timezone": "TIMEZONE",
+    "cefas_buoy": "CEFAS_BUOY",
+    "windquest_location": "WINDQUEST_LOCATION",
+    "windquest_api_key": "WINDQUEST_API_KEY",
+    "windquest_api_token": "WINDQUEST_API_TOKEN",
+    "test_mode": "TEST_MODE",
+    "announce_updates": "ANNOUNCE_UPDATES",
+    "files_repo": "FILES_REPO",
+    "files_repo_branch": "FILES_REPO_BRANCH",
+    "files_repo_token": "FILES_REPO_TOKEN",
 }
-OLD_ENV_VARS = {
+OLD_ENV_VARS = {name: f"TROUBLESHOOTER_{var}" for name, var in ENV_VARS.items()} | {
+    "name": "TROUBLESHOOTER_NAME",
     "windquest_api_key": "WINDQUEST_API_KEY",
     "windquest_api_token": "WINDQUEST_API_TOKEN",
 }
@@ -48,6 +50,8 @@ SETTINGS = SimpleNamespace(
     wtg_prefix="",
     token=None,
     owner_id=None,
+    db_url=None,
+    env_prefix="",
     alerts_chat_id=None,
     timezone="Europe/London",
     noise_filters=NOISE_FILTERS,
@@ -69,14 +73,17 @@ SETTINGS = SimpleNamespace(
 NOTIFY_DEFAULTS = {"added": 1, "edited": 0, "deleted": 1}
 
 
-def setup(**options):
+def setup(env_prefix="", **options):
     unknown = set(options) - set(vars(SETTINGS)) | (
-        set(options) & {"content", "menu", "notify_settings"}
+        set(options) & {"content", "menu", "notify_settings", "env_prefix"}
     )
     if unknown:
         raise TypeError(f"Unknown troubleshooter settings: {sorted(unknown)}")
+    SETTINGS.env_prefix = env_prefix
     for name, var in ENV_VARS.items():
-        value = os.environ.get(var) or os.environ.get(OLD_ENV_VARS.get(name, ""))
+        value = os.environ.get(f"{env_prefix}{var}") or os.environ.get(
+            OLD_ENV_VARS[name]
+        )
         if value:
             setattr(SETTINGS, name, value)
     for name, value in options.items():

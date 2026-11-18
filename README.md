@@ -32,32 +32,34 @@ On its own (reads a `.env` in the current folder):
 python -m turbine_troubleshooter
 ```
 
-Standalone also uses `TROUBLESHOOTER_FILES_DIR` (default `media`) and `TROUBLESHOOTER_SENTRY_DSN` (Sentry is off when unset).
+Standalone also uses `FILES_DIR` (default `media`) and `SENTRY_DSN` (Sentry is off when unset).
 
 The settings below are read from the environment; any keyword passed to `start_troubleshooter_bot()` overrides the environment.
 
+Inside a host (with `share_with`), the same names are read with a `TROUBLESHOOTER_` prefix, such as `TROUBLESHOOTER_BOT_TOKEN` and `TROUBLESHOOTER_DB_URL`, so they never clash with the host's own settings. Pass `env_prefix=` to use a different prefix. Settings the host already has, like the owner and alerts chat, can be passed as keywords instead. Older installs that set the `TROUBLESHOOTER_` names on their own still work, as do `TROUBLESHOOTER_NAME` and the unprefixed WindQuest names.
+
 | Setting | Environment variable | Purpose |
 |---|---|---|
-| `name` | `TROUBLESHOOTER_NAME` | Shown in menus and messages ("*name* Bot"). Default `Troubleshooter` |
-| `wtg_prefix` | `TROUBLESHOOTER_WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
-| `token` | `TROUBLESHOOTER_BOT_TOKEN` | Bot token from @BotFather (see [Create your Telegram bot](#create-your-telegram-bot)) |
-| `owner_id` | `TROUBLESHOOTER_OWNER_ID` | Your Telegram user ID; the owner approves access and admins ([how to find it](#your-telegram-user-id)) |
-| `alerts_chat_id` | `TROUBLESHOOTER_ALERTS_CHAT_ID` | Group or channel for everything the bot reports: new users, access requests, change notices, feedback, delete requests, ↩️ Undo, files to save and the *What's new* note. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
-| `timezone` | `TROUBLESHOOTER_TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
-| `test_mode` | `TROUBLESHOOTER_TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
-| `announce_updates` | `TROUBLESHOOTER_ANNOUNCE_UPDATES` | `0` to stop the owner being offered each release's *What's new* note. On by default ([release notes](#release-notes-for-users)) |
-| `files_repo` | `TROUBLESHOOTER_FILES_REPO` | GitHub repo that holds `files_dir`, as `owner/name`. With a token, **💾 Save** commits new photos and PDFs there instead of to `files_dir` ([details](#photos-and-pdfs-on-menu-pages)) |
-| `files_repo_branch` | `TROUBLESHOOTER_FILES_REPO_BRANCH` | Branch to save to. Default `main` |
-| `files_repo_token` | `TROUBLESHOOTER_FILES_REPO_TOKEN` | Fine-grained GitHub token with *Contents: read and write* on that one repo only |
-| `cefas_buoy` | `TROUBLESHOOTER_CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
-| `windquest_location` | `TROUBLESHOOTER_WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
-| `windquest_api_key`, `windquest_api_token` | `TROUBLESHOOTER_WINDQUEST_API_KEY`, `TROUBLESHOOTER_WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides. The old `WINDQUEST_API_KEY` and `WINDQUEST_API_TOKEN` still work |
-| `files_dir` | `TROUBLESHOOTER_FILES_DIR` (standalone) | Folder the menus' photos and PDFs are kept in, e.g. `pdf/manual.pdf` inside it |
+| `name` | `BOT_NAME` | Shown in menus and messages ("*name* Bot"). Default `Troubleshooter` |
+| `wtg_prefix` | `WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
+| `token` | `BOT_TOKEN` | Bot token from @BotFather (see [Create your Telegram bot](#create-your-telegram-bot)) |
+| `owner_id` | `OWNER_ID` | Your Telegram user ID; the owner approves access and admins ([how to find it](#your-telegram-user-id)) |
+| `alerts_chat_id` | `ALERTS_CHAT_ID` | Group or channel for everything the bot reports: new users, access requests, change notices, feedback, delete requests, ↩️ Undo, files to save and the *What's new* note. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
+| `timezone` | `TIMEZONE` | Used for edit timestamps and weather. Default `Europe/London` |
+| `test_mode` | `TEST_MODE` | `1` while testing: notifications and broadcasts only reach the owner, and errors print a traceback. Off by default |
+| `announce_updates` | `ANNOUNCE_UPDATES` | `0` to stop the owner being offered each release's *What's new* note. On by default ([release notes](#release-notes-for-users)) |
+| `files_repo` | `FILES_REPO` | GitHub repo that holds `files_dir`, as `owner/name`. With a token, **💾 Save** commits new photos and PDFs there instead of to `files_dir` ([details](#photos-and-pdfs-on-menu-pages)) |
+| `files_repo_branch` | `FILES_REPO_BRANCH` | Branch to save to. Default `main` |
+| `files_repo_token` | `FILES_REPO_TOKEN` | Fine-grained GitHub token with *Contents: read and write* on that one repo only |
+| `cefas_buoy` | `CEFAS_BUOY` | Cefas WaveNet buoy ID for sea state; enables 🌦 Weather |
+| `windquest_location` | `WINDQUEST_LOCATION` | Preferred WindQuest forecast location (falls back to the main location) |
+| `windquest_api_key`, `windquest_api_token` | `WINDQUEST_API_KEY`, `WINDQUEST_API_TOKEN` | WindQuest credentials for wind, lightning and tides |
+| `files_dir` | `FILES_DIR` (standalone) | Folder the menus' photos and PDFs are kept in, e.g. `pdf/manual.pdf` inside it |
 | `noise_filters` | — | Error messages to ignore. Defaults to common network blips |
 
 ## Database
 
-MySQL, via `TROUBLESHOOTER_DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `menus` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
+MySQL, via `DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `menus` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
 
 Upgrading from 2.0: start version 2.1 once before 2.2 or later. 2.1 copies the old `content` rows and per-board IO tables into the tables above; 2.2 then removes the old ones (`content`, the per-board tables and `suggestions`). If 2.2 starts on a database that was never copied, it leaves the old data alone and reports it to Sentry.
 
@@ -71,7 +73,7 @@ A new file works in the troubleshooter bot straight away. The bot also sends it 
 
 The owner can tap **💾 Save** on that message, or in Pending Files, instead of saving it by hand; the result replaces the message's caption or shows at the top of the list. Without repo settings it saves the file straight into `files_dir`, which is all a bot on an ordinary server needs. On hosts that reset their disk on each restart, such as Heroku, a file saved that way only lasts until the next restart; the bot then notices it's gone and puts it back in Pending Files.
 
-For those hosts, if `files_dir` is deployed from a GitHub repo, set `TROUBLESHOOTER_FILES_REPO` and `TROUBLESHOOTER_FILES_REPO_TOKEN` and the button becomes **💾 Save to Repo**: it commits the file to the same place in the repo, worked out from where `files_dir` sits under the folder the bot runs from (for a bot started from the top of its repo, `app/media` stays `app/media`), so it's in `files_dir` after the host's next deploy. Use a fine-grained token limited to that one repo with *Contents: read and write*; keep it in the host's environment, never in a file. If GitHub refuses (wrong token, missing folder, a file with that name already there), the owner is told why and the file stays pending.
+For those hosts, if `files_dir` is deployed from a GitHub repo, set `FILES_REPO` and `FILES_REPO_TOKEN` and the button becomes **💾 Save to Repo**: it commits the file to the same place in the repo, worked out from where `files_dir` sits under the folder the bot runs from (for a bot started from the top of its repo, `app/media` stays `app/media`), so it's in `files_dir` after the host's next deploy. Use a fine-grained token limited to that one repo with *Contents: read and write*; keep it in the host's environment, never in a file. If GitHub refuses (wrong token, missing folder, a file with that name already there), the owner is told why and the file stays pending.
 
 ## Who can change what
 
@@ -86,7 +88,7 @@ The same rules cover fault codes, spare parts and menu items:
 
 Undo only works while the item still has the text the admin saved; if it's been changed again since, the bot says so. Edits made before this version can't be undone, because their old text wasn't kept.
 
-Approved users can tell the admins about anything missing or wrong with **💬 Feedback** on the troubleshooter bot's main menu (a host showing the menus doesn't show it). Their message goes to `TROUBLESHOOTER_ALERTS_CHAT_ID` (or the owner when it isn't set) with their name and Telegram ID; nothing is stored.
+Approved users can tell the admins about anything missing or wrong with **💬 Feedback** on the troubleshooter bot's main menu (a host showing the menus doesn't show it). Their message goes to `ALERTS_CHAT_ID` (or the owner when it isn't set) with their name and Telegram ID; nothing is stored.
 
 ## Content
 
@@ -102,7 +104,7 @@ Turbines and IO boards aren't edited from the menus. The owner keeps them up to 
 
 | Column | Meaning |
 |---|---|
-| `name` | The turbine: `TROUBLESHOOTER_WTG_PREFIX`, a row letter and a two-digit number, e.g. `WTA05`. Technicians look it up as `A5` |
+| `name` | The turbine: `WTG_PREFIX`, a row letter and a two-digit number, e.g. `WTA05`. Technicians look it up as `A5` |
 | `serial` | Serial number |
 | `ip` | IP address |
 
@@ -154,21 +156,21 @@ Every copy of the bot needs its own bot account. A token can only be used by one
 1. In Telegram, open [@BotFather](https://t.me/BotFather) and send `/newbot`.
 2. Give it a display name, for example `Site Troubleshooter`.
 3. Give it a username. It must be unique and end in `bot`, for example `site_troubleshooter_bot`.
-4. BotFather replies with a token that looks like `123456789:AAH...`. Put it in `TROUBLESHOOTER_BOT_TOKEN`.
+4. BotFather replies with a token that looks like `123456789:AAH...`. Put it in `BOT_TOKEN`.
 
 The token is a password: anyone who has it controls the bot. Never commit it or paste it in an issue. If it leaks, send `/revoke` to BotFather to get a new one.
 
 ### Your Telegram user ID
 
-The owner is set by user ID, not username. Message [@userinfobot](https://t.me/userinfobot) and it replies with your ID, a number like `123456789`. Put it in `TROUBLESHOOTER_OWNER_ID`.
+The owner is set by user ID, not username. Message [@userinfobot](https://t.me/userinfobot) and it replies with your ID, a number like `123456789`. Put it in `OWNER_ID`.
 
 ### An alerts group or channel
 
-Notifications go to the owner's private chat unless you set `TROUBLESHOOTER_ALERTS_CHAT_ID`. To send them to a group or channel instead:
+Notifications go to the owner's private chat unless you set `ALERTS_CHAT_ID`. To send them to a group or channel instead:
 
 1. Add the bot to the group. For a channel, add it as an admin that can post messages; it can't post in a channel otherwise.
 2. Find the chat's ID. With the bot stopped, open `https://api.telegram.org/bot<your token>/getUpdates` in a browser and look for `"chat":{"id":-100...` from adding the bot. If the list is empty, remove the bot and add it again, then reload.
-3. Put the ID, including the minus sign, in `TROUBLESHOOTER_ALERTS_CHAT_ID`.
+3. Put the ID, including the minus sign, in `ALERTS_CHAT_ID`.
 
 Everything the bot reports goes there, including the old text of edits, files waiting to be saved and the owner's buttons (**↩️ Undo**, **✅ Delete**, **💾 Save**, **📢 Send to Everyone**). Anyone in the chat can see them, but only the owner can press those buttons. Use a chat only you, or you and people you trust, can see.
 
@@ -193,11 +195,11 @@ cp .env.example .env               # Windows: copy .env.example .env
 ```
 
 In `.env`, set these three (the bot refuses to start and lists any that are missing):
-- `TROUBLESHOOTER_BOT_TOKEN`: your test bot's token from [@BotFather](#create-your-telegram-bot).
-- `TROUBLESHOOTER_OWNER_ID`: your [Telegram user ID](#your-telegram-user-id).
-- `TROUBLESHOOTER_DB_URL`: your MySQL database.
+- `BOT_TOKEN`: your test bot's token from [@BotFather](#create-your-telegram-bot).
+- `OWNER_ID`: your [Telegram user ID](#your-telegram-user-id).
+- `DB_URL`: your MySQL database.
 
-Everything else is optional. Access requests and change notices go to `TROUBLESHOOTER_ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
+Everything else is optional. Access requests and change notices go to `ALERTS_CHAT_ID`, or to the owner when it isn't set. Then:
 
 ```bash
 python -m turbine_troubleshooter

@@ -27,6 +27,8 @@ def fake_app(monkeypatch):
     monkeypatch.setattr(turbine_troubleshooter, "close_db", AsyncMock())
     monkeypatch.setattr(turbine_troubleshooter, "application", None)
     monkeypatch.setattr(SETTINGS, "owner_id", "42")
+    monkeypatch.setattr(SETTINGS, "db_url", None)
+    monkeypatch.setattr(SETTINGS, "env_prefix", "")
     monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@db-host:3306/ts")
     app.builder = builder
     return app
@@ -45,6 +47,13 @@ async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
         await turbine_troubleshooter.start_troubleshooter_bot()
 
     assert str(error.value) == (
+        "Troubleshooter needs these settings: BOT_TOKEN, OWNER_ID, DB_URL"
+    )
+
+    with pytest.raises(ValueError) as error:
+        await turbine_troubleshooter.start_troubleshooter_bot(share_with=MagicMock())
+
+    assert str(error.value) == (
         "Troubleshooter needs these settings: TROUBLESHOOTER_BOT_TOKEN, "
         "TROUBLESHOOTER_OWNER_ID, TROUBLESHOOTER_DB_URL"
     )
@@ -58,7 +67,7 @@ async def test_host_database_url_does_not_count(monkeypatch, fake_app):
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/main")
 
-    with pytest.raises(ValueError, match="TROUBLESHOOTER_DB_URL"):
+    with pytest.raises(ValueError, match="DB_URL"):
         await turbine_troubleshooter.start_troubleshooter_bot()
 
     init.assert_not_awaited()
