@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.4.0...v2.5.0) (2026-11-19)
+
+
+### Features
+
+* read only the current setting names ([#72](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/72)) ([7d8bf64](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/7d8bf6449405870b735f0498da9699da2c27cf89))
+
 ## [2.4.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.3.1...v2.4.0) (2026-11-19)
 
 
