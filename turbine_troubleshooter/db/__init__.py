@@ -28,9 +28,6 @@ from .menu import (
     menu_node_delete,
     menu_node_update,
 )
-from .old_content import (
-    old_content_remove,
-)
 from .parts import (
     part_add,
     part_update,
@@ -78,7 +75,6 @@ __all__ = [
     "menu_node_add",
     "menu_node_delete",
     "menu_node_update",
-    "old_content_remove",
     "part_add",
     "part_update",
     "init_troubleshooter_db",
