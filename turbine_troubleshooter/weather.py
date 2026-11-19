@@ -10,6 +10,7 @@ from telegram.ext import ContextTypes
 from turbine_troubleshooter.settings import SETTINGS
 
 WINDQUEST_URL = "https://api.weatherquest.co.uk/API/WindQuest/API-Forecast"
+WINDQUEST_TIMEOUT = 30
 CEFAS_RESULTS_URL = (
     "https://wavenet-api.cefas.co.uk/api/Detail/Results/{buoy}/INT?showForecast=true"
 )
@@ -223,7 +224,7 @@ async def get_windquest_data(
             "APIToken": SETTINGS.windquest_api_token,
             "Rand": "0",
         },
-        timeout=15,
+        timeout=WINDQUEST_TIMEOUT,
     )
 
     if not data or data.get("error"):
@@ -364,7 +365,7 @@ async def get_windquest_service() -> bool:
             "APIToken": SETTINGS.windquest_api_token,
             "Rand": "0",
         },
-        timeout=10,
+        timeout=WINDQUEST_TIMEOUT,
     )
     return bool(data) and not data.get("error") and bool(data.get("Forecast"))
 
