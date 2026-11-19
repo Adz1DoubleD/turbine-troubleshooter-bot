@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.4.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.3.1...v2.4.0) (2026-11-19)
+
+
+### Features
+
+* export the weather screen and WindQuest check for hosts ([#70](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/70)) ([c1d615f](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/c1d615f208f801721a0ddbd35add2233af3aea78))
+
+
+### Documentation
+
+* tidy the changelog to match the releases on PyPI ([#68](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/68)) ([1a71d8e](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/1a71d8e886b7286ec361036a937952ecd35c0f68))
+
 ## [2.3.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.3.0...v2.3.1) (2026-11-19)
 
 
