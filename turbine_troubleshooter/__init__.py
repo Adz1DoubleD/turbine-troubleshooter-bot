@@ -222,7 +222,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else links.append((m[2], m[3]))
                 or (
                     ""
-                    if m[1] is not None and m[4] is not None
+                    if None not in (m[1], m[4])
                     else f"{m[1] or ''}{m[2]}{m[4] or ''}"
                 )
             ),
@@ -271,9 +271,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if not links:
                     raise
                 await query.edit_message_text(
-                    caption.rstrip()
-                    + "\n\n"
-                    + "\n".join(f"{name}: {url}" for name, url in links),
+                    caption.rstrip() + "\n" + "".join(f"\n{n}: {u}" for n, u in links),
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup([back]),
                 )
