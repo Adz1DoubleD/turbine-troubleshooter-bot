@@ -42,7 +42,9 @@ Standalone also uses `FILES_DIR` (default `media`) and `SENTRY_DSN` (Sentry is o
 
 The settings below are read from the environment; any keyword passed to `start_troubleshooter_bot()` overrides the environment.
 
-Inside a host (with `share_with`), the same names are read with a `TROUBLESHOOTER_` prefix, such as `TROUBLESHOOTER_BOT_TOKEN` and `TROUBLESHOOTER_DB_URL`, so they never clash with the host's own settings. Pass `env_prefix=` to use a different prefix. Settings the host already has, like the owner and alerts chat, can be passed as keywords instead. Older installs that set the `TROUBLESHOOTER_` names on their own still work, as do `TROUBLESHOOTER_NAME` and the unprefixed WindQuest names.
+Inside a host (with `share_with`), the same names are read with a `TROUBLESHOOTER_` prefix, such as `TROUBLESHOOTER_BOT_TOKEN` and `TROUBLESHOOTER_DB_URL`, so they never clash with the host's own settings. Pass `env_prefix=` to use a different prefix. Settings the host already has, like the owner and alerts chat, can be passed as keywords instead.
+
+Upgrading from 2.4 or earlier: the old names are no longer read. Run on its own, rename `TROUBLESHOOTER_BOT_TOKEN` to `BOT_TOKEN`, `TROUBLESHOOTER_NAME` to `BOT_NAME` and so on. Inside a host, use `TROUBLESHOOTER_BOT_NAME` for the name and `TROUBLESHOOTER_WINDQUEST_API_KEY` / `TROUBLESHOOTER_WINDQUEST_API_TOKEN` for WindQuest.
 
 | Setting | Environment variable | Purpose |
 |---|---|---|

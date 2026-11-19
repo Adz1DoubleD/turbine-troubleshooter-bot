@@ -39,11 +39,6 @@ ENV_VARS = {
     "files_repo_branch": "FILES_REPO_BRANCH",
     "files_repo_token": "FILES_REPO_TOKEN",
 }
-OLD_ENV_VARS = {name: f"TROUBLESHOOTER_{var}" for name, var in ENV_VARS.items()} | {
-    "name": "TROUBLESHOOTER_NAME",
-    "windquest_api_key": "WINDQUEST_API_KEY",
-    "windquest_api_token": "WINDQUEST_API_TOKEN",
-}
 
 SETTINGS = SimpleNamespace(
     name="Troubleshooter",
@@ -81,9 +76,7 @@ def setup(env_prefix="", **options):
         raise TypeError(f"Unknown troubleshooter settings: {sorted(unknown)}")
     SETTINGS.env_prefix = env_prefix
     for name, var in ENV_VARS.items():
-        value = os.environ.get(f"{env_prefix}{var}") or os.environ.get(
-            OLD_ENV_VARS[name]
-        )
+        value = os.environ.get(f"{env_prefix}{var}")
         if value:
             setattr(SETTINGS, name, value)
     for name, value in options.items():
