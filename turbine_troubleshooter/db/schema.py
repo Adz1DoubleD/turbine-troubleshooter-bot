@@ -6,7 +6,6 @@ import sentry_sdk
 
 from ..settings import SETTINGS
 from .core import db_session
-from .old_content import old_content_remove
 
 
 async def init_troubleshooter_db(application):
@@ -342,21 +341,6 @@ async def init_troubleshooter_db(application):
             f"{len(io_boards)} IO boards, {len(SETTINGS.content.WTG_MAP)} turbines, "
             f"{len(admins)} admins, {len(approved)} approved users"
         )
-
-        try:
-            removed = await old_content_remove()
-            if removed:
-                print(f"🧹 Troubleshooter old content removed: {', '.join(removed)}")
-            elif removed is False:
-                print("⚠️ Troubleshooter old content kept: it was never copied")
-                sentry_sdk.capture_message(
-                    "Troubleshooter old content kept: it was never copied to the new "
-                    "tables. Start version 2.1 once to copy it, then this version.",
-                    level="error",
-                )
-        except Exception as e:
-            print(f"❌ [DB] Troubleshooter old content removal failed: {e}")
-            sentry_sdk.capture_exception(e)
 
     except Exception as e:
         print(f"❌ [DB] Troubleshooter DB init failed: {e}")
