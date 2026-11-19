@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.3.1...v2.3.2) (2026-11-19)
+
+
+### Documentation
+
+* tidy the changelog to match the releases on PyPI ([#68](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/68)) ([1a71d8e](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/1a71d8e886b7286ec361036a937952ecd35c0f68))
+
 ## [2.3.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.3.0...v2.3.1) (2026-11-19)
 
 
