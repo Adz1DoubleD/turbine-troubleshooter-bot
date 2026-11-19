@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from pathlib import Path
 
 import sentry_sdk
@@ -212,17 +213,31 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
             return
 
-        content_body = item.get("content", "")
+        links = []
+        content_body = re.sub(
+            r"(?m)(^[ \t]*)?\[([^\]\n]+)\]\((https?://[^)\s]+)\)([ \t]*(?:\n|\Z))?",
+            lambda m: (
+                f"{m[1] or ''}{m[2]}: {m[3]}{m[4] or ''}"
+                if "@" in m[3].split("/")[2]
+                else links.append((m[2], m[3]))
+                or (
+                    ""
+                    if m[1] is not None and m[4] is not None
+                    else f"{m[1] or ''}{m[2]}{m[4] or ''}"
+                )
+            ),
+            item.get("content", ""),
+        ).strip()
         caption = f"*{item['title']}*\n\n{content_body}"
+        back = [
+            InlineKeyboardButton(
+                "🔙 Back",
+                callback_data=item.get("parent") or "troubleshooter:home",
+            )
+        ]
         kb = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "🔙 Back",
-                        callback_data=item.get("parent") or "troubleshooter:home",
-                    )
-                ]
-            ]
+            [[InlineKeyboardButton(f"🔗 {name}", url=url)] for name, url in links]
+            + [back]
         )
 
         files = item.get("file")
@@ -248,9 +263,20 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         if item["type"] == "text":
-            await query.edit_message_text(
-                caption, parse_mode="Markdown", reply_markup=kb
-            )
+            try:
+                await query.edit_message_text(
+                    caption, parse_mode="Markdown", reply_markup=kb
+                )
+            except BadRequest:
+                if not links:
+                    raise
+                await query.edit_message_text(
+                    caption.rstrip()
+                    + "\n\n"
+                    + "\n".join(f"{name}: {url}" for name, url in links),
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup([back]),
+                )
             return
 
         await close_message(query)

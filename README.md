@@ -73,6 +73,10 @@ Upgrading from 2.0: start version 2.1 once before 2.2 or later. 2.1 copies the o
 
 `settings` holds the owner's *Notify Users* toggles (`notify_added`, `notify_edited`, `notify_deleted`), set from **Admin Panel → 🔔 Notify Users**. Added and Deleted start on and Edited starts off, so small fixes don't message everyone; a row in `settings` overrides that. When one is off, that kind of code or part change is only sent to admins. Users are also told when a menu page or a file on one is added, following the Added toggle; other menu changes only go to the alerts chat. Users can turn notifications off for themselves from any notice or their User Menu.
 
+### Links on menu pages
+
+A link written as `[name](https://…)` in a page's text becomes a **🔗 name** button under the page. A link with a login built in (`https://user:password@…`) can't be a button or a hidden link in Telegram, so it shows in the text as `name: https://…`, which is still tappable and keeps the login. If Telegram refuses a button for any other reason, the page shows its links as text instead. Bold, italic and tap-to-copy text that Telegram formats while you type are kept when a page is saved.
+
 ### Photos and PDFs on menu pages
 
 In the troubleshooter bot itself, admins can send a PDF or photo (up to 20 MB) when adding a page, or attach one from **Admin Panel → 📋 Edit Menus**, then the page, **✏️ Edit → 📎 File**. Text sent with it becomes its caption, so the page text is limited to Telegram's 1024-character caption. Only the owner can replace or remove a file. When an admin adds one, the alerts chat gets **↩️ Undo**, which lets the owner take it off the page again. A host showing the menus through `share_with` can't take files, because a Telegram file can only be resent by the bot that received it.

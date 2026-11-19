@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from telegram import MessageEntity
 from telegram.error import BadRequest
 
 import turbine_troubleshooter
@@ -147,9 +148,9 @@ async def press(data, user, context, text="menu"):
     return query
 
 
-async def type_in(text, user, context):
+async def type_in(text, user, context, entities=()):
     update = SimpleNamespace(
-        message=SimpleNamespace(text=text),
+        message=SimpleNamespace(text=text, entities=entities),
         effective_user=user,
         effective_chat=SimpleNamespace(id=user.id),
     )
@@ -560,4 +561,29 @@ async def test_edit_menus_lists_items_in_the_same_order_as_the_menus(db):
     )
     assert ids(inside, "troubleshooter:menu_manage:")[:-1] == ids(
         live_inside, "troubleshooter:menu:"
+    )
+
+
+@pytest.mark.asyncio
+async def test_links_and_formatting_from_telegram_are_kept_in_page_text(db):
+    user, context = make()
+    await press("troubleshooter:menu_add:in:1", user, context)
+    await press("troubleshooter:menu_add:type:page", user, context)
+    await type_in("Viewer", user, context)
+
+    text = "🖥 Open viewer\nUser: LoginName and *typed* stars"
+    preview = await type_in(
+        text,
+        user,
+        context,
+        entities=(
+            MessageEntity("text_link", 3, 11, url="https://u:p@example.com/x/"),
+            MessageEntity("code", 21, 9),
+            MessageEntity("mention", 31, 3),
+        ),
+    )
+
+    assert preview["text"].endswith(
+        "🖥 [Open viewer](https://u:p@example.com/x/)\n"
+        "User: `LoginName` and *typed* stars"
     )

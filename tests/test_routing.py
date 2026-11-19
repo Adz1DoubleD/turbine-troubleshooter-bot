@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from telegram.error import BadRequest
 
 import turbine_troubleshooter
 from turbine_troubleshooter.blocks import (
@@ -265,3 +266,85 @@ async def test_code_edit_text_updates_buffer(monkeypatch):
     assert context.user_data["code_edit_buffer"]["advice"] == "new advice"
     assert context.user_data["state"] is None
     assert called == [(context, 1, 55)]
+
+
+def page(body):
+    return {
+        "troubleshooter:viewer": {
+            "type": "text",
+            "title": "Viewer",
+            "content": body,
+            "file": None,
+            "parent": None,
+        }
+    }
+
+
+@pytest.mark.asyncio
+async def test_links_on_a_page_become_buttons(monkeypatch):
+    monkeypatch.setattr(
+        turbine_troubleshooter,
+        "get_troubleshooter_content",
+        lambda: page(
+            "Two viewers:\n"
+            "[WTG viewer](https://example.com/wtg)\n"
+            "See [the manual](https://example.com/manual) first."
+        ),
+    )
+    update, edits = make_update("troubleshooter:viewer")
+
+    await turbine_troubleshooter.handle_button(
+        update, SimpleNamespace(bot_data={}, user_data={})
+    )
+
+    assert edits[0]["text"] == "*Viewer*\n\nTwo viewers:\nSee the manual first."
+    rows = edits[0]["reply_markup"].inline_keyboard
+    assert [(r[0].text, r[0].url) for r in rows[:2]] == [
+        ("🔗 WTG viewer", "https://example.com/wtg"),
+        ("🔗 the manual", "https://example.com/manual"),
+    ]
+    assert rows[2][0].callback_data == "troubleshooter:home"
+
+
+@pytest.mark.asyncio
+async def test_links_with_a_login_stay_in_the_text(monkeypatch):
+    monkeypatch.setattr(
+        turbine_troubleshooter,
+        "get_troubleshooter_content",
+        lambda: page("[WTG viewer](https://user:pass@example.com/wtg/)"),
+    )
+    update, edits = make_update("troubleshooter:viewer")
+
+    await turbine_troubleshooter.handle_button(
+        update, SimpleNamespace(bot_data={}, user_data={})
+    )
+
+    assert edits[0]["text"] == (
+        "*Viewer*\n\nWTG viewer: https://user:pass@example.com/wtg/"
+    )
+    assert callbacks(edits[0]["reply_markup"]) == ["troubleshooter:home"]
+
+
+@pytest.mark.asyncio
+async def test_a_button_telegram_refuses_falls_back_to_text(monkeypatch):
+    monkeypatch.setattr(
+        turbine_troubleshooter,
+        "get_troubleshooter_content",
+        lambda: page("[Odd link](https://example.com/odd)"),
+    )
+    update, edits = make_update("troubleshooter:viewer")
+    sent = update.callback_query.edit_message_text
+
+    async def edit(text, **kwargs):
+        if len(kwargs["reply_markup"].inline_keyboard) > 1:
+            raise BadRequest("Button_url_invalid")
+        await sent(text, **kwargs)
+
+    update.callback_query.edit_message_text = edit
+
+    await turbine_troubleshooter.handle_button(
+        update, SimpleNamespace(bot_data={}, user_data={})
+    )
+
+    assert edits[0]["text"] == "*Viewer*\n\nOdd link: https://example.com/odd"
+    assert callbacks(edits[0]["reply_markup"]) == ["troubleshooter:home"]
