@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.5.0...v2.6.0) (2026-11-19)
+
+
+### Features
+
+* links on pages become buttons, and formatting is kept ([#74](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/74)) ([407e4a0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/407e4a02bf43d716fed76f235b779effda38d8e4))
+
 ## [2.5.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.4.0...v2.5.0) (2026-11-19)
 
 
