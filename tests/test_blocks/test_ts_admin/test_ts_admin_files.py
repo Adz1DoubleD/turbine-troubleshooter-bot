@@ -155,6 +155,7 @@ async def upload(user, context, kind="pdf", caption=None, unique="U1", size=1000
         photo=photo if kind == "photo" else None,
         document=None if kind == "photo" else document,
         caption=caption,
+        entities=(),
         delete=AsyncMock(),
     )
     update = SimpleNamespace(
@@ -166,7 +167,7 @@ async def upload(user, context, kind="pdf", caption=None, unique="U1", size=1000
 
 async def type_in(text, user, context):
     update = SimpleNamespace(
-        message=SimpleNamespace(text=text),
+        message=SimpleNamespace(text=text, entities=()),
         effective_user=user,
         effective_chat=SimpleNamespace(id=user.id),
     )
@@ -436,6 +437,7 @@ async def test_files_from_non_admins_are_ignored(db):
             file_id="F", file_unique_id="U", file_size=1, mime_type="application/pdf"
         ),
         caption=None,
+        entities=(),
         delete=AsyncMock(),
     )
     await turbine_troubleshooter.file_handler(

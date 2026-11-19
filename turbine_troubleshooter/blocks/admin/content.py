@@ -386,6 +386,23 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
         callback_data="troubleshooter:menu_manage:"
         f"{node['id'] if node else draft.get('parent') or 0}",
     )
+    if state and state.endswith(":body") and update.message.entities:
+        raw = update.message.text.encode("utf-16-le")
+        marks = {"bold": "*", "italic": "_", "code": "`"}
+        parts, pos = [], 0
+        for e in sorted(update.message.entities, key=lambda e: e.offset):
+            if e.offset < pos or (e.type not in marks and e.type != "text_link"):
+                continue
+            inner = raw[e.offset * 2 : (e.offset + e.length) * 2].decode("utf-16-le")
+            parts.append(raw[pos * 2 : e.offset * 2].decode("utf-16-le"))
+            parts.append(
+                f"[{inner}]({e.url})"
+                if e.type == "text_link"
+                else f"{marks[e.type]}{inner}{marks[e.type]}"
+            )
+            pos = e.offset + e.length
+        parts.append(raw[pos * 2 :].decode("utf-16-le"))
+        text = "".join(parts).strip()
     if "parent" not in draft and not node:
         context.user_data["state"] = None
         return
