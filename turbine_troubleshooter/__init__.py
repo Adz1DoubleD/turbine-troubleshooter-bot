@@ -41,8 +41,19 @@ from .tools import (
     send_notification_troubleshooter,
     set_user_roles,
 )
+from .weather import get_windquest_service, weather_block
 
 application = None
+
+__all__ = [
+    "get_windquest_service",
+    "handle_block",
+    "handle_button",
+    "handle_text_input",
+    "start_troubleshooter_bot",
+    "stop_troubleshooter_bot",
+    "weather_block",
+]
 
 
 async def command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
