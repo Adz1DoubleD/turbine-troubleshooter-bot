@@ -355,6 +355,7 @@ async def get_windquest_data(
 
 
 async def get_windquest_service() -> bool:
+    """Whether the WindQuest API answers with the configured key and token."""
     if not (SETTINGS.windquest_api_key and SETTINGS.windquest_api_token):
         return False
 
@@ -382,12 +383,19 @@ async def get_weather_data(tomorrow: bool = False, brief: bool = False):
 
 
 async def weather_block(
-    is_tomorrow=False,
-    brief=False,
-    base="troubleshooter:weather",
-    back=("🔙 Back", "troubleshooter:home"),
-    close=False,
-):
+    is_tomorrow: bool = False,
+    brief: bool = False,
+    base: str = "troubleshooter:weather",
+    back: tuple[str, str] | None = ("🔙 Back", "troubleshooter:home"),
+    close: bool = False,
+) -> dict:
+    """The work weather (WindQuest and CEFAS) as a block, with "text", "image"
+    and "reply_markup".
+
+    base: callback prefix for its Today, Tomorrow and Refresh buttons.
+    back: the (label, callback) of a back button, or None for none.
+    close: add a ❌ Close button.
+    """
     text, image = await get_weather_data(tomorrow=is_tomorrow, brief=brief)
 
     today, tomorrow = base, f"{base}:tomorrow"

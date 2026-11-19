@@ -47,6 +47,9 @@ Changelog = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/releases"
 [tool.setuptools.packages.find]
 include = ["turbine_troubleshooter*"]
 
+[tool.setuptools.package-data]
+turbine_troubleshooter = ["py.typed"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

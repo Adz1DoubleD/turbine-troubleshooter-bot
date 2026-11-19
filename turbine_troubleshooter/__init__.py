@@ -37,6 +37,7 @@ from .blocks.admin import parts as admin_parts
 from .blocks.admin import users as admin_users
 from .blocks.user import LOCKED_MARKUP, LOCKED_TEXT
 from .settings import ENV_VARS, SETTINGS, setup
+from .text_input import handle_text_input
 from .tools import (
     get_troubleshooter_content,
     send_notification_troubleshooter,
@@ -126,7 +127,9 @@ async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await admin_files.handle_file(update, context)
 
 
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle a troubleshooter button press. A host routes "troubleshooter:"
+    callbacks here."""
     query = update.callback_query
     data = query.data
 
@@ -459,67 +462,18 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (update.message.text or "").strip()
-    user_data = context.user_data
-    state = user_data.get("state", "")
-    admin = context.user_data.get(
-        "is_admin", not context.bot_data.get("is_troubleshooter")
-    )
+async def start_troubleshooter_bot(
+    share_with: Application | None = None, env_prefix: str | None = None, **options
+) -> Application:
+    """Start the troubleshooter's own bot and return its Application.
 
-    try:
-        await update.message.delete()
-    except Exception:
-        pass
-
-    if admin and state.startswith("troubleshooter:code_add:"):
-        await admin_codes.handle_code_add(update, context, text, state)
-        return
-
-    if admin and state.startswith("troubleshooter:part_add:"):
-        await admin_parts.handle_part_add(update, context, text, state)
-        return
-
-    if admin and state.startswith("troubleshooter:part_await_edit:"):
-        await admin_parts.handle_part_edit(update, context, text, state)
-        return
-
-    if admin and state.startswith("troubleshooter:code_await_edit:"):
-        field = state.split(":")[2]
-        context.user_data["code_edit_buffer"][field] = text
-        context.user_data["state"] = None
-
-        await admin_codes.handle_code_edit(
-            context,
-            update.effective_chat.id,
-            context.user_data.get("last_msg_id"),
-            updated=True,
-        )
-
-    elif state == "troubleshooter:code_search":
-        await codes.handle_search(update, context, text)
-
-    elif state == "troubleshooter:wtg_search":
-        await wtg.handle_search(update, context, text)
-
-    elif state == "troubleshooter:parts_search":
-        await parts.handle_search(update, context, text)
-
-    elif state == "troubleshooter:feedback":
-        await feedback.handle_text(update, context, text)
-
-    elif admin and state.startswith("troubleshooter:menu_"):
-        await admin_content.handle_text(update, context, text)
-
-    elif admin and state == "troubleshooter:user_search":
-        await admin_users.handle_user_search(update, context, text)
-
-    elif state == "troubleshooter:broadcast":
-        await admin_broadcast.handle_broadcast(update, context, text)
-        return
-
-
-async def start_troubleshooter_bot(share_with=None, env_prefix=None, **options):
+    share_with: a host's Application, so the host can show the troubleshooter's
+    menus and weather too.
+    env_prefix: prefix for its environment variables, "TROUBLESHOOTER_" inside a
+    host and none on its own.
+    options: settings that override the environment, such as owner_id,
+    alerts_chat_id, timezone, files_dir or test_mode.
+    """
     global application
     if env_prefix is None:
         env_prefix = "" if share_with is None else "TROUBLESHOOTER_"
@@ -587,7 +541,8 @@ async def start_troubleshooter_bot(share_with=None, env_prefix=None, **options):
     return application
 
 
-async def stop_troubleshooter_bot():
+async def stop_troubleshooter_bot() -> None:
+    """Stop the troubleshooter's bot and close its database connections."""
     global application
     if application is not None:
         if application.updater and application.updater.running:

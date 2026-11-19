@@ -66,3 +66,16 @@ async def test_weather_button_only_when_configured(monkeypatch, buoy, shown):
     block = await handle_block(context)
 
     assert ("troubleshooter:weather" in menu_callbacks(block)) is shown
+
+
+def test_public_functions_are_documented_and_typed():
+    import inspect
+
+    import turbine_troubleshooter
+
+    for name in turbine_troubleshooter.__all__:
+        func = getattr(turbine_troubleshooter, name)
+        assert inspect.getdoc(func), name
+        assert (
+            inspect.signature(func).return_annotation is not inspect.Signature.empty
+        ), name
