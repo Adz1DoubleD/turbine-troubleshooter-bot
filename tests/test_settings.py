@@ -4,7 +4,6 @@ from turbine_troubleshooter.helpers import is_test_mode
 from turbine_troubleshooter.settings import (
     ENV_VARS,
     NOISE_FILTERS,
-    OLD_ENV_VARS,
     SETTINGS,
     setup,
 )
@@ -12,8 +11,10 @@ from turbine_troubleshooter.settings import (
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
-    for var in [*ENV_VARS.values(), *OLD_ENV_VARS.values()]:
+    for var in ENV_VARS.values():
         monkeypatch.delenv(var, raising=False)
+        monkeypatch.delenv(f"TROUBLESHOOTER_{var}", raising=False)
+    monkeypatch.delenv("TROUBLESHOOTER_NAME", raising=False)
 
 
 def test_setup_reads_its_own_environment(monkeypatch):
@@ -42,15 +43,22 @@ def test_setup_reads_its_own_environment(monkeypatch):
     assert (SETTINGS.windquest_api_key, SETTINGS.windquest_api_token) == ("key", "tok")
 
 
-def test_the_old_troubleshooter_names_still_work(monkeypatch):
+def test_the_old_names_are_no_longer_read(monkeypatch):
     monkeypatch.setattr(SETTINGS, "token", None)
     monkeypatch.setattr(SETTINGS, "name", "Troubleshooter")
+    monkeypatch.setattr(SETTINGS, "windquest_api_key", None)
     monkeypatch.setenv("TROUBLESHOOTER_BOT_TOKEN", "123:old")
     monkeypatch.setenv("TROUBLESHOOTER_NAME", "Old Name")
 
     setup()
 
-    assert (SETTINGS.token, SETTINGS.name) == ("123:old", "Old Name")
+    assert (SETTINGS.token, SETTINGS.name) == (None, "Troubleshooter")
+
+    monkeypatch.setenv("WINDQUEST_API_KEY", "old-key")
+
+    setup("TROUBLESHOOTER_")
+
+    assert SETTINGS.windquest_api_key is None
 
 
 def test_a_host_prefix_reads_only_the_prefixed_names(monkeypatch):
@@ -66,22 +74,7 @@ def test_a_host_prefix_reads_only_the_prefixed_names(monkeypatch):
     assert SETTINGS.env_prefix == "SITE_"
 
 
-def test_the_old_windquest_names_still_work(monkeypatch):
-    monkeypatch.setattr(SETTINGS, "windquest_api_key", None)
-    monkeypatch.setattr(SETTINGS, "windquest_api_token", None)
-    monkeypatch.setenv("WINDQUEST_API_KEY", "old-key")
-    monkeypatch.setenv("WINDQUEST_API_TOKEN", "old-tok")
-
-    setup()
-
-    assert (SETTINGS.windquest_api_key, SETTINGS.windquest_api_token) == (
-        "old-key",
-        "old-tok",
-    )
-
-
-def test_the_new_windquest_names_win(monkeypatch):
-    monkeypatch.setenv("WINDQUEST_API_KEY", "old-key")
+def test_a_host_reads_the_prefixed_windquest_names(monkeypatch):
     monkeypatch.setenv("TROUBLESHOOTER_WINDQUEST_API_KEY", "new-key")
 
     setup("TROUBLESHOOTER_")
@@ -134,7 +127,7 @@ def test_test_mode_is_off_without_the_variable(monkeypatch):
 
 def test_test_mode_is_read_from_the_environment(monkeypatch):
     monkeypatch.setattr(SETTINGS, "test_mode", False)
-    monkeypatch.setenv("TROUBLESHOOTER_TEST_MODE", "1")
+    monkeypatch.setenv("TEST_MODE", "1")
 
     setup()
 

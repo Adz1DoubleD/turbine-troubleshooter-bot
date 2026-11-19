@@ -29,6 +29,7 @@ def fake_app(monkeypatch):
     monkeypatch.setattr(SETTINGS, "owner_id", "42")
     monkeypatch.setattr(SETTINGS, "db_url", None)
     monkeypatch.setattr(SETTINGS, "env_prefix", "")
+    monkeypatch.setenv("DB_URL", "mysql://u:p@db-host:3306/ts")
     monkeypatch.setenv("TROUBLESHOOTER_DB_URL", "mysql://u:p@db-host:3306/ts")
     app.builder = builder
     return app
@@ -38,6 +39,7 @@ def fake_app(monkeypatch):
 async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
     monkeypatch.setattr(SETTINGS, "token", None)
     monkeypatch.setattr(SETTINGS, "owner_id", None)
+    monkeypatch.delenv("DB_URL")
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
     monkeypatch.delenv("JAWSDB_URL", raising=False)
     for var in ("TROUBLESHOOTER_BOT_TOKEN", "TROUBLESHOOTER_OWNER_ID"):
@@ -64,6 +66,7 @@ async def test_start_refuses_without_required_settings(monkeypatch, fake_app):
 async def test_host_database_url_does_not_count(monkeypatch, fake_app):
     init = AsyncMock()
     monkeypatch.setattr(turbine_troubleshooter, "init_troubleshooter_db", init)
+    monkeypatch.delenv("DB_URL")
     monkeypatch.delenv("TROUBLESHOOTER_DB_URL")
     monkeypatch.setenv("JAWSDB_URL", "mysql://u:p@main-host:3306/main")
 

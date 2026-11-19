@@ -10,16 +10,10 @@ from turbine_troubleshooter import start_troubleshooter_bot, stop_troubleshooter
 
 async def main():
     load_dotenv(find_dotenv(usecwd=True))
-    sentry_sdk.init(
-        dsn=os.environ.get("SENTRY_DSN") or os.environ.get("TROUBLESHOOTER_SENTRY_DSN")
-    )
+    sentry_sdk.init(dsn=os.environ.get("SENTRY_DSN"))
     try:
         await start_troubleshooter_bot(
-            files_dir=Path(
-                os.environ.get("FILES_DIR")
-                or os.environ.get("TROUBLESHOOTER_FILES_DIR")
-                or "media"
-            ),
+            files_dir=Path(os.environ.get("FILES_DIR") or "media"),
         )
     except ValueError as e:
         print(f"❌ {e}. Add them to .env (see .env.example).")
