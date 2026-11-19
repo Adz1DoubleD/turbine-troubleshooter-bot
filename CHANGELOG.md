@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.1](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.3.0...v2.3.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* give WindQuest 30 seconds before calling it offline ([#67](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/67)) ([55a159c](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/55a159c4eb6a58476a2980e728b487d51ca5df1e))
+* read .env from the folder the bot is started in ([#65](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/65)) ([68819e9](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/68819e991875bb88abaa1437a60cdbad164edddd))
+
 ## [2.3.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.2.0...v2.3.0) (2026-11-18)
 
 
