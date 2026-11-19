@@ -276,3 +276,11 @@ async def test_host_shares_every_piece_of_data_the_package_uses(monkeypatch, fak
     assert used - {"is_troubleshooter"} <= set(host.bot_data)
     for key in host.bot_data:
         assert host.bot_data[key] is fake_app.bot_data[key]
+
+
+def test_hosts_can_import_the_public_api():
+    for name in turbine_troubleshooter.__all__:
+        assert callable(getattr(turbine_troubleshooter, name)), name
+    assert {"weather_block", "get_windquest_service"} <= set(
+        turbine_troubleshooter.__all__
+    )
