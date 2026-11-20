@@ -90,8 +90,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                     InlineKeyboardButton(content[k]["title"], callback_data=k)
                     for k in item["items"]
                 ]
-                kb = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
-                kb.append(
+                rows = [buttons[i : i + 2] for i in range(0, len(buttons), 2)]
+                rows.append(
                     [
                         InlineKeyboardButton(
                             "🔙 Back",
@@ -106,7 +106,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                     await query.edit_message_text(
                         text,
                         parse_mode="Markdown",
-                        reply_markup=InlineKeyboardMarkup(kb),
+                        reply_markup=InlineKeyboardMarkup(rows),
                     )
                 else:
                     await close_message(query)
@@ -114,23 +114,23 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                         query.message.chat_id,
                         text,
                         parse_mode="Markdown",
-                        reply_markup=InlineKeyboardMarkup(kb),
+                        reply_markup=InlineKeyboardMarkup(rows),
                     )
             return
 
-        links = []
+        links: list[tuple[str, str]] = []
+
+        def link_text(m: re.Match[str]) -> str:
+            if "@" in m[3].split("/")[2]:
+                return f"{m[1] or ''}{m[2]}: {m[3]}{m[4] or ''}"
+            links.append((m[2], m[3]))
+            if None not in (m[1], m[4]):
+                return ""
+            return f"{m[1] or ''}{m[2]}{m[4] or ''}"
+
         content_body = re.sub(
             r"(?m)(^[ \t]*)?\[([^\]\n]+)\]\((https?://[^)\s]+)\)([ \t]*(?:\n|\Z))?",
-            lambda m: (
-                f"{m[1] or ''}{m[2]}: {m[3]}{m[4] or ''}"
-                if "@" in m[3].split("/")[2]
-                else links.append((m[2], m[3]))
-                or (
-                    ""
-                    if None not in (m[1], m[4])
-                    else f"{m[1] or ''}{m[2]}{m[4] or ''}"
-                )
-            ),
+            link_text,
             item.get("content", ""),
         ).strip()
         caption = f"*{item['title']}*\n\n{content_body}"

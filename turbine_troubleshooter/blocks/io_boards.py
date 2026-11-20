@@ -1,5 +1,7 @@
 """IO board pin-out screens."""
 
+from typing import Any
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
@@ -28,7 +30,7 @@ async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     board_entries = io_data[board_name]
-    sections = {}
+    sections: dict[Any, Any] = {}
     for entry in board_entries:
         section = entry.get("section") or "General"
         if section not in sections:

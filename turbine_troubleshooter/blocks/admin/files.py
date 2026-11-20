@@ -28,8 +28,8 @@ FOLDERS = {"document": ("pdf", "pdf"), "photo": ("images", "jpg")}
 
 async def attach(
     context: ContextTypes.DEFAULT_TYPE,
-    user: dict[str, Any],
-    node: dict[str, Any] | None,
+    user: Any,
+    node: dict[str, Any],
     file: dict[str, Any],
 ) -> dict[str, Any]:
     folder, ext = FOLDERS[file["type"]]
@@ -279,7 +279,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                             404: "The repo, folder or branch wasn't found.",
                             409: "The branch changed while saving. Try again.",
                             422: "A file with that name is already there.",
-                        }.get(status, "Try again later.")
+                        }.get(status or 0, "Try again later.")
             if query.message.caption is not None:
                 try:
                     await query.edit_message_caption(

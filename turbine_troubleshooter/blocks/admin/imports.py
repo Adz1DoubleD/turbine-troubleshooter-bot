@@ -3,6 +3,7 @@
 import csv
 import io
 import re
+from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
@@ -80,7 +81,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             text = f"✅ Imported {len(rows)} turbines."
         else:
             await io_boards_replace(rows)
-            boards, pins = {}, {}
+            boards: dict[Any, Any] = {}
+            pins: dict[Any, Any] = {}
             for r in rows:
                 boards.setdefault(
                     r["board"], {"name": r["board_name"], "can": r["can_node"]}
@@ -141,7 +143,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             errors.append(f"Missing columns: {', '.join(missing)}.")
         else:
             prefix = SETTINGS.wtg_prefix.upper()
-            seen = {}
+            seen: dict[Any, Any] = {}
             for line, raw in enumerate(reader, 2):
                 r = {(k or "").strip(): (v or "").strip() for k, v in raw.items()}
                 if not any(r.values()):
@@ -212,7 +214,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         context.user_data["import_draft"] = {"kind": kind, "rows": rows}
         if kind == "wtgs":
             old = SETTINGS.content.WTG_MAP
-            new = {r["wtg"]: r for r in rows}
+            new: dict[Any, Any] = {r["wtg"]: r for r in rows}
             changed = [
                 w
                 for w in new.keys() & old.keys()

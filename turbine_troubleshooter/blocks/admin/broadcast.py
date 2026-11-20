@@ -20,6 +20,7 @@ PICKER_PAGE_SIZE = 20
 async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     user_data = context.user_data
+    assert user_data is not None
 
     if not is_owner(query.from_user.id):
         await query.answer("⚠️ Unauthorized.", show_alert=True)
@@ -109,9 +110,9 @@ async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return
 
     if choice == "user":
-        audience = int(parts[3])
+        audience: int | str = int(parts[3])
         try:
-            match = await user_get(audience)
+            match = await user_get(int(parts[3]))
         except Exception as e:
             sentry_sdk.capture_exception(e)
             match = None
@@ -148,6 +149,7 @@ async def handle_broadcast(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
 ) -> None:
     user_data = context.user_data
+    assert user_data is not None
 
     if not is_owner(update.effective_user.id):
         return

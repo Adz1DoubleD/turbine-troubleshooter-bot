@@ -1,5 +1,7 @@
 """Editing the menus: adding, renaming, rewriting and deleting submenus and pages."""
 
+from typing import Any
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
@@ -25,9 +27,9 @@ TO_PANEL = InlineKeyboardButton(
 EXPIRED = "⚠️ That has expired. Start again from the Admin Panel."
 
 
-def where(node_id: int) -> str:
+def where(node_id: int | None) -> str:
     nodes = {n["id"]: n for n in SETTINGS.menu["nodes"]}
-    names = []
+    names: list[str] = []
     while node_id in nodes:
         names.insert(0, nodes[node_id]["title"])
         node_id = nodes[node_id]["parent_id"]
@@ -384,7 +386,7 @@ async def handle_text(
     state = context.user_data.get("state")
     draft = context.user_data.get("menu_draft") or {}
     nodes = SETTINGS.menu["nodes"] if SETTINGS.menu else []
-    node = next((n for n in nodes if n["id"] == draft.get("node")), None)
+    node: Any = next((n for n in nodes if n["id"] == draft.get("node")), None)
     chat_id = update.effective_chat.id
     msg_id = context.user_data.get("last_msg_id")
     cancel = InlineKeyboardButton(
@@ -489,7 +491,7 @@ async def handle_text(
             text=f"👀 *Preview*\n\n*{title}*\n\n"
             + (body or "" if is_page else "📁 Submenu")
             + {"photo": "\n\n📎 Photo attached", "document": "\n\n📎 PDF attached"}.get(
-                (draft.get("file") or {}).get("type"), ""
+                (draft.get("file") or {}).get("type") or "", ""
             ),
             parse_mode="Markdown",
             reply_markup=kb,

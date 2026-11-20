@@ -10,7 +10,7 @@ async def io_boards_replace(pins: list[dict[str, Any]]) -> None:
         await cur.execute("START TRANSACTION")
         try:
             await cur.execute("DELETE FROM io_boards")
-            orders = {}
+            orders: dict[Any, Any] = {}
             for p in pins:
                 orders[p["board"]] = orders.get(p["board"], 0) + 1
                 await cur.execute(

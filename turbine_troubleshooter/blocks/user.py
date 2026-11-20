@@ -64,7 +64,7 @@ async def button_alert_toggle(
 ) -> None:
     query = update.callback_query
     enabled = await user_notifications_toggle(query.from_user.id)
-    await query.edit_message_reply_markup(reply_markup=alert_markup(enabled))
+    await query.edit_message_reply_markup(reply_markup=alert_markup(bool(enabled)))
     await query.answer("🔔 Notifications on" if enabled else "🔕 Notifications off")
 
 

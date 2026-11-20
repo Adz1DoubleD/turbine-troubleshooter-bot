@@ -46,19 +46,21 @@ def own_bot(context: ContextTypes.DEFAULT_TYPE) -> Bot:
     return turbine_troubleshooter.application.bot
 
 
-def escape_markdown(text: str) -> str:
+def escape_markdown(text: object) -> str:
     escape_chars = r"_*[`"
     return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", str(text))
 
 
-def error_kb(block: dict[str, Any] = None) -> InlineKeyboardMarkup:
+def error_kb(block: str | None = None) -> InlineKeyboardMarkup:
     text = f"🔙 Back to {block.capitalize()}" if block else "❌ Close"
     callback = f"back:{block}" if block else "cancel"
     return InlineKeyboardMarkup([[InlineKeyboardButton(text, callback_data=callback)]])
 
 
 async def close_message(
-    query: CallbackQuery, title: str | None = None, reopen: str = "troubleshooter:home"
+    query: CallbackQuery | None,
+    title: str | None = None,
+    reopen: str = "troubleshooter:home",
 ) -> None:
     title = title or f"🛠 *{SETTINGS.name} Bot*"
     try:
@@ -82,7 +84,7 @@ async def close_message(
             pass
 
 
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     error = context.error
     if any(noise.lower() in str(error).lower() for noise in SETTINGS.noise_filters):
         return
@@ -120,14 +122,14 @@ def find_wtg(text: str) -> tuple[str | None, dict[str, Any] | None]:
 
 
 def get_troubleshooter_content() -> dict[str, dict[str, Any]]:
-    content = (
+    content: dict[str, dict[str, Any]] = (
         {"troubleshooter:ioboard": {"type": "menu", "title": "IO Boards"}}
         if getattr(SETTINGS.content, "IO_BOARDS", None)
         else {}
     )
 
     menu = SETTINGS.menu or {"nodes": [], "attachments": []}
-    attached = {}
+    attached: dict[Any, Any] = {}
     for a in menu["attachments"]:
         attached.setdefault(a["node_id"], []).append(a)
 
@@ -161,17 +163,18 @@ def get_troubleshooter_content() -> dict[str, dict[str, Any]]:
 
 
 def find_codes(
-    query: CallbackQuery, codes: dict[str, dict[str, Any]], limit: int = 5
+    query: str, codes: dict[str, dict[str, Any]], limit: int = 5
 ) -> list[dict[str, Any]]:
     q = query.strip().lower()
     if not q:
         return []
 
-    scored = []
+    scored: list[tuple[float, dict[str, Any]]] = []
     for c in codes.values():
         cl = str(c["code"]).lower()
         if cl == q:
             continue
+        score: float
         if cl.startswith(q):
             score = 300 - (len(cl) - len(q))
         elif q in cl:
@@ -188,14 +191,14 @@ def find_codes(
 
 
 def find_parts(
-    query: CallbackQuery, parts: list[dict[str, Any]], limit: int = 8
+    query: str, parts: list[dict[str, Any]], limit: int = 8
 ) -> list[dict[str, Any]]:
     q = query.strip().lower()
     if not q:
         return []
     words = re.findall(r"\w+", q)
 
-    scored = []
+    scored: list[tuple[float, dict[str, Any]]] = []
     for p in parts:
         part_no = p["part_no"].lower()
         desc = p["description"].lower()

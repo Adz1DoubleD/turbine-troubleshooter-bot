@@ -27,6 +27,7 @@ async def handle_search(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
 ) -> None:
     user_data = context.user_data
+    assert user_data is not None
     user_data["state"] = None
     wtg, info = find_wtg(text)
 

@@ -29,7 +29,7 @@ def alert_markup(enabled: bool = True) -> InlineKeyboardMarkup:
 
 
 async def send_notification_troubleshooter(
-    user: dict[str, Any] | None = None,
+    user: Any = None,
     action: str = "new_user",
     code: str | None = None,
     advice: str | None = None,
@@ -39,7 +39,7 @@ async def send_notification_troubleshooter(
     audience: str = "all",
     undo: Any = None,
     was: Any = None,
-) -> tuple[int, int, list[int]]:
+) -> tuple[int, int, list[str]]:
     if turbine_troubleshooter.application is None:
         return 0, 0, []
 

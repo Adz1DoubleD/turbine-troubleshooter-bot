@@ -82,7 +82,7 @@ async def start_troubleshooter_bot(
     application.bot_data["is_troubleshooter"] = True
 
     await init_troubleshooter_db(application)
-    shared = {
+    shared: dict[str, Any] = {
         "codes": {},
         "parts": [],
         "io_boards": {},
@@ -142,6 +142,7 @@ async def stop_troubleshooter_bot() -> None:
 
 
 async def _command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     try:
         await update.message.delete()
     except Exception:
@@ -169,6 +170,7 @@ async def _command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def _callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     await set_user_roles(context, query.from_user.id)
     data = query.data
@@ -192,6 +194,7 @@ async def _callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 
 async def _text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     if update.effective_user is None or context.user_data is None:
         return
     await set_user_roles(context, update.effective_user.id)

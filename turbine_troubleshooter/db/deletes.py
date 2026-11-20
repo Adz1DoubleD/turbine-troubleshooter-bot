@@ -4,7 +4,7 @@ from .core import db_session
 
 
 async def delete_request_add(
-    kind: str, target: str, label: str, user_id: int, name: str
+    kind: str, target: str | int, label: str, user_id: int, name: str
 ) -> int | None:
     async with db_session() as cur:
         await cur.execute(

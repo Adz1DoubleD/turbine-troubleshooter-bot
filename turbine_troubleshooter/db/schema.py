@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import sentry_sdk
 from telegram.ext import Application
@@ -13,10 +14,10 @@ from .core import db_session
 
 async def init_troubleshooter_db(application: Application) -> None:
     codes = {}
-    io_boards = {}
+    io_boards: dict[Any, Any] = {}
     admins = {}
     parts = []
-    requests = {"access": {}, "admin": {}}
+    requests: dict[str, dict[Any, Any]] = {"access": {}, "admin": {}}
     delete_requests = {}
 
     SETTINGS.content = SimpleNamespace(WTG_MAP={}, IO_BOARDS={})
@@ -304,7 +305,8 @@ async def init_troubleshooter_db(application: Application) -> None:
                     "SELECT board, board_name, can_node, section, pin, description "
                     "FROM io_boards ORDER BY board, position, id"
                 )
-                boards, pins = {}, {}
+                boards: dict[Any, Any] = {}
+                pins: dict[Any, Any] = {}
                 for r in await cur.fetchall():
                     boards.setdefault(
                         r["board"],

@@ -22,7 +22,7 @@ async def code_view(
         else (None, None)
     )
 
-    def stamp(by: str | None, at: str | None) -> str:
+    def stamp(by: str | None, at: str | datetime | None) -> str:
         if isinstance(at, str):
             at = datetime.strptime(at, "%Y-%m-%d %H:%M")
         when = f" ({at:%d %b %Y})" if at else ""
@@ -124,6 +124,7 @@ async def handle_search(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
 ) -> None:
     user_data = context.user_data
+    assert user_data is not None
     code_data = context.bot_data.get("codes", {})
     msg_id = user_data.get("last_msg_id")
     admin = context.user_data.get(

@@ -117,6 +117,7 @@ async def handle_part_add(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, state: str
 ) -> None:
     user_data = context.user_data
+    assert user_data is not None
     parts = context.bot_data.setdefault("parts", [])
 
     if state == "troubleshooter:part_add:part_no":
@@ -202,9 +203,10 @@ async def handle_part_edit(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, state: str
 ) -> None:
     user_data = context.user_data
+    assert user_data is not None
     user_data["state"] = None
-    _, _, field, part_id = state.split(":")
-    part_id = int(part_id)
+    _, _, field, raw_id = state.split(":")
+    part_id = int(raw_id)
 
     part = _find_part(context, part_id)
     if not part:

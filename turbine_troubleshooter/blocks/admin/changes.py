@@ -2,6 +2,7 @@
 
 import html
 from types import SimpleNamespace
+from typing import Any
 
 import sentry_sdk
 from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -39,7 +40,7 @@ async def ask_owner_to_delete(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     kind: str,
-    target: str,
+    target: str | int,
     label: str,
 ) -> str:
     user = update.effective_user
@@ -194,7 +195,7 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             return
         await attachments_remove(added["node_id"])
         attachments[:] = [a for a in attachments if a is not added]
-        page = next(
+        page: Any = next(
             (n for n in SETTINGS.menu["nodes"] if n["id"] == added["node_id"]), {}
         )
         await send_notification_troubleshooter(
@@ -210,6 +211,7 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             )
         )
         return
+    item: Any
     if kind == "menu":
         item = next(
             (
@@ -303,10 +305,10 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 async def show_pending(
-    query: CallbackQuery,
+    query: CallbackQuery | None,
     context: ContextTypes.DEFAULT_TYPE,
     status: str | None = None,
-    page: int = None,
+    page: int | None = None,
 ) -> None:
     assert context.user_data is not None
     requests = pending_requests(context) + [

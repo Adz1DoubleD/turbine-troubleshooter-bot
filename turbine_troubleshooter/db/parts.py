@@ -7,7 +7,7 @@ from .core import db_session
 
 
 async def part_add(
-    part_no: str, description: str, section: str = "", added_by: str = None
+    part_no: str, description: str, section: str = "", added_by: str | None = None
 ) -> int | None:
     async with db_session() as cur:
         await cur.execute(
@@ -22,8 +22,8 @@ async def part_update(
     part_id: int | str,
     field: str,
     value: Any,
-    edited_by: str = None,
-    edited_at: str = None,
+    edited_by: str | None = None,
+    edited_at: str | None = None,
     old: Any = None,
 ) -> bool:
     if field not in ("part_no", "description", "section"):

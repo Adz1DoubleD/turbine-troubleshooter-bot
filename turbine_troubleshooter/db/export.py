@@ -77,17 +77,19 @@ async def db_tables(table: str | None) -> list[dict[str, Any]] | None:
                     "SELECT id, parent_id, type, title, body, sort_order "
                     "FROM menus ORDER BY sort_order, id"
                 )
-                children = {}
+                children: dict[Any, Any] = {}
                 for n in await cur.fetchall():
                     children.setdefault(n["parent_id"], []).append(n)
                 await cur.execute(
                     "SELECT node_id, path FROM attachments ORDER BY sort_order, id"
                 )
-                files = {}
+                files: dict[Any, Any] = {}
                 for a in await cur.fetchall():
                     files.setdefault(a["node_id"], []).append(a["path"] or "")
                 rows = []
-                stack = [(n, (n["title"],)) for n in reversed(children.get(None, []))]
+                stack: list[tuple[Any, tuple[Any, ...]]] = [
+                    (n, (n["title"],)) for n in reversed(children.get(None, []))
+                ]
                 while stack:
                     n, path = stack.pop()
                     rows.append(

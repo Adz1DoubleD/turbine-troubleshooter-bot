@@ -41,14 +41,14 @@ async def button_code_add(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
 async def button_code_delete(
     update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+) -> str | None:
     query = update.callback_query
 
     is_admin = user_is_admin(context)
 
     if not is_admin:
         await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
-        return
+        return None
 
     data = query.data
     code_to_del = data.split(":")[-1]
@@ -160,18 +160,18 @@ async def button_code_edit_field(
 
 async def button_code_edit_save(
     update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+) -> tuple[str, str] | None:
     query = update.callback_query
 
     is_admin = user_is_admin(context)
 
     if not is_admin:
         await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
-        return
+        return None
 
     entry = context.user_data.get("code_edit_buffer")
     if not entry:
-        return
+        return None
 
     user = query.from_user
     editor = f"@{user.username}" if user.username else user.full_name
@@ -215,6 +215,7 @@ async def handle_code_add(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, state: str
 ) -> None:
     user_data = context.user_data
+    assert user_data is not None
     msg_id = user_data.get("last_msg_id")
     chat_id = update.effective_chat.id
 

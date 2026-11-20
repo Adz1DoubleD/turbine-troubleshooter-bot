@@ -72,7 +72,7 @@ def pending_requests(context: ContextTypes.DEFAULT_TYPE) -> list[tuple[int, str,
 
 
 async def edit(
-    query: CallbackQuery, text: str, kb: InlineKeyboardMarkup | None
+    query: CallbackQuery | None, text: str, kb: list[list[InlineKeyboardButton]]
 ) -> None:
     try:
         await query.edit_message_text(
@@ -418,7 +418,7 @@ async def _deny_request(
     return name
 
 
-def _request_target(query: CallbackQuery) -> tuple[int, bool]:
+def _request_target(query: CallbackQuery | None) -> tuple[int, bool]:
     parts = query.data.split(":")
     return int(parts[3]), parts[-1] == "p"
 
@@ -445,7 +445,7 @@ def _matches(user: dict[str, Any], search: str) -> bool:
 
 async def _users_list(
     context: ContextTypes.DEFAULT_TYPE, viewer_id: int, sort_by: str, page: int
-) -> tuple[str, InlineKeyboardMarkup]:
+) -> tuple[str, list[list[InlineKeyboardButton]]]:
     assert context.user_data is not None
     users = await users_get()
     total = len(users)
@@ -547,7 +547,7 @@ async def _find_user(user_id: int) -> dict[str, Any] | None:
 
 
 async def _show_card(
-    query: CallbackQuery,
+    query: CallbackQuery | None,
     context: ContextTypes.DEFAULT_TYPE,
     user_id: int,
     status: str | None = None,
@@ -601,6 +601,6 @@ async def _show_card(
     await edit(query, text, kb)
 
 
-def _parse_action(query: CallbackQuery) -> tuple[str, int]:
+def _parse_action(query: CallbackQuery | None) -> tuple[str, int]:
     _, _, action, user_id = query.data.split(":")
     return action, int(user_id)

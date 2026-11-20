@@ -65,7 +65,7 @@ async def user_revoke(user_id: int) -> bool:
         return cur.rowcount > 0
 
 
-async def request_add(user_id: int, kind: str, name: str = None) -> None:
+async def request_add(user_id: int, kind: str, name: str | None = None) -> None:
     async with db_session() as cur:
         await cur.execute(
             "INSERT INTO requests (user_id, kind, name) VALUES (%s, %s, %s) AS new "
@@ -94,7 +94,7 @@ async def user_get(user_id: int) -> dict[str, Any] | None:
         return _user_from_row(row) if row else None
 
 
-async def user_notifications_toggle(user_id: int) -> int:
+async def user_notifications_toggle(user_id: int) -> int | None:
     async with db_session() as cur:
         await cur.execute(
             "UPDATE users SET notifications_enabled = 1 - notifications_enabled WHERE user_id = %s",

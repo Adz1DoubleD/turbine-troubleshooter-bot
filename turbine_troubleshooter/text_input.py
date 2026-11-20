@@ -16,6 +16,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     assert context.user_data is not None
     text = (update.message.text or "").strip()
     user_data = context.user_data
+    assert user_data is not None
     state = user_data.get("state", "")
     admin = context.user_data.get(
         "is_admin", not context.bot_data.get("is_troubleshooter")

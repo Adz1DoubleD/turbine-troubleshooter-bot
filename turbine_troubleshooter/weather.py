@@ -196,7 +196,7 @@ def _parse_dt(raw_str: str) -> tuple[datetime, bool]:
 
 async def _get_cefas_data(
     brief: bool = False, hours: int = 6, tomorrow: bool = False
-) -> tuple[str | None, str | None]:
+) -> tuple[str | None, BytesIO | None]:
     buoy = SETTINGS.cefas_buoy
     if not buoy:
         return None, None
@@ -229,7 +229,7 @@ async def _get_cefas_data(
         obs = sorted((x for x in rows if not x[1]), key=lambda x: x[0])
         fc = sorted((x for x in rows if x[1]), key=lambda x: x[0])
 
-        def line(dt: datetime, v: float) -> str:
+        def line(dt: datetime, v: dict[str, float]) -> str:
             h = round(v["Hm0"], 2)
             head = _degrees_to_heading(v["W_PDIR"]) if "W_PDIR" in v else "N/A"
             return f" ├ {dt:%H:%M} {_get_safety_emoji(h)} {h}m · {head}"
@@ -448,7 +448,7 @@ async def _get_windquest_data(
 
 async def _get_weather_data(
     tomorrow: bool = False, brief: bool = False
-) -> tuple[str, bytes | None]:
+) -> tuple[str, BytesIO | None]:
     sea, image = await _get_cefas_data(brief=brief, tomorrow=tomorrow)
     wind = await _get_windquest_data(tomorrow=tomorrow)
 
@@ -459,7 +459,7 @@ async def _get_weather_data(
     return "\n".join(parts) + "\n", image
 
 
-async def _send_block(query: CallbackQuery, block: dict[str, Any]) -> None:
+async def _send_block(query: CallbackQuery | None, block: dict[str, Any]) -> None:
     message = query.message
 
     if block.get("image"):
