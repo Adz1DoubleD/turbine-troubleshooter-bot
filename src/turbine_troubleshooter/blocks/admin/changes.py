@@ -18,20 +18,19 @@ from turbine_troubleshooter.db import (
     menu_node_update,
     part_update,
 )
-from turbine_troubleshooter.helpers import escape_markdown, is_owner, own_bot
+from turbine_troubleshooter.helpers import (
+    PAGE_SIZE,
+    escape_markdown,
+    is_owner,
+    nav_row,
+    own_bot,
+    page_count,
+)
 from turbine_troubleshooter.settings import SETTINGS
 
 from ...notify import send_notification_troubleshooter
 from . import local_now
-from .users import (
-    OWNER_ONLY,
-    PAGE_SIZE,
-    edit,
-    nav_row,
-    page_count,
-    pending_requests,
-    tell_user,
-)
+from .users import OWNER_ONLY, edit, pending_requests, tell_user
 
 KINDS = {"code": "code", "part": "part", "menu": "menu item"}
 

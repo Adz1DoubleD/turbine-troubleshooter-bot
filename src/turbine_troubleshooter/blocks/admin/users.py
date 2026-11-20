@@ -18,13 +18,20 @@ from turbine_troubleshooter.db import (
     user_revoke,
     users_get,
 )
-from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner, own_bot
+from turbine_troubleshooter.helpers import (
+    PAGE_SIZE,
+    error_kb,
+    escape_markdown,
+    is_owner,
+    nav_row,
+    own_bot,
+    page_count,
+    user_is_admin,
+)
 from turbine_troubleshooter.settings import SETTINGS
 
-from ...helpers import user_is_admin
 from ...notify import send_notification_troubleshooter
 
-PAGE_SIZE = 10
 SORTS = ("name", "added", "edits", "login")
 BADGES = {"owner": "👑", "admin": "🛡️", "approved": "✅", "locked": "🔒"}
 ROLE_LABELS = {
@@ -147,25 +154,6 @@ async def _button_decide_request(
 
 button_admin_approve = button_admin_deny = _button_decide_request
 button_access_approve = button_access_deny = _button_decide_request
-
-
-def page_count(total: int) -> int:
-    return max((total - 1) // PAGE_SIZE + 1, 1)
-
-
-def nav_row(
-    callback_prefix: str, page: int, pages: int
-) -> list[list[InlineKeyboardButton]]:
-    row = []
-    if page > 0:
-        row.append(
-            InlineKeyboardButton("◀️ Prev", callback_data=f"{callback_prefix}{page - 1}")
-        )
-    if page < pages - 1:
-        row.append(
-            InlineKeyboardButton("Next ▶️", callback_data=f"{callback_prefix}{page + 1}")
-        )
-    return [row] if row else []
 
 
 async def button_users_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

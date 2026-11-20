@@ -46,6 +46,7 @@ Issues = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues"
 Changelog = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/releases"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["turbine_troubleshooter*"]
 
 [tool.setuptools.package-data]

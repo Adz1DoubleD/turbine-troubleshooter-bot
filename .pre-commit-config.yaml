@@ -12,6 +12,12 @@ repos:
         entry: ruff format
         language: system
         types: [python]
+      - id: mypy
+        name: mypy
+        entry: mypy src
+        language: system
+        types: [python]
+        pass_filenames: false
       - id: max-lines
         name: max 600 lines
         entry: >-

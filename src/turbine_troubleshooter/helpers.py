@@ -20,6 +20,7 @@ from telegram.ext import ContextTypes
 import turbine_troubleshooter
 from turbine_troubleshooter.settings import SETTINGS, SKIPPED_WORDS
 
+PAGE_SIZE = 10
 ERROR_REPLY = "⚠️ Something went wrong. It's been logged."
 
 
@@ -239,3 +240,22 @@ def user_is_admin(context: ContextTypes.DEFAULT_TYPE) -> bool:
     return context.user_data.get(
         "is_admin", not context.bot_data.get("is_troubleshooter")
     )
+
+
+def page_count(total: int) -> int:
+    return max((total - 1) // PAGE_SIZE + 1, 1)
+
+
+def nav_row(
+    callback_prefix: str, page: int, pages: int
+) -> list[list[InlineKeyboardButton]]:
+    row = []
+    if page > 0:
+        row.append(
+            InlineKeyboardButton("◀️ Prev", callback_data=f"{callback_prefix}{page - 1}")
+        )
+    if page < pages - 1:
+        row.append(
+            InlineKeyboardButton("Next ▶️", callback_data=f"{callback_prefix}{page + 1}")
+        )
+    return [row] if row else []
