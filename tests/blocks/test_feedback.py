@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 import turbine_troubleshooter
-import turbine_troubleshooter.tools as tools
+import turbine_troubleshooter.notify as tools
 from turbine_troubleshooter.blocks import feedback, handle_block
 from turbine_troubleshooter.settings import SETTINGS
 

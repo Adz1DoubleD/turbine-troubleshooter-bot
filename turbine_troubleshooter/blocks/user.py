@@ -10,7 +10,7 @@ from turbine_troubleshooter.db import (
 from turbine_troubleshooter.helpers import escape_markdown
 from turbine_troubleshooter.settings import SETTINGS
 
-from ..tools import alert_markup
+from ..notify import alert_markup
 from . import handle_block
 
 

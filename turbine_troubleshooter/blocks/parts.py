@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.helpers import escape_markdown
 
-from ..tools import find_parts
+from ..helpers import find_parts
 
 
 async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):

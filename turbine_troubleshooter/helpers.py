@@ -1,5 +1,7 @@
+import difflib
 import re
 import traceback
+from pathlib import Path
 
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -7,7 +9,7 @@ from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
 import turbine_troubleshooter
-from turbine_troubleshooter.settings import SETTINGS
+from turbine_troubleshooter.settings import SETTINGS, SKIPPED_WORDS
 
 ERROR_REPLY = "⚠️ Something went wrong. It's been logged."
 
@@ -93,3 +95,128 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def error_handler_noise_filter(record):
     msg = record.getMessage()
     return not any(n in msg for n in SETTINGS.noise_filters)
+
+
+def find_wtg(text):
+    prefix = SETTINGS.wtg_prefix.upper()
+    match = re.fullmatch(
+        rf"(?:{re.escape(prefix)})?([A-Z])(\d{{1,2}})", text.upper().replace(" ", "")
+    )
+    if not match:
+        return None, None
+    info = f"{prefix}{match.group(1)}{int(match.group(2)):02d}"
+    return info, SETTINGS.content.WTG_MAP.get(info)
+
+
+def get_troubleshooter_content():
+    content = (
+        {"troubleshooter:ioboard": {"type": "menu", "title": "IO Boards"}}
+        if getattr(SETTINGS.content, "IO_BOARDS", None)
+        else {}
+    )
+
+    menu = SETTINGS.menu or {"nodes": [], "attachments": []}
+    attached = {}
+    for a in menu["attachments"]:
+        attached.setdefault(a["node_id"], []).append(a)
+
+    for n in sorted(menu["nodes"], key=lambda n: (n["sort_order"], n["id"])):
+        parent = n["parent_id"] and f"troubleshooter:menu:{n['parent_id']}"
+        if n["type"] == "submenu":
+            item = {
+                "type": "menu",
+                "title": n["title"],
+                "items": [],
+                "parent": parent,
+            }
+        else:
+            files = attached.get(n["id"], [])
+            paths = [Path(SETTINGS.files_dir) / a["path"] for a in files]
+            item = {
+                "type": files[0]["type"] if files else "text",
+                "title": n["title"],
+                "content": n["body"] or "",
+                "file": (paths[0] if len(paths) == 1 else paths) or None,
+                "file_ids": [a.get("file_id") for a in files],
+                "parent": parent,
+            }
+        content[f"troubleshooter:menu:{n['id']}"] = item
+
+    for key, item in list(content.items()):
+        if item.get("parent") in content:
+            content[item["parent"]]["items"].append(key)
+
+    return dict(sorted(content.items(), key=lambda kv: kv[1]["title"].lower()))
+
+
+def find_codes(query, codes, limit=5):
+    q = query.strip().lower()
+    if not q:
+        return []
+
+    scored = []
+    for c in codes.values():
+        cl = str(c["code"]).lower()
+        if cl == q:
+            continue
+        if cl.startswith(q):
+            score = 300 - (len(cl) - len(q))
+        elif q in cl:
+            score = 200 - abs(len(cl) - len(q))
+        else:
+            ratio = difflib.SequenceMatcher(None, q, cl).ratio()
+            if ratio < 0.6:
+                continue
+            score = ratio * 100
+        scored.append((score, c))
+
+    scored.sort(key=lambda t: t[0], reverse=True)
+    return [c for _, c in scored[:limit]]
+
+
+def find_parts(query, parts, limit=8):
+    q = query.strip().lower()
+    if not q:
+        return []
+    words = re.findall(r"\w+", q)
+
+    scored = []
+    for p in parts:
+        part_no = p["part_no"].lower()
+        desc = p["description"].lower()
+        hay = f"{desc} {p['section'].lower()}"
+        if q == part_no:
+            return [p]
+        if part_no.startswith(q):
+            scored.append((500, p))
+            continue
+        hits = sum(w in hay for w in words)
+        if hits == len(words):
+            score = 300 + sum(w in desc for w in words) * 40 - len(desc) / 10
+            score -= 50 * sum(a in desc and a not in q for a in SKIPPED_WORDS)
+        elif hits:
+            score = 100 * hits / len(words) + sum(w in desc for w in words) * 10
+        else:
+            ratio = difflib.SequenceMatcher(None, q, desc).ratio()
+            if ratio < 0.6:
+                continue
+            score = ratio * 100
+        scored.append((score, p))
+
+    scored.sort(key=lambda t: t[0], reverse=True)
+    return [p for _, p in scored[:limit]]
+
+
+async def set_user_roles(context: ContextTypes.DEFAULT_TYPE, user_id):
+    uid = int(user_id)
+    is_admin = is_owner(uid) or uid in context.bot_data.get("troubleshooter_admins", {})
+    context.user_data["is_admin"] = is_admin
+    context.user_data["is_approved"] = is_admin or uid in context.bot_data.get(
+        "troubleshooter_approved", set()
+    )
+
+
+def user_is_admin(context: ContextTypes.DEFAULT_TYPE) -> bool:
+    return context.user_data.get(
+        "is_admin", not context.bot_data.get("is_troubleshooter")
+    )

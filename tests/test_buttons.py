@@ -23,7 +23,7 @@ from turbine_troubleshooter.blocks.admin import users as admin_users
 @pytest.fixture(autouse=True)
 def no_content(monkeypatch):
     monkeypatch.setattr(
-        turbine_troubleshooter, "get_troubleshooter_content", lambda: {}
+        turbine_troubleshooter.buttons, "get_troubleshooter_content", lambda: {}
     )
 
 
@@ -93,7 +93,9 @@ SAMPLE_CONTENT = {
 @pytest.mark.asyncio
 async def test_submenu_lists_items_and_backs_to_main(monkeypatch):
     monkeypatch.setattr(
-        turbine_troubleshooter, "get_troubleshooter_content", lambda: SAMPLE_CONTENT
+        turbine_troubleshooter.buttons,
+        "get_troubleshooter_content",
+        lambda: SAMPLE_CONTENT,
     )
     update, edits = make_update("troubleshooter:torque")
     update.callback_query.message = SimpleNamespace(text="menu")
@@ -112,7 +114,9 @@ async def test_submenu_lists_items_and_backs_to_main(monkeypatch):
 @pytest.mark.asyncio
 async def test_submenu_item_backs_to_parent(monkeypatch):
     monkeypatch.setattr(
-        turbine_troubleshooter, "get_troubleshooter_content", lambda: SAMPLE_CONTENT
+        turbine_troubleshooter.buttons,
+        "get_troubleshooter_content",
+        lambda: SAMPLE_CONTENT,
     )
     update, edits = make_update("troubleshooter:torque:hub")
 
@@ -283,7 +287,7 @@ def page(body):
 @pytest.mark.asyncio
 async def test_links_on_a_page_become_buttons(monkeypatch):
     monkeypatch.setattr(
-        turbine_troubleshooter,
+        turbine_troubleshooter.buttons,
         "get_troubleshooter_content",
         lambda: page(
             "Two viewers:\n"
@@ -309,7 +313,7 @@ async def test_links_on_a_page_become_buttons(monkeypatch):
 @pytest.mark.asyncio
 async def test_links_with_a_login_stay_in_the_text(monkeypatch):
     monkeypatch.setattr(
-        turbine_troubleshooter,
+        turbine_troubleshooter.buttons,
         "get_troubleshooter_content",
         lambda: page("[WTG viewer](https://user:pass@example.com/wtg/)"),
     )
@@ -328,7 +332,7 @@ async def test_links_with_a_login_stay_in_the_text(monkeypatch):
 @pytest.mark.asyncio
 async def test_a_button_telegram_refuses_falls_back_to_text(monkeypatch):
     monkeypatch.setattr(
-        turbine_troubleshooter,
+        turbine_troubleshooter.buttons,
         "get_troubleshooter_content",
         lambda: page("[Odd link](https://example.com/odd)"),
     )

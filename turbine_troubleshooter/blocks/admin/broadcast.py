@@ -9,7 +9,7 @@ from turbine_troubleshooter.helpers import escape_markdown, is_owner, is_test_mo
 from turbine_troubleshooter.settings import SETTINGS
 from turbine_troubleshooter.whats_new import WHATS_NEW
 
-from ...tools import send_notification_troubleshooter
+from ...notify import send_notification_troubleshooter
 from . import handle_block
 
 PICKER_PAGE_SIZE = 20

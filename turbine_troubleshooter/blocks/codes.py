@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 from turbine_troubleshooter.db import get_neighbours
 from turbine_troubleshooter.helpers import escape_markdown
 
-from ..tools import find_codes
+from ..helpers import find_codes
 
 
 async def code_view(match, admin):

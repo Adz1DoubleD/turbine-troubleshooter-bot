@@ -1,8 +1,8 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
+from ..helpers import find_wtg
 from ..settings import SETTINGS
-from ..tools import find_wtg
 
 
 async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):

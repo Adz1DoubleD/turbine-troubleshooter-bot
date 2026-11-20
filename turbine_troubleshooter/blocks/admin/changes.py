@@ -18,7 +18,7 @@ from turbine_troubleshooter.db import (
 from turbine_troubleshooter.helpers import escape_markdown, is_owner, own_bot
 from turbine_troubleshooter.settings import SETTINGS
 
-from ...tools import send_notification_troubleshooter
+from ...notify import send_notification_troubleshooter
 from . import local_now
 from .users import (
     OWNER_ONLY,

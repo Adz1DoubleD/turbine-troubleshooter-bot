@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 import turbine_troubleshooter
-import turbine_troubleshooter.tools as tools
+import turbine_troubleshooter.notify as tools
 from turbine_troubleshooter.blocks.admin import changes
 from turbine_troubleshooter.blocks.admin import codes as admin_codes
 from turbine_troubleshooter.blocks.admin import parts as admin_parts

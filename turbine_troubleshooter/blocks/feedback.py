@@ -2,7 +2,7 @@ import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from ..tools import send_notification_troubleshooter
+from ..notify import send_notification_troubleshooter
 
 MAX_FEEDBACK = 1000
 

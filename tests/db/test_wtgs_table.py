@@ -3,8 +3,8 @@ from types import SimpleNamespace
 import pytest
 
 import turbine_troubleshooter.db as ts
+from turbine_troubleshooter.helpers import find_wtg
 from turbine_troubleshooter.settings import SETTINGS
-from turbine_troubleshooter.tools import find_wtg
 
 ROWS = [
     {"wtg": "WTB01", "serial": "1000101", "ip": "192.0.2.21"},

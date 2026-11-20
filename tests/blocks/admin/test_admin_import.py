@@ -6,8 +6,8 @@ import pytest
 import turbine_troubleshooter
 import turbine_troubleshooter.db as ts
 from turbine_troubleshooter.blocks.admin import imports
+from turbine_troubleshooter.helpers import find_wtg
 from turbine_troubleshooter.settings import SETTINGS
-from turbine_troubleshooter.tools import find_wtg
 
 OWNER = 1
 ADMIN = 5

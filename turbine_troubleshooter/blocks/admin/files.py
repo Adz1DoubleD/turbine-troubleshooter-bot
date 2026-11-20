@@ -16,7 +16,7 @@ from turbine_troubleshooter.db import (
 from turbine_troubleshooter.helpers import escape_markdown, is_owner, own_bot
 from turbine_troubleshooter.settings import SETTINGS
 
-from ...tools import send_notification_troubleshooter
+from ...notify import send_notification_troubleshooter
 from .content import EXPIRED, TO_PANEL, handle_text, where
 
 MAX_FILE_BYTES = 20 * 1024 * 1024

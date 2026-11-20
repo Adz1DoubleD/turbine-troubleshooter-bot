@@ -2,8 +2,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
 from .. import weather
+from ..helpers import get_troubleshooter_content
 from ..settings import SETTINGS
-from ..tools import get_troubleshooter_content
 
 
 async def handle_block(context: ContextTypes.DEFAULT_TYPE) -> dict:

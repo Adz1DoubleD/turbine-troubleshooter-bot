@@ -10,7 +10,7 @@ from turbine_troubleshooter.db import db_export, db_tables, setting_toggle
 from turbine_troubleshooter.helpers import error_kb, is_owner
 from turbine_troubleshooter.settings import NOTIFY_DEFAULTS, SETTINGS
 
-from ...tools import user_is_admin
+from ...helpers import user_is_admin
 
 
 async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):

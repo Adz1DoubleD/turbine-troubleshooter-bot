@@ -18,7 +18,8 @@ from turbine_troubleshooter.db import (
 from turbine_troubleshooter.helpers import error_kb, escape_markdown, is_owner, own_bot
 from turbine_troubleshooter.settings import SETTINGS
 
-from ...tools import send_notification_troubleshooter, user_is_admin
+from ...helpers import user_is_admin
+from ...notify import send_notification_troubleshooter
 
 PAGE_SIZE = 10
 SORTS = ("name", "added", "edits", "login")

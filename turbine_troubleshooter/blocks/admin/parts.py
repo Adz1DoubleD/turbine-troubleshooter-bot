@@ -8,7 +8,8 @@ from turbine_troubleshooter.db import (
 )
 from turbine_troubleshooter.helpers import escape_markdown, is_owner
 
-from ...tools import send_notification_troubleshooter, user_is_admin
+from ...helpers import user_is_admin
+from ...notify import send_notification_troubleshooter
 from . import handle_block, local_now
 from .changes import ask_owner_to_delete
 
