@@ -60,7 +60,7 @@ If a test needs example data, add made-up entries to `tests/example_content.py`.
 Releases are prepared by [release-please](https://github.com/googleapis/release-please):
 
 1. Every merge to `main` updates a "chore(main): release X.Y.Z" pull request. It works out the next version from the commit types since the last release, bumps `version` in `pyproject.toml` and writes `CHANGELOG.md`.
-2. When it's time to release, the maintainer merges that pull request. The workflow can't trigger CI on its own pull requests, so the maintainer merges it past the required check; it only changes the version and changelog.
+2. When it's time to release, the maintainer merges that pull request once CI passes. release-please opens it as the repo's release GitHub App (`RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY` secrets), so CI runs on it like any other pull request.
 3. The merge tags `vX.Y.Z`, creates the GitHub release, runs the tests, builds, and waits for the maintainer to approve the `pypi` deployment before uploading to [PyPI](https://pypi.org/project/turbine-troubleshooter-bot/).
 
 If a release changes something users will notice, add a short, plain-language note for its version to `src/turbine_troubleshooter/whats_new.py` in the same pull request (no code terms; it's broadcast to technicians once the owner approves it).
