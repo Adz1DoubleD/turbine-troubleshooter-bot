@@ -1,10 +1,12 @@
 """Saved on/off settings and one-off markers."""
 
+from typing import Any
+
 from ..settings import SETTINGS
 from .core import db_session
 
 
-async def setting_toggle(name, default=1):
+async def setting_toggle(name: str, default: int = 1) -> Any:
     async with db_session() as cur:
         await cur.execute(
             "INSERT INTO settings (name, value) VALUES (%s, %s) "
@@ -17,7 +19,7 @@ async def setting_toggle(name, default=1):
     return SETTINGS.notify_settings[name]
 
 
-async def setting_mark(name):
+async def setting_mark(name: str) -> bool:
     async with db_session() as cur:
         await cur.execute(
             "INSERT IGNORE INTO settings (name, value) VALUES (%s, 1)", (name,)

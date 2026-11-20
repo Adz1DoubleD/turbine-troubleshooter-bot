@@ -1,9 +1,11 @@
 """Replacing the IO board pin-outs."""
 
+from typing import Any
+
 from .core import db_session
 
 
-async def io_boards_replace(pins):
+async def io_boards_replace(pins: list[dict[str, Any]]) -> None:
     async with db_session() as cur:
         await cur.execute("START TRANSACTION")
         try:

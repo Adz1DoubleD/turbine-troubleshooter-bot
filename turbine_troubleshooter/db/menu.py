@@ -1,11 +1,14 @@
 """Menu items and their attached files."""
 
 import json
+from typing import Any
 
 from .core import db_session
 
 
-async def menu_node_add(parent_id, kind, title, body, user_id):
+async def menu_node_add(
+    parent_id: int | None, kind: str, title: str | None, body: str | None, user_id: int
+) -> dict[str, Any]:
     async with db_session() as cur:
         await cur.execute(
             "SELECT COALESCE(MAX(sort_order), 0) + 1 AS n FROM menus "
@@ -30,7 +33,15 @@ async def menu_node_add(parent_id, kind, title, body, user_id):
         }
 
 
-async def menu_node_update(node_id, field, value, user_id, edited_by, edited_at, old):
+async def menu_node_update(
+    node_id: int,
+    field: str,
+    value: Any,
+    user_id: int,
+    edited_by: str,
+    edited_at: str,
+    old: Any,
+) -> bool:
     if field not in ("title", "body"):
         raise ValueError(f"Unknown menu field: {field}")
     async with db_session() as cur:
@@ -58,13 +69,15 @@ async def menu_node_update(node_id, field, value, user_id, edited_by, edited_at,
         return cur.rowcount > 0
 
 
-async def menu_node_delete(node_id):
+async def menu_node_delete(node_id: int) -> bool:
     async with db_session() as cur:
         await cur.execute("DELETE FROM menus WHERE id = %s", (node_id,))
         return cur.rowcount > 0
 
 
-async def attachment_add(node_id, kind, file_id, file_unique_id, path, user_id):
+async def attachment_add(
+    node_id: int, kind: str, file_id: str, file_unique_id: str, path: str, user_id: int
+) -> dict[str, Any]:
     async with db_session() as cur:
         await cur.execute(
             "INSERT INTO attachments (node_id, type, file_id, file_unique_id, path, "
@@ -83,13 +96,13 @@ async def attachment_add(node_id, kind, file_id, file_unique_id, path, user_id):
         }
 
 
-async def attachments_remove(node_id):
+async def attachments_remove(node_id: int) -> int:
     async with db_session() as cur:
         await cur.execute("DELETE FROM attachments WHERE node_id = %s", (node_id,))
         return cur.rowcount
 
 
-async def attachment_status(attachment_id, status):
+async def attachment_status(attachment_id: int, status: str | None) -> bool:
     async with db_session() as cur:
         await cur.execute(
             "UPDATE attachments SET status = %s WHERE id = %s", (status, attachment_id)

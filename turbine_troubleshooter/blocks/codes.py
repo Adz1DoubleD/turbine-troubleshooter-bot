@@ -1,6 +1,7 @@
 """Searching fault codes and showing their advice."""
 
 from datetime import datetime
+from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
@@ -11,7 +12,9 @@ from turbine_troubleshooter.helpers import escape_markdown
 from ..helpers import find_codes
 
 
-async def code_view(match, admin):
+async def code_view(
+    match: dict[str, Any], admin: bool
+) -> tuple[str, InlineKeyboardMarkup]:
     row_id = match.get("id")
     prev_id, next_id = (
         await get_neighbours(int(row_id), "codes", order_by="code")
@@ -19,7 +22,7 @@ async def code_view(match, admin):
         else (None, None)
     )
 
-    def stamp(by, at):
+    def stamp(by: str | None, at: str | None) -> str:
         if isinstance(at, str):
             at = datetime.strptime(at, "%Y-%m-%d %H:%M")
         when = f" ({at:%d %b %Y})" if at else ""
@@ -42,7 +45,7 @@ async def code_view(match, admin):
         f"{meta}"
     )
 
-    def page_button(label, target_id):
+    def page_button(label: str, target_id: int | None) -> InlineKeyboardButton:
         if not target_id:
             return InlineKeyboardButton(" ", callback_data="ignore")
         return InlineKeyboardButton(
@@ -78,7 +81,7 @@ async def code_view(match, admin):
     return text, InlineKeyboardMarkup(keyboard)
 
 
-async def button_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_page(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     target_id = query.data.split(":")[-1]
     admin = context.user_data.get(
@@ -102,7 +105,8 @@ async def button_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(text, parse_mode="Markdown", reply_markup=markup)
 
 
-async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     context.user_data["state"] = "troubleshooter:code_search"
     context.user_data["last_msg_id"] = query.message.message_id
@@ -116,7 +120,9 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+async def handle_search(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
+) -> None:
     user_data = context.user_data
     code_data = context.bot_data.get("codes", {})
     msg_id = user_data.get("last_msg_id")

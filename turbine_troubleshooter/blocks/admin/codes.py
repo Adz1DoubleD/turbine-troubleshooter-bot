@@ -15,7 +15,8 @@ from . import handle_block, local_now
 from .changes import ask_owner_to_delete
 
 
-async def button_code_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_code_add(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
 
     is_admin = user_is_admin(context)
@@ -38,7 +39,9 @@ async def button_code_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def button_code_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_code_delete(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
 
     is_admin = user_is_admin(context)
@@ -70,7 +73,7 @@ async def button_code_delete(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def button_code_delete_confirm(
     update: Update, context: ContextTypes.DEFAULT_TYPE
-):
+) -> None:
     query = update.callback_query
 
     is_admin = user_is_admin(context)
@@ -101,7 +104,8 @@ async def button_code_delete_confirm(
     )
 
 
-async def button_code_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_code_edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
 
     is_admin = user_is_admin(context)
@@ -126,7 +130,10 @@ async def button_code_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await handle_code_edit(context, query.message.chat_id, query.message.message_id)
 
 
-async def button_code_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_code_edit_field(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    assert context.user_data is not None
     query = update.callback_query
 
     is_admin = user_is_admin(context)
@@ -151,7 +158,9 @@ async def button_code_edit_field(update: Update, context: ContextTypes.DEFAULT_T
     )
 
 
-async def button_code_edit_save(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_code_edit_save(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
 
     is_admin = user_is_admin(context)
@@ -204,7 +213,7 @@ async def button_code_edit_save(update: Update, context: ContextTypes.DEFAULT_TY
 
 async def handle_code_add(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, state: str
-):
+) -> None:
     user_data = context.user_data
     msg_id = user_data.get("last_msg_id")
     chat_id = update.effective_chat.id
@@ -290,8 +299,11 @@ async def handle_code_add(
 
 
 async def handle_code_edit(
-    context: ContextTypes.DEFAULT_TYPE, chat_id, msg_id, updated=False
-):
+    context: ContextTypes.DEFAULT_TYPE,
+    chat_id: int,
+    msg_id: int | None,
+    updated: bool = False,
+) -> None:
     entry = context.user_data.get("code_edit_buffer")
     if not entry:
         return

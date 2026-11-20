@@ -24,7 +24,8 @@ KINDS = {
 TO_IMPORT = InlineKeyboardButton("🔙 Import", callback_data="troubleshooter:import")
 
 
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     if not is_owner(query.from_user.id) or not context.bot_data.get(
         "is_troubleshooter"
@@ -107,7 +108,8 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     kind = (context.user_data.get("state") or "").split(":")[-1]
     message = update.message
     if kind not in KINDS or not is_owner(update.effective_user.id):

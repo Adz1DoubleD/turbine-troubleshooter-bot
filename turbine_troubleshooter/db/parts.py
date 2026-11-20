@@ -1,11 +1,14 @@
 """Saving spare parts."""
 
 import json
+from typing import Any
 
 from .core import db_session
 
 
-async def part_add(part_no, description, section="", added_by=None):
+async def part_add(
+    part_no: str, description: str, section: str = "", added_by: str = None
+) -> int | None:
     async with db_session() as cur:
         await cur.execute(
             "INSERT IGNORE INTO parts (part_no, description, section, added_by) "
@@ -15,7 +18,14 @@ async def part_add(part_no, description, section="", added_by=None):
         return cur.lastrowid if cur.rowcount else None
 
 
-async def part_update(part_id, field, value, edited_by=None, edited_at=None, old=None):
+async def part_update(
+    part_id: int | str,
+    field: str,
+    value: Any,
+    edited_by: str = None,
+    edited_at: str = None,
+    old: Any = None,
+) -> bool:
     if field not in ("part_no", "description", "section"):
         raise ValueError(f"Unknown part field: {field}")
     async with db_session() as cur:

@@ -3,6 +3,7 @@
 import base64
 import re
 from pathlib import Path
+from typing import Any
 
 import httpx
 import sentry_sdk
@@ -25,7 +26,12 @@ MAX_FILE_BYTES = 20 * 1024 * 1024
 FOLDERS = {"document": ("pdf", "pdf"), "photo": ("images", "jpg")}
 
 
-async def attach(context: ContextTypes.DEFAULT_TYPE, user, node, file):
+async def attach(
+    context: ContextTypes.DEFAULT_TYPE,
+    user: dict[str, Any],
+    node: dict[str, Any] | None,
+    file: dict[str, Any],
+) -> dict[str, Any]:
     folder, ext = FOLDERS[file["type"]]
     base = re.sub(r"\W+", "_", node["title"].lower()).strip("_") or "file"
     taken = {a["path"] for a in SETTINGS.menu["attachments"]}
@@ -40,7 +46,8 @@ async def attach(context: ContextTypes.DEFAULT_TYPE, user, node, file):
     return attachment
 
 
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     user = query.from_user
     bits = query.data.split(":")
@@ -342,7 +349,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["last_msg_id"] = sent.message_id
 
 
-async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     state = context.user_data.get("state")
     draft = context.user_data.get("menu_draft") or {}
@@ -407,7 +414,9 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def _send_to_owner(context: ContextTypes.DEFAULT_TYPE, attachment):
+async def _send_to_owner(
+    context: ContextTypes.DEFAULT_TYPE, attachment: dict[str, Any]
+) -> None:
     send = (
         own_bot(context).send_photo
         if attachment["type"] == "photo"

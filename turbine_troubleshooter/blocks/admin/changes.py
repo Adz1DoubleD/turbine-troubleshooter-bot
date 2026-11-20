@@ -4,7 +4,7 @@ import html
 from types import SimpleNamespace
 
 import sentry_sdk
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.db import (
@@ -36,8 +36,12 @@ KINDS = {"code": "code", "part": "part", "menu": "menu item"}
 
 
 async def ask_owner_to_delete(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, kind, target, label
-):
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    kind: str,
+    target: str,
+    label: str,
+) -> str:
     user = update.effective_user
     name = f"@{user.username}" if user.username else user.full_name
     request_id = await delete_request_add(kind, target, label, user.id, name)
@@ -78,7 +82,9 @@ async def ask_owner_to_delete(
     return "🗑 Sent to the owner to approve. It stays until they do."
 
 
-async def button_delete_requests(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_delete_requests(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer("⚠️ Only the owner can do that.", show_alert=True)
@@ -167,7 +173,7 @@ async def button_delete_requests(update: Update, context: ContextTypes.DEFAULT_T
     )
 
 
-async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer("⚠️ Only the owner can do that.", show_alert=True)
@@ -296,7 +302,13 @@ async def button_undo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def show_pending(query, context, status=None, page=None):
+async def show_pending(
+    query: CallbackQuery,
+    context: ContextTypes.DEFAULT_TYPE,
+    status: str | None = None,
+    page: int = None,
+) -> None:
+    assert context.user_data is not None
     requests = pending_requests(context) + [
         (r["id"], r, "delete")
         for r in context.bot_data.get("pending_delete_requests", {}).values()
@@ -357,7 +369,7 @@ async def show_pending(query, context, status=None, page=None):
     await edit(query, text, kb)
 
 
-async def button_pending(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_pending(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer(OWNER_ONLY, show_alert=True)

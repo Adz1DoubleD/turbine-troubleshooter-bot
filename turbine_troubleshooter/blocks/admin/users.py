@@ -3,8 +3,9 @@
 import html
 from collections import Counter
 from datetime import datetime
+from typing import Any
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
@@ -55,14 +56,14 @@ BACK_TO_PANEL = InlineKeyboardButton(
 )
 
 
-def display_name(user):
+def display_name(user: dict[str, Any]) -> str:
     name = user["username"]
     if name and " " not in name:
         name = f"@{name}"
     return name
 
 
-def pending_requests(context):
+def pending_requests(context: ContextTypes.DEFAULT_TYPE) -> list[tuple[int, str, str]]:
     return [
         (uid, name, kind)
         for kind in ("access", "admin")
@@ -70,7 +71,9 @@ def pending_requests(context):
     ]
 
 
-async def edit(query, text, kb):
+async def edit(
+    query: CallbackQuery, text: str, kb: InlineKeyboardMarkup | None
+) -> None:
     try:
         await query.edit_message_text(
             text,
@@ -85,11 +88,11 @@ async def edit(query, text, kb):
 
 async def tell_user(
     context: ContextTypes.DEFAULT_TYPE,
-    user_id,
-    text,
-    reply_markup=None,
-    parse_mode=None,
-):
+    user_id: int,
+    text: str,
+    reply_markup: InlineKeyboardMarkup | None = None,
+    parse_mode: str | None = None,
+) -> None:
     try:
         await own_bot(context).send_message(
             user_id,
@@ -109,7 +112,9 @@ DECISIONS = {
 }
 
 
-async def _button_decide_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def _button_decide_request(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     await query.answer()
     if not is_owner(query.from_user.id):
@@ -144,11 +149,13 @@ button_admin_approve = button_admin_deny = _button_decide_request
 button_access_approve = button_access_deny = _button_decide_request
 
 
-def page_count(total):
+def page_count(total: int) -> int:
     return max((total - 1) // PAGE_SIZE + 1, 1)
 
 
-def nav_row(callback_prefix, page, pages):
+def nav_row(
+    callback_prefix: str, page: int, pages: int
+) -> list[list[InlineKeyboardButton]]:
     row = []
     if page > 0:
         row.append(
@@ -161,7 +168,7 @@ def nav_row(callback_prefix, page, pages):
     return [row] if row else []
 
 
-async def button_users_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_users_list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not user_is_admin(context):
         await query.answer(UNAUTHORIZED, show_alert=True)
@@ -180,7 +187,10 @@ async def button_users_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await edit(query, text, kb)
 
 
-async def button_user_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_user_search(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     if not user_is_admin(context):
         await query.answer(UNAUTHORIZED, show_alert=True)
@@ -194,7 +204,10 @@ async def button_user_search(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
 
 
-async def handle_user_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
+async def handle_user_search(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
+) -> None:
+    assert context.user_data is not None
     context.user_data["state"] = None
     if not user_is_admin(context):
         return
@@ -215,7 +228,7 @@ async def handle_user_search(update: Update, context: ContextTypes.DEFAULT_TYPE,
             raise
 
 
-async def button_user_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_user_card(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not user_is_admin(context):
         await query.answer(UNAUTHORIZED, show_alert=True)
@@ -223,7 +236,9 @@ async def button_user_card(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await _show_card(query, context, int(query.data.split(":")[2]))
 
 
-async def button_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_user_action(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer(OWNER_ONLY, show_alert=True)
@@ -258,7 +273,7 @@ async def button_user_action(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
 
 
-async def button_user_do(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_user_do(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer(OWNER_ONLY, show_alert=True)
@@ -286,7 +301,7 @@ async def button_user_do(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await _show_card(query, context, user_id, status=status)
 
 
-def _role(user, context):
+def _role(user: dict[str, Any], context: ContextTypes.DEFAULT_TYPE) -> str:
     uid = int(user["user_id"])
     if is_owner(uid):
         return "owner"
@@ -297,7 +312,9 @@ def _role(user, context):
     return "locked"
 
 
-def _contributions(context):
+def _contributions(
+    context: ContextTypes.DEFAULT_TYPE,
+) -> tuple[dict[str, int], dict[str, int]]:
     items = [
         *context.bot_data.get("codes", {}).values(),
         *context.bot_data.get("parts", []),
@@ -307,12 +324,12 @@ def _contributions(context):
     return added, edited
 
 
-def _clear_request(context, user_id):
+def _clear_request(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     for kind in ("access", "admin"):
         context.bot_data.get(f"pending_{kind}_requests", {}).pop(user_id, None)
 
 
-async def _grant_access(context: ContextTypes.DEFAULT_TYPE, user_id):
+async def _grant_access(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     await user_approve(user_id)
     context.bot_data.setdefault("troubleshooter_approved", set()).add(user_id)
     _clear_request(context, user_id)
@@ -339,7 +356,9 @@ async def _grant_access(context: ContextTypes.DEFAULT_TYPE, user_id):
     )
 
 
-async def _grant_admin(context: ContextTypes.DEFAULT_TYPE, user_id, name):
+async def _grant_admin(
+    context: ContextTypes.DEFAULT_TYPE, user_id: int, name: str
+) -> None:
     await admin_add(user_id, name.lstrip("@"))
     context.bot_data.setdefault("troubleshooter_admins", {})[user_id] = name
     _clear_request(context, user_id)
@@ -365,7 +384,7 @@ async def _grant_admin(context: ContextTypes.DEFAULT_TYPE, user_id, name):
     )
 
 
-async def _remove_admin(context: ContextTypes.DEFAULT_TYPE, user_id):
+async def _remove_admin(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     removed = await admin_remove(user_id)
     await user_approve(user_id)
     context.bot_data.get("troubleshooter_admins", {}).pop(user_id, None)
@@ -376,7 +395,7 @@ async def _remove_admin(context: ContextTypes.DEFAULT_TYPE, user_id):
         )
 
 
-async def _remove_access(context: ContextTypes.DEFAULT_TYPE, user_id):
+async def _remove_access(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
     await admin_remove(user_id)
     removed = await user_revoke(user_id)
     context.bot_data.get("troubleshooter_admins", {}).pop(user_id, None)
@@ -387,7 +406,9 @@ async def _remove_access(context: ContextTypes.DEFAULT_TYPE, user_id):
         )
 
 
-async def _deny_request(context: ContextTypes.DEFAULT_TYPE, user_id, kind):
+async def _deny_request(
+    context: ContextTypes.DEFAULT_TYPE, user_id: int, kind: str
+) -> str:
     name = context.bot_data.get(f"pending_{kind}_requests", {}).pop(user_id, None)
     await request_remove(user_id)
     what = "admin request" if kind == "admin" else "access request"
@@ -397,12 +418,12 @@ async def _deny_request(context: ContextTypes.DEFAULT_TYPE, user_id, kind):
     return name
 
 
-def _request_target(query):
+def _request_target(query: CallbackQuery) -> tuple[int, bool]:
     parts = query.data.split(":")
     return int(parts[3]), parts[-1] == "p"
 
 
-async def _lookup_name(context: ContextTypes.DEFAULT_TYPE, user_id):
+async def _lookup_name(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> str:
     try:
         chat = await context.bot.get_chat(user_id)
     except Exception:
@@ -412,17 +433,20 @@ async def _lookup_name(context: ContextTypes.DEFAULT_TYPE, user_id):
     return chat.first_name or str(user_id)
 
 
-def _users_back(context):
+def _users_back(context: ContextTypes.DEFAULT_TYPE) -> str:
     sort_by, page = context.user_data.get("user_list", ("name", 0))
     return f"troubleshooter:user_list:{sort_by}:{page}"
 
 
-def _matches(user, search):
+def _matches(user: dict[str, Any], search: str) -> bool:
     search = search.lower().lstrip("@")
     return search in (user["username"] or "").lower() or search == str(user["user_id"])
 
 
-async def _users_list(context: ContextTypes.DEFAULT_TYPE, viewer_id, sort_by, page):
+async def _users_list(
+    context: ContextTypes.DEFAULT_TYPE, viewer_id: int, sort_by: str, page: int
+) -> tuple[str, InlineKeyboardMarkup]:
+    assert context.user_data is not None
     users = await users_get()
     total = len(users)
     search = context.user_data.get("user_search")
@@ -475,7 +499,7 @@ async def _users_list(context: ContextTypes.DEFAULT_TYPE, viewer_id, sort_by, pa
 
     kb += nav_row(f"troubleshooter:user_list:{sort_by}:", page, pages)
 
-    def sort_button(key, label):
+    def sort_button(key: str, label: str) -> InlineKeyboardButton:
         return InlineKeyboardButton(
             f"• {label} •" if key == sort_by else label,
             callback_data=f"troubleshooter:user_list:{key}:0",
@@ -510,7 +534,7 @@ async def _users_list(context: ContextTypes.DEFAULT_TYPE, viewer_id, sort_by, pa
     return text, kb
 
 
-def _available_actions(user_role):
+def _available_actions(user_role: str) -> list[str]:
     return {
         "locked": ["access_add"],
         "approved": ["admin_add", "access_remove"],
@@ -518,11 +542,16 @@ def _available_actions(user_role):
     }.get(user_role, [])
 
 
-async def _find_user(user_id):
+async def _find_user(user_id: int) -> dict[str, Any] | None:
     return await user_get(user_id)
 
 
-async def _show_card(query, context, user_id, status=None):
+async def _show_card(
+    query: CallbackQuery,
+    context: ContextTypes.DEFAULT_TYPE,
+    user_id: int,
+    status: str | None = None,
+) -> None:
     user = await _find_user(user_id)
     if user is None:
         await edit(
@@ -572,6 +601,6 @@ async def _show_card(query, context, user_id, status=None):
     await edit(query, text, kb)
 
 
-def _parse_action(query):
+def _parse_action(query: CallbackQuery) -> tuple[str, int]:
     _, _, action, user_id = query.data.split(":")
     return action, int(user_id)

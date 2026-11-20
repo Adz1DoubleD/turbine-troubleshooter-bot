@@ -13,6 +13,7 @@ from .blocks.admin import users as admin_users
 
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle a typed reply the troubleshooter asked for, such as a search."""
+    assert context.user_data is not None
     text = (update.message.text or "").strip()
     user_data = context.user_data
     state = user_data.get("state", "")

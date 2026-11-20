@@ -1,5 +1,7 @@
 """Users, admins and access requests."""
 
+from typing import Any
+
 from .core import db_session
 
 USER_COLUMNS = (
@@ -8,7 +10,7 @@ USER_COLUMNS = (
 )
 
 
-async def admin_add(user_id, username=None):
+async def admin_add(user_id: int, username: str | None = None) -> None:
     query = """
     INSERT INTO users (user_id, username, is_admin)
     VALUES (%(user_id)s, %(username)s, 1) AS new
@@ -20,14 +22,14 @@ async def admin_add(user_id, username=None):
         await cur.execute(query, {"user_id": user_id, "username": username})
 
 
-async def admin_remove(user_id):
+async def admin_remove(user_id: int) -> bool:
     query = "UPDATE users SET is_admin = 0 WHERE user_id = %s"
     async with db_session() as cur:
         await cur.execute(query, (user_id,))
         return cur.rowcount > 0
 
 
-async def user_add(user_id, username=None):
+async def user_add(user_id: int, username: str | None = None) -> bool:
     async with db_session() as cur:
         await cur.execute("SELECT user_id FROM users WHERE user_id = %s", (user_id,))
         exists = await cur.fetchone()
@@ -47,7 +49,7 @@ async def user_add(user_id, username=None):
         return False
 
 
-async def user_approve(user_id):
+async def user_approve(user_id: int) -> bool:
     async with db_session() as cur:
         await cur.execute(
             "UPDATE users SET is_approved = 1 WHERE user_id = %s", (user_id,)
@@ -55,7 +57,7 @@ async def user_approve(user_id):
         return cur.rowcount > 0
 
 
-async def user_revoke(user_id):
+async def user_revoke(user_id: int) -> bool:
     async with db_session() as cur:
         await cur.execute(
             "UPDATE users SET is_approved = 0 WHERE user_id = %s", (user_id,)
@@ -63,7 +65,7 @@ async def user_revoke(user_id):
         return cur.rowcount > 0
 
 
-async def request_add(user_id, kind, name=None):
+async def request_add(user_id: int, kind: str, name: str = None) -> None:
     async with db_session() as cur:
         await cur.execute(
             "INSERT INTO requests (user_id, kind, name) VALUES (%s, %s, %s) AS new "
@@ -73,26 +75,26 @@ async def request_add(user_id, kind, name=None):
         )
 
 
-async def request_remove(user_id):
+async def request_remove(user_id: int) -> bool:
     async with db_session() as cur:
         await cur.execute("DELETE FROM requests WHERE user_id = %s", (user_id,))
         return cur.rowcount > 0
 
 
-async def users_get():
+async def users_get() -> list[dict[str, Any]]:
     async with db_session() as cur:
         await cur.execute(USER_COLUMNS)
         return [_user_from_row(r) for r in await cur.fetchall()]
 
 
-async def user_get(user_id):
+async def user_get(user_id: int) -> dict[str, Any] | None:
     async with db_session() as cur:
         await cur.execute(f"{USER_COLUMNS} WHERE user_id = %s", (user_id,))
         row = await cur.fetchone()
         return _user_from_row(row) if row else None
 
 
-async def user_notifications_toggle(user_id):
+async def user_notifications_toggle(user_id: int) -> int:
     async with db_session() as cur:
         await cur.execute(
             "UPDATE users SET notifications_enabled = 1 - notifications_enabled WHERE user_id = %s",
@@ -105,7 +107,7 @@ async def user_notifications_toggle(user_id):
         return int(row["notifications_enabled"]) if row else None
 
 
-async def user_notifications_get(user_id):
+async def user_notifications_get(user_id: int) -> int:
     async with db_session() as cur:
         await cur.execute(
             "SELECT notifications_enabled FROM users WHERE user_id = %s", (user_id,)
@@ -114,7 +116,7 @@ async def user_notifications_get(user_id):
         return int(row["notifications_enabled"]) if row else 1
 
 
-def _user_from_row(record):
+def _user_from_row(record: Any) -> dict[str, Any]:
     return {
         "user_id": int(record["user_id"]),
         "username": record.get("username"),

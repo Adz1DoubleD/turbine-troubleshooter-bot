@@ -1,7 +1,9 @@
 """The database connection pool and shared queries."""
 
 import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 from urllib.parse import urlparse
 
 import aiomysql
@@ -16,7 +18,7 @@ _pool = None
 _pool_lock = asyncio.Lock()
 
 
-async def get_db_pool():
+async def get_db_pool() -> aiomysql.Pool:
     global _pool
     async with _pool_lock:
         if _pool is None:
@@ -40,7 +42,7 @@ async def get_db_pool():
 
 
 @asynccontextmanager
-async def db_session():
+async def db_session() -> AsyncIterator[aiomysql.DictCursor]:
     pool = await get_db_pool()
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
@@ -51,7 +53,7 @@ async def db_session():
                 raise
 
 
-async def close_db():
+async def close_db() -> None:
     global _pool
     if _pool is not None:
         _pool.close()
@@ -59,7 +61,9 @@ async def close_db():
         _pool = None
 
 
-async def get_neighbours(curr_id: int, table: str, order_by: str = "id"):
+async def get_neighbours(
+    curr_id: int, table: str, order_by: str = "id"
+) -> tuple[int | None, int | None]:
     async with db_session() as cur:
         await cur.execute(
             f"""
@@ -77,7 +81,7 @@ async def get_neighbours(curr_id: int, table: str, order_by: str = "id"):
         return (row["prev_id"], row["next_id"]) if row else (None, None)
 
 
-async def delete_entry(table, column, value):
+async def delete_entry(table: str | None, column: str, value: Any) -> bool:
     async with db_session() as cur:
         await cur.execute(f"DELETE FROM `{table}` WHERE `{column}` = %s", (value,))
         return cur.rowcount > 0

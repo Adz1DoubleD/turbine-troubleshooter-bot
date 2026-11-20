@@ -10,7 +10,7 @@ from dotenv import find_dotenv, load_dotenv
 from turbine_troubleshooter import start_troubleshooter_bot, stop_troubleshooter_bot
 
 
-async def main():
+async def main() -> None:
     load_dotenv(find_dotenv(usecwd=True))
     sentry_sdk.init(dsn=os.environ.get("SENTRY_DSN"))
     try:

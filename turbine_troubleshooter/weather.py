@@ -2,11 +2,12 @@
 
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import aiohttp
 import sentry_sdk
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.settings import SETTINGS
@@ -42,11 +43,16 @@ HEADINGS = (
 )
 
 
-def is_enabled():
+def is_enabled() -> bool:
     return bool(SETTINGS.cefas_buoy or SETTINGS.windquest_api_key)
 
 
-async def fetch(url, headers=None, params=None, timeout=5):
+async def fetch(
+    url: str,
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    timeout: int = 5,
+) -> Any:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -137,13 +143,18 @@ async def weather_block(
     }
 
 
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     block = await weather_block(is_tomorrow=query.data.endswith(":tomorrow"))
     await _send_block(query, block)
 
 
-async def _fetch_bytes(url, headers=None, params=None, timeout=5):
+async def _fetch_bytes(
+    url: str,
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
+    timeout: int = 5,
+) -> bytes | None:
     try:
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=timeout)
@@ -155,11 +166,11 @@ async def _fetch_bytes(url, headers=None, params=None, timeout=5):
         return None
 
 
-def _degrees_to_heading(deg):
+def _degrees_to_heading(deg: float) -> str:
     return HEADINGS[round(deg / 22.5) % 16]
 
 
-def _get_safety_emoji(value, kind="wave"):
+def _get_safety_emoji(value: float, kind: str = "wave") -> str:
     if kind == "wind":
         if value > 18:
             return "🔴"
@@ -173,7 +184,7 @@ def _get_safety_emoji(value, kind="wave"):
     return "🟢"
 
 
-def _parse_dt(raw_str):
+def _parse_dt(raw_str: str) -> tuple[datetime, bool]:
     if "T" in raw_str:
         dt = datetime.fromisoformat(raw_str.replace("Z", "+00:00"))
         if dt.tzinfo is None:
@@ -183,7 +194,9 @@ def _parse_dt(raw_str):
     return dt, False
 
 
-async def _get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = False):
+async def _get_cefas_data(
+    brief: bool = False, hours: int = 6, tomorrow: bool = False
+) -> tuple[str | None, str | None]:
     buoy = SETTINGS.cefas_buoy
     if not buoy:
         return None, None
@@ -216,7 +229,7 @@ async def _get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = 
         obs = sorted((x for x in rows if not x[1]), key=lambda x: x[0])
         fc = sorted((x for x in rows if x[1]), key=lambda x: x[0])
 
-        def line(dt, v):
+        def line(dt: datetime, v: float) -> str:
             h = round(v["Hm0"], 2)
             head = _degrees_to_heading(v["W_PDIR"]) if "W_PDIR" in v else "N/A"
             return f" ├ {dt:%H:%M} {_get_safety_emoji(h)} {h}m · {head}"
@@ -291,7 +304,7 @@ async def _get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = 
 
 async def _get_windquest_data(
     hours: int = 6, location: str | None = None, tomorrow: bool = False
-):
+) -> str | None:
     if not (SETTINGS.windquest_api_key and SETTINGS.windquest_api_token):
         return None
     location = location or SETTINGS.windquest_location
@@ -433,7 +446,9 @@ async def _get_windquest_data(
     return out or None
 
 
-async def _get_weather_data(tomorrow: bool = False, brief: bool = False):
+async def _get_weather_data(
+    tomorrow: bool = False, brief: bool = False
+) -> tuple[str, bytes | None]:
     sea, image = await _get_cefas_data(brief=brief, tomorrow=tomorrow)
     wind = await _get_windquest_data(tomorrow=tomorrow)
 
@@ -444,7 +459,7 @@ async def _get_weather_data(tomorrow: bool = False, brief: bool = False):
     return "\n".join(parts) + "\n", image
 
 
-async def _send_block(query, block):
+async def _send_block(query: CallbackQuery, block: dict[str, Any]) -> None:
     message = query.message
 
     if block.get("image"):

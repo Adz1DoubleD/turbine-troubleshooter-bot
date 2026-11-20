@@ -31,6 +31,7 @@ from .helpers import get_troubleshooter_content
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle a troubleshooter button press. A host routes "troubleshooter:"
     callbacks here."""
+    assert context.user_data is not None
     query = update.callback_query
     data = query.data
 

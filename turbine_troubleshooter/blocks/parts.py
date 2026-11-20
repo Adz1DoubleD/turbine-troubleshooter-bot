@@ -8,7 +8,8 @@ from turbine_troubleshooter.helpers import escape_markdown
 from ..helpers import find_parts
 
 
-async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     context.user_data["state"] = "troubleshooter:parts_search"
     context.user_data["last_msg_id"] = query.message.message_id
@@ -22,7 +23,10 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+async def handle_search(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
+) -> None:
+    assert context.user_data is not None
     context.user_data["state"] = None
     msg_id = context.user_data.get("last_msg_id")
     results = find_parts(text, context.bot_data.get("parts", []))

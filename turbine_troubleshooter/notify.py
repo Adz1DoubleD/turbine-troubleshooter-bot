@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import timedelta
+from typing import Any
 
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -13,7 +14,7 @@ from turbine_troubleshooter.helpers import escape_markdown, is_owner, is_test_mo
 from turbine_troubleshooter.settings import NOTIFY_DEFAULTS, SETTINGS
 
 
-def alert_markup(enabled=True):
+def alert_markup(enabled: bool = True) -> InlineKeyboardMarkup:
     toggle = "🔕 Turn Off Notifications" if enabled else "🔔 Turn On Notifications"
     return InlineKeyboardMarkup(
         [
@@ -28,17 +29,17 @@ def alert_markup(enabled=True):
 
 
 async def send_notification_troubleshooter(
-    user=None,
-    action="new_user",
-    code=None,
-    advice=None,
-    parts=None,
-    message=None,
-    target_id=None,
-    audience="all",
-    undo=None,
-    was=None,
-):
+    user: dict[str, Any] | None = None,
+    action: str = "new_user",
+    code: str | None = None,
+    advice: str | None = None,
+    parts: str | None = None,
+    message: str | None = None,
+    target_id: int | None = None,
+    audience: str = "all",
+    undo: Any = None,
+    was: Any = None,
+) -> tuple[int, int, list[int]]:
     if turbine_troubleshooter.application is None:
         return 0, 0, []
 

@@ -4,6 +4,7 @@ import csv
 import io
 import json
 from datetime import datetime
+from typing import Any
 
 from .core import db_session
 
@@ -17,7 +18,7 @@ EXPORT_TABLES = (
 )
 
 
-def db_export(rows):
+def db_export(rows: list[dict[str, Any]]) -> io.BytesIO:
     rows = list(rows)
 
     headers = []
@@ -57,7 +58,7 @@ def db_export(rows):
     return bio
 
 
-async def db_tables(table):
+async def db_tables(table: str | None) -> list[dict[str, Any]] | None:
     if table not in EXPORT_TABLES:
         return None
 

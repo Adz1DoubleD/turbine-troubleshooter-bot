@@ -15,7 +15,7 @@ from turbine_troubleshooter.settings import NOTIFY_DEFAULTS, SETTINGS
 from ...helpers import user_is_admin
 
 
-async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_export(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not user_is_admin(context):
         await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
@@ -85,7 +85,9 @@ EXPORT_LABELS = {
 }
 
 
-async def button_export_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_export_menu(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     if not user_is_admin(context):
         await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
@@ -122,7 +124,7 @@ async def button_export_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
 NOTIFY_LABELS = {"added": "➕ Added", "edited": "✏️ Edited", "deleted": "🗑️ Deleted"}
 
 
-async def button_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_notify(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer("⚠️ Unauthorized: Admin access required.", show_alert=True)
@@ -156,13 +158,13 @@ async def button_notify(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def local_now():
+def local_now() -> datetime:
     return datetime.now(ZoneInfo(SETTINGS.timezone)).replace(tzinfo=None)
 
 
 async def handle_block(
     update: Update, context: ContextTypes.DEFAULT_TYPE, status: str | None = None
-):
+) -> None:
     query = update.callback_query
     is_admin = user_is_admin(context)
     if not is_admin:

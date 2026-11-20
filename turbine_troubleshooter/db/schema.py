@@ -5,12 +5,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import sentry_sdk
+from telegram.ext import Application
 
 from ..settings import SETTINGS
 from .core import db_session
 
 
-async def init_troubleshooter_db(application):
+async def init_troubleshooter_db(application: Application) -> None:
     codes = {}
     io_boards = {}
     admins = {}

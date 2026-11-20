@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 from turbine_troubleshooter.settings import SETTINGS
 
 
-async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     io_data = context.bot_data.get("io_boards", {})
     data = query.data
@@ -71,7 +71,7 @@ async def button_board(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def board_menu():
+def board_menu() -> InlineKeyboardMarkup:
     keyboard = []
     board_ids = sorted(SETTINGS.content.IO_BOARDS.keys())
 

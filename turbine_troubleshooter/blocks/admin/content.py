@@ -25,7 +25,7 @@ TO_PANEL = InlineKeyboardButton(
 EXPIRED = "⚠️ That has expired. Start again from the Admin Panel."
 
 
-def where(node_id):
+def where(node_id: int) -> str:
     nodes = {n["id"]: n for n in SETTINGS.menu["nodes"]}
     names = []
     while node_id in nodes:
@@ -34,7 +34,8 @@ def where(node_id):
     return " › ".join(names) or "Main menu"
 
 
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     if SETTINGS.menu is None:
         await query.answer(
@@ -376,7 +377,10 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["last_msg_id"] = sent.message_id
 
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text):
+async def handle_text(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
+) -> None:
+    assert context.user_data is not None
     state = context.user_data.get("state")
     draft = context.user_data.get("menu_draft") or {}
     nodes = SETTINGS.menu["nodes"] if SETTINGS.menu else []

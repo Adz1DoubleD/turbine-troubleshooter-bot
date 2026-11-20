@@ -2,6 +2,7 @@
 
 import os
 from types import SimpleNamespace
+from typing import Any
 
 NOISE_FILTERS = (
     "httpx.ReadError",
@@ -70,7 +71,7 @@ SETTINGS = SimpleNamespace(
 NOTIFY_DEFAULTS = {"added": 1, "edited": 0, "deleted": 1}
 
 
-def setup(env_prefix="", **options):
+def setup(env_prefix: str = "", **options: Any) -> None:
     unknown = set(options) - set(vars(SETTINGS)) | (
         set(options) & {"content", "menu", "notify_settings", "env_prefix"}
     )

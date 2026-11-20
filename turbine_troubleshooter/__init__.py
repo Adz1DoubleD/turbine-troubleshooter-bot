@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import Any
 
 import sentry_sdk
 from telegram import Update
@@ -48,7 +49,7 @@ __all__ = [
 
 
 async def start_troubleshooter_bot(
-    share_with: Application | None = None, env_prefix: str | None = None, **options
+    share_with: Application | None = None, env_prefix: str | None = None, **options: Any
 ) -> Application:
     """Start the troubleshooter's own bot and return its Application.
 
@@ -140,7 +141,7 @@ async def stop_troubleshooter_bot() -> None:
     await close_db()
 
 
-async def _command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def _command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         await update.message.delete()
     except Exception:
@@ -167,7 +168,7 @@ async def _command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def _callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def _callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await set_user_roles(context, query.from_user.id)
     data = query.data
@@ -190,7 +191,7 @@ async def _callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await handle_button(update, context)
 
 
-async def _text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def _text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user is None or context.user_data is None:
         return
     await set_user_roles(context, update.effective_user.id)
@@ -199,7 +200,7 @@ async def _text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await handle_text_input(update, context)
 
 
-async def _file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def _file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user is None or context.user_data is None:
         return
     await set_user_roles(context, update.effective_user.id)

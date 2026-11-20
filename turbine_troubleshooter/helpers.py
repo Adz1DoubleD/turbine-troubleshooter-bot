@@ -4,9 +4,16 @@ import difflib
 import re
 import traceback
 from pathlib import Path
+from typing import Any
 
 import sentry_sdk
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import (
+    Bot,
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Update,
+)
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 
@@ -16,11 +23,11 @@ from turbine_troubleshooter.settings import SETTINGS, SKIPPED_WORDS
 ERROR_REPLY = "⚠️ Something went wrong. It's been logged."
 
 
-def is_test_mode():
+def is_test_mode() -> bool:
     return str(SETTINGS.test_mode).lower() in ("1", "true", "yes", "on")
 
 
-def is_owner(user_id) -> bool:
+def is_owner(user_id: Any) -> bool:
     chat_id = SETTINGS.owner_id
     if not chat_id:
         return False
@@ -30,7 +37,7 @@ def is_owner(user_id) -> bool:
         return False
 
 
-def own_bot(context):
+def own_bot(context: ContextTypes.DEFAULT_TYPE) -> Bot:
     if (
         context.bot_data.get("is_troubleshooter")
         or turbine_troubleshooter.application is None
@@ -39,18 +46,20 @@ def own_bot(context):
     return turbine_troubleshooter.application.bot
 
 
-def escape_markdown(text):
+def escape_markdown(text: str) -> str:
     escape_chars = r"_*[`"
     return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", str(text))
 
 
-def error_kb(block=None):
+def error_kb(block: dict[str, Any] = None) -> InlineKeyboardMarkup:
     text = f"🔙 Back to {block.capitalize()}" if block else "❌ Close"
     callback = f"back:{block}" if block else "cancel"
     return InlineKeyboardMarkup([[InlineKeyboardButton(text, callback_data=callback)]])
 
 
-async def close_message(query, title=None, reopen="troubleshooter:home"):
+async def close_message(
+    query: CallbackQuery, title: str | None = None, reopen: str = "troubleshooter:home"
+) -> None:
     title = title or f"🛠 *{SETTINGS.name} Bot*"
     try:
         await query.message.delete()
@@ -73,7 +82,7 @@ async def close_message(query, title=None, reopen="troubleshooter:home"):
             pass
 
 
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     error = context.error
     if any(noise.lower() in str(error).lower() for noise in SETTINGS.noise_filters):
         return
@@ -94,12 +103,12 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         traceback.print_exception(error)
 
 
-def error_handler_noise_filter(record):
+def error_handler_noise_filter(record: Any) -> bool:
     msg = record.getMessage()
     return not any(n in msg for n in SETTINGS.noise_filters)
 
 
-def find_wtg(text):
+def find_wtg(text: str) -> tuple[str | None, dict[str, Any] | None]:
     prefix = SETTINGS.wtg_prefix.upper()
     match = re.fullmatch(
         rf"(?:{re.escape(prefix)})?([A-Z])(\d{{1,2}})", text.upper().replace(" ", "")
@@ -110,7 +119,7 @@ def find_wtg(text):
     return info, SETTINGS.content.WTG_MAP.get(info)
 
 
-def get_troubleshooter_content():
+def get_troubleshooter_content() -> dict[str, dict[str, Any]]:
     content = (
         {"troubleshooter:ioboard": {"type": "menu", "title": "IO Boards"}}
         if getattr(SETTINGS.content, "IO_BOARDS", None)
@@ -151,7 +160,9 @@ def get_troubleshooter_content():
     return dict(sorted(content.items(), key=lambda kv: kv[1]["title"].lower()))
 
 
-def find_codes(query, codes, limit=5):
+def find_codes(
+    query: CallbackQuery, codes: dict[str, dict[str, Any]], limit: int = 5
+) -> list[dict[str, Any]]:
     q = query.strip().lower()
     if not q:
         return []
@@ -176,7 +187,9 @@ def find_codes(query, codes, limit=5):
     return [c for _, c in scored[:limit]]
 
 
-def find_parts(query, parts, limit=8):
+def find_parts(
+    query: CallbackQuery, parts: list[dict[str, Any]], limit: int = 8
+) -> list[dict[str, Any]]:
     q = query.strip().lower()
     if not q:
         return []
@@ -209,7 +222,8 @@ def find_parts(query, parts, limit=8):
     return [p for _, p in scored[:limit]]
 
 
-async def set_user_roles(context: ContextTypes.DEFAULT_TYPE, user_id):
+async def set_user_roles(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+    assert context.user_data is not None
     uid = int(user_id)
     is_admin = is_owner(uid) or uid in context.bot_data.get("troubleshooter_admins", {})
     context.user_data["is_admin"] = is_admin

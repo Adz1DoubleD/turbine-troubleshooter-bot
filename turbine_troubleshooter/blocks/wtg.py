@@ -7,7 +7,8 @@ from ..helpers import find_wtg
 from ..settings import SETTINGS
 
 
-async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     context.user_data["state"] = "troubleshooter:wtg_search"
     context.user_data["last_msg_id"] = query.message.message_id
@@ -22,7 +23,9 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+async def handle_search(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
+) -> None:
     user_data = context.user_data
     user_data["state"] = None
     wtg, info = find_wtg(text)

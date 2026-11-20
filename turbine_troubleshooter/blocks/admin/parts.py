@@ -1,5 +1,7 @@
 """Adding, editing and deleting spare parts."""
 
+from typing import Any
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
@@ -22,7 +24,8 @@ PART_FIELDS = {
 }
 
 
-async def button_part_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_part_add(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
 
     if not user_is_admin(context):
@@ -48,7 +51,8 @@ async def button_part_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def button_part_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_part_edit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
 
     if not user_is_admin(context):
@@ -68,7 +72,10 @@ async def button_part_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await _show_part(context, query.message.chat_id, query.message.message_id, part)
 
 
-async def button_part_edit_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_part_edit_field(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    assert context.user_data is not None
     query = update.callback_query
 
     if not user_is_admin(context):
@@ -108,7 +115,7 @@ async def button_part_edit_field(update: Update, context: ContextTypes.DEFAULT_T
 
 async def handle_part_add(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, state: str
-):
+) -> None:
     user_data = context.user_data
     parts = context.bot_data.setdefault("parts", [])
 
@@ -193,7 +200,7 @@ async def handle_part_add(
 
 async def handle_part_edit(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, state: str
-):
+) -> None:
     user_data = context.user_data
     user_data["state"] = None
     _, _, field, part_id = state.split(":")
@@ -251,7 +258,7 @@ async def handle_part_edit(
 
 async def button_part_delete_confirm(
     update: Update, context: ContextTypes.DEFAULT_TYPE
-):
+) -> None:
     query = update.callback_query
 
     if not user_is_admin(context):
@@ -290,7 +297,9 @@ async def button_part_delete_confirm(
     )
 
 
-async def button_part_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_part_delete(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
 
     if not user_is_admin(context):
@@ -330,15 +339,21 @@ async def button_part_delete(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await handle_block(update, context, status=status)
 
 
-def _find_part(context, part_id):
+def _find_part(
+    context: ContextTypes.DEFAULT_TYPE, part_id: int | str
+) -> dict[str, Any] | None:
     return next(
         (p for p in context.bot_data.get("parts", []) if p.get("id") == part_id), None
     )
 
 
 async def _show_part(
-    context: ContextTypes.DEFAULT_TYPE, chat_id, msg_id, part, status=None
-):
+    context: ContextTypes.DEFAULT_TYPE,
+    chat_id: int,
+    msg_id: int | None,
+    part: dict[str, Any],
+    status: str | None = None,
+) -> None:
     section = escape_markdown(part["section"]) if part.get("section") else "_None_"
     text = (f"{status}\n\n" if status else "") + (
         f"🔩 *Edit Part*\n\n"

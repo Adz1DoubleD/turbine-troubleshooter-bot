@@ -16,7 +16,8 @@ from ..notify import alert_markup
 from . import handle_block
 
 
-async def button_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     user_id = query.from_user.id
     context.user_data["state"] = None
@@ -58,7 +59,9 @@ async def button_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def button_alert_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_alert_toggle(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     enabled = await user_notifications_toggle(query.from_user.id)
     await query.edit_message_reply_markup(reply_markup=alert_markup(enabled))
@@ -79,7 +82,9 @@ LOCKED_MARKUP = InlineKeyboardMarkup(
 )
 
 
-async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_request_access(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     user = query.from_user
     pending = context.bot_data.setdefault("pending_access_requests", {})
@@ -113,7 +118,9 @@ async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TY
     await query.answer("✅ Your request has been sent to the admin.", show_alert=True)
 
 
-async def button_request_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_request_admin(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     query = update.callback_query
     user = query.from_user
     if context.user_data.get("is_admin"):
@@ -156,7 +163,7 @@ async def button_request_admin(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer("✅ Your request has been sent to the admin.", show_alert=True)
 
 
-async def _save_request(user_id, kind, name):
+async def _save_request(user_id: int, kind: str, name: str) -> None:
     try:
         await request_add(user_id, kind, name)
     except Exception as e:

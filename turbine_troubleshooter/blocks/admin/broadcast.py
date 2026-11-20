@@ -4,7 +4,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
+from telegram.ext import Application, ContextTypes
 
 from turbine_troubleshooter.db import setting_mark, user_get, users_get
 from turbine_troubleshooter.helpers import escape_markdown, is_owner, is_test_mode
@@ -17,7 +17,7 @@ from . import handle_block
 PICKER_PAGE_SIZE = 20
 
 
-async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     user_data = context.user_data
 
@@ -146,7 +146,7 @@ async def button_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_broadcast(
     update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
-):
+) -> None:
     user_data = context.user_data
 
     if not is_owner(update.effective_user.id):
@@ -182,7 +182,7 @@ async def handle_broadcast(
     )
 
 
-async def offer_update_note(application):
+async def offer_update_note(application: Application) -> None:
     try:
         current = version("turbine-troubleshooter-bot")
     except PackageNotFoundError:
@@ -220,7 +220,7 @@ async def offer_update_note(application):
     )
 
 
-async def button_announce(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_announce(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     if not is_owner(query.from_user.id):
         await query.answer("⚠️ Only the owner can do that.", show_alert=True)

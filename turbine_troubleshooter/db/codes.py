@@ -1,11 +1,12 @@
 """Saving fault codes."""
 
 import json
+from typing import Any
 
 from .core import db_session
 
 
-async def fault_code_add(**kwargs):
+async def fault_code_add(**kwargs: Any) -> int | None:
     params = {
         "code": kwargs["code"],
         "advice": kwargs.get("advice"),

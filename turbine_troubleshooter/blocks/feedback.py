@@ -9,7 +9,8 @@ from ..notify import send_notification_troubleshooter
 MAX_FEEDBACK = 1000
 
 
-async def button_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    assert context.user_data is not None
     query = update.callback_query
     await query.answer()
     context.user_data["state"] = "troubleshooter:feedback"
@@ -25,7 +26,10 @@ async def button_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str):
+async def handle_text(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, text: str
+) -> None:
+    assert context.user_data is not None
     context.user_data["state"] = None
     if not text:
         status = "⚠️ Nothing was sent. Tap 💬 Feedback and type your message."
