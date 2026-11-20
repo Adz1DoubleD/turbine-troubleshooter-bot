@@ -15,9 +15,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: app-token
@@ -26,22 +23,17 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - uses: googleapis/release-please-action@v4
-        id: release
         with:
           token: ${{ steps.app-token.outputs.token }}
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
 
   build:
-    needs: release-please
-    if: >-
-      always() &&
-      (needs.release-please.outputs.release_created == 'true' ||
-       startsWith(github.ref, 'refs/tags/v'))
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TAG: ${{ needs.release-please.outputs.tag_name || github.ref_name }}
+      TAG: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -80,7 +72,6 @@ jobs:
 
   publish:
     needs: build
-    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
