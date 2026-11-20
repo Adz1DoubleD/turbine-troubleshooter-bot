@@ -9,6 +9,7 @@ Thanks for helping. To get a copy running, follow [Run it yourself](README.md#ru
 3. Run both checks before pushing:
    ```bash
    pre-commit run --all-files
+   mypy src
    pytest
    ```
 4. Start each commit message with a type, which decides the next version:
@@ -48,7 +49,7 @@ If a test needs example data, add made-up entries to `tests/example_content.py`.
 
 ## Code style
 
-- Ruff handles linting and formatting, and mypy checks types (`pre-commit` runs both). Keep `target-version` at `py312`, the oldest Python the package supports.
+- Ruff handles linting and formatting (`pre-commit` runs it, installing its own copy, so it works without the virtual environment active). mypy checks types in CI; run `mypy src` before pushing. Keep `target-version` at `py312`, the oldest Python the package supports.
 - Every function has type hints. Every file starts with a one-line docstring saying what it's for, and the public functions in `__all__` have a short docstring. Other code has no comments; explain the why in the pull request.
 - A leading `_` marks a function used only inside its own file. Public functions come first, then the `_` helpers.
 - The package lives in `src/turbine_troubleshooter/`, and the tests in `tests/` follow the same folders.
