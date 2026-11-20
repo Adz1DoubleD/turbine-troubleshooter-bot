@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.6.0...v2.7.0) (2026-11-20)
+
+
+### Features
+
+* document and type the public functions ([#77](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/77)) ([fceb208](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/fceb20826df33c47b970c729d8cef1d2e2485c52))
+
 ## [2.6.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.5.0...v2.6.0) (2026-11-19)
 
 
