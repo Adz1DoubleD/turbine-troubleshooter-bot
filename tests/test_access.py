@@ -65,7 +65,7 @@ async def test_start_shows_request_access_to_unapproved_user(monkeypatch):
         effective_user=SimpleNamespace(id=STRANGER, username="someone"),
     )
 
-    await turbine_troubleshooter.command_handler(update, make_context())
+    await turbine_troubleshooter._command_handler(update, make_context())
 
     block.assert_not_awaited()
     text = message.reply_text.await_args.args[0]
@@ -84,7 +84,7 @@ async def test_unapproved_user_buttons_show_lock_screen(monkeypatch, data):
     monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     update, query = make_query(data)
 
-    await turbine_troubleshooter.callback_handler(update, make_context())
+    await turbine_troubleshooter._callback_handler(update, make_context())
 
     handled.assert_not_awaited()
     assert "Access is by approval" in query.edit_message_text.await_args.args[0]
@@ -98,7 +98,7 @@ async def test_approved_user_and_owner_get_through(monkeypatch, approved, owner_
     monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     update, _ = make_query("troubleshooter:code_search")
 
-    await turbine_troubleshooter.callback_handler(update, make_context(approved))
+    await turbine_troubleshooter._callback_handler(update, make_context(approved))
 
     handled.assert_awaited_once()
 
@@ -109,7 +109,7 @@ async def test_unapproved_user_can_request_access(monkeypatch):
     monkeypatch.setattr(turbine_troubleshooter, "handle_button", handled)
     update, _ = make_query("troubleshooter:access_request")
 
-    await turbine_troubleshooter.callback_handler(update, make_context())
+    await turbine_troubleshooter._callback_handler(update, make_context())
 
     handled.assert_awaited_once()
 
@@ -120,7 +120,7 @@ async def test_unapproved_user_text_is_ignored(monkeypatch):
     monkeypatch.setattr(turbine_troubleshooter, "handle_text_input", handled)
     update = SimpleNamespace(effective_user=SimpleNamespace(id=STRANGER))
 
-    await turbine_troubleshooter.text_handler(update, make_context())
+    await turbine_troubleshooter._text_handler(update, make_context())
 
     handled.assert_not_awaited()
 
@@ -302,7 +302,7 @@ async def test_revoked_user_is_locked_out_straight_away(monkeypatch):
     context.bot_data["troubleshooter_approved"].discard(STRANGER)
     update, query = make_query("troubleshooter:code_search")
 
-    await turbine_troubleshooter.callback_handler(update, context)
+    await turbine_troubleshooter._callback_handler(update, context)
 
     handled.assert_not_awaited()
     assert "Access is by approval" in query.edit_message_text.await_args.args[0]
@@ -329,7 +329,7 @@ async def test_approved_user_is_welcomed_with_an_open_button(monkeypatch):
     monkeypatch.setattr(SETTINGS, "name", "Site_1")
     context = make_context()
 
-    await admin_users.grant_access(context, STRANGER)
+    await admin_users._grant_access(context, STRANGER)
 
     sent = context.bot.send_message.await_args
     assert sent.args[0] == STRANGER
@@ -346,7 +346,7 @@ async def test_new_admin_is_told_what_they_can_do(monkeypatch):
     monkeypatch.setattr(admin_users, "admin_add", AsyncMock())
     context = make_context()
 
-    await admin_users.grant_admin(context, STRANGER, "@someone")
+    await admin_users._grant_admin(context, STRANGER, "@someone")
 
     sent = context.bot.send_message.await_args
     assert sent.args[1].startswith("🛡️ *You're now an admin*")
@@ -364,6 +364,6 @@ async def test_declines_stay_plain_text(monkeypatch):
     context = make_context()
     context.bot_data["pending_access_requests"] = {STRANGER: "@some_one"}
 
-    await admin_users.deny_request(context, STRANGER, "access")
+    await admin_users._deny_request(context, STRANGER, "access")
 
     assert context.bot.send_message.await_args.kwargs["parse_mode"] is None

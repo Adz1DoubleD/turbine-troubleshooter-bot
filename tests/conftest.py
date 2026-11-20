@@ -4,9 +4,9 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-import example_content
 import pytest
 
+import example_content
 from turbine_troubleshooter.settings import SETTINGS
 
 os.environ.setdefault("PTB_TIMEDELTA", "1")

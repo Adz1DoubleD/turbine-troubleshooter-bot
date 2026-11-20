@@ -159,7 +159,7 @@ Content lives only in the database, so keep a copy: **Admin Panel → 📤 Expor
 
 ## Release notes for users
 
-A release can come with a short, plain-language *What's new* note in [`whats_new.py`](turbine_troubleshooter/whats_new.py). The first time the bot starts on that version, it sends the note to the alerts chat with **📢 Send to Everyone** and **❌ Skip**; nothing reaches users until the owner taps Send, and it can only be sent once. The bot doesn't offer it in test mode, or when it has no approved users yet.
+A release can come with a short, plain-language *What's new* note in [`whats_new.py`](src/turbine_troubleshooter/whats_new.py). The first time the bot starts on that version, it sends the note to the alerts chat with **📢 Send to Everyone** and **❌ Skip**; nothing reaches users until the owner taps Send, and it can only be sent once. The bot doesn't offer it in test mode, or when it has no approved users yet.
 
 ## Create your Telegram bot
 

@@ -31,13 +31,13 @@ If a test needs example data, add made-up entries to `tests/example_content.py`.
 
 ## Adding a button
 
-1. **The handler** goes in `turbine_troubleshooter/blocks/` (or `blocks/admin/` for admin screens). It edits the current message rather than sending a new one, and gives every screen a 🔙 Back button.
+1. **The handler** goes in `src/turbine_troubleshooter/blocks/` (or `blocks/admin/` for admin screens). It edits the current message rather than sending a new one, and gives every screen a 🔙 Back button.
 2. **The callback data** starts with `troubleshooter:` and stays under Telegram's 64-byte limit, IDs included.
-3. **The route** goes in `handle_button` in `turbine_troubleshooter/__init__.py`. Admin screens go behind `admin and ...`; owner-only actions also check `is_owner()` inside the handler, because admins pass the route.
+3. **The route** goes in `handle_button` in `src/turbine_troubleshooter/buttons.py`. Admin screens go behind `admin and ...`; owner-only actions also check `is_owner()` inside the handler, because admins pass the route.
 4. **Typed input**: set `context.user_data["state"]` and `last_msg_id`, then add the state to `handle_text_input`.
 5. **Lists that grow** (users, codes, parts, requests) are paged, because Telegram rejects a message with more than about 100 buttons.
 6. **Changes that remove access or delete data** ask for confirmation first.
-7. **Tests**: add the callback to the routing tests in `tests/test_routing.py` (the admin-only list if it's an admin screen), and test the handler with made-up data.
+7. **Tests**: add the callback to the routing tests in `tests/test_buttons.py` (the admin-only list if it's an admin screen), and test the handler with made-up data.
 
 ## Rules for this repo
 
@@ -48,8 +48,10 @@ If a test needs example data, add made-up entries to `tests/example_content.py`.
 
 ## Code style
 
-- Ruff handles linting and formatting (`pre-commit` runs it). Keep `target-version` at `py313`.
-- No code comments or docstrings; explain the why in the pull request.
+- Ruff handles linting and formatting, and mypy checks types (`pre-commit` runs both). Keep `target-version` at `py312`, the oldest Python the package supports.
+- Every function has type hints. Every file starts with a one-line docstring saying what it's for, and the public functions in `__all__` have a short docstring. Other code has no comments; explain the why in the pull request.
+- A leading `_` marks a function used only inside its own file. Public functions come first, then the `_` helpers.
+- The package lives in `src/turbine_troubleshooter/`, and the tests in `tests/` follow the same folders.
 - Keep logic inline where it is used rather than adding small helper functions.
 - Files stay under 600 lines (`pre-commit` checks this).
 
@@ -61,6 +63,6 @@ Releases are prepared by [release-please](https://github.com/googleapis/release-
 2. When it's time to release, the maintainer merges that pull request. The workflow can't trigger CI on its own pull requests, so the maintainer merges it past the required check; it only changes the version and changelog.
 3. The merge tags `vX.Y.Z`, creates the GitHub release, runs the tests, builds, and waits for the maintainer to approve the `pypi` deployment before uploading to [PyPI](https://pypi.org/project/turbine-troubleshooter-bot/).
 
-If a release changes something users will notice, add a short, plain-language note for its version to `turbine_troubleshooter/whats_new.py` in the same pull request (no code terms; it's broadcast to technicians once the owner approves it).
+If a release changes something users will notice, add a short, plain-language note for its version to `src/turbine_troubleshooter/whats_new.py` in the same pull request (no code terms; it's broadcast to technicians once the owner approves it).
 
 A version number can only be published once. Pushing a `vX.Y.Z` tag by hand also publishes, as long as it matches `version`. Hosts pin a version, so nothing reaches a live bot until a host moves to the new release.

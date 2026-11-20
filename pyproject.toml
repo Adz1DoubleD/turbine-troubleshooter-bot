@@ -35,6 +35,7 @@ dev = [
     "pytest==9.2.0",
     "pytest-asyncio==1.5.0",
     "freezegun==1.5.5",
+    "mypy==2.4.1",
     "ruff==0.17.5",
     "pre_commit==4.7.0",
 ]
@@ -45,6 +46,7 @@ Issues = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues"
 Changelog = "https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/releases"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["turbine_troubleshooter*"]
 
 [tool.setuptools.package-data]
@@ -55,3 +57,11 @@ testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disable_error_code = ["union-attr"]
