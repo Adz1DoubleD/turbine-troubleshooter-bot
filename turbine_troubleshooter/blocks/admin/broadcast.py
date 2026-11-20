@@ -1,3 +1,5 @@
+"""Broadcasts and announcements to the bot's users, including what's-new notes."""
+
 from importlib.metadata import PackageNotFoundError, version
 
 import sentry_sdk

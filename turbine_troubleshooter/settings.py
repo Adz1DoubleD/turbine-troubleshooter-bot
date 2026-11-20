@@ -1,3 +1,5 @@
+"""Start-up settings and their environment variables."""
+
 import os
 from types import SimpleNamespace
 

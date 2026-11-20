@@ -1,3 +1,5 @@
+"""Work weather from WindQuest and CEFAS."""
+
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from zoneinfo import ZoneInfo

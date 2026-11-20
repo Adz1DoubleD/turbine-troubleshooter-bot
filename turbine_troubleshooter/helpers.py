@@ -1,3 +1,5 @@
+"""Shared helpers: owner checks, error handling, searches and the menu content."""
+
 import difflib
 import re
 import traceback

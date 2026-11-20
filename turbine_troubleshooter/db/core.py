@@ -1,3 +1,5 @@
+"""The database connection pool and shared queries."""
+
 import asyncio
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse

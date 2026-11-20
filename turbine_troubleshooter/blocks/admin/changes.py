@@ -1,3 +1,5 @@
+"""Pending changes: undoing edits and the owner's approval of delete requests."""
+
 import html
 from types import SimpleNamespace
 

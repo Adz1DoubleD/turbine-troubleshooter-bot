@@ -1,3 +1,5 @@
+"""The user menu: notifications and asking for access or admin rights."""
+
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes

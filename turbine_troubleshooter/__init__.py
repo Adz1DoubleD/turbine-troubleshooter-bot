@@ -1,3 +1,5 @@
+"""Turbine troubleshooter: start its bot, alone or beside a host, and the functions a host can use."""
+
 import logging
 import os
 

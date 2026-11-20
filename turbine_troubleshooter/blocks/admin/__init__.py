@@ -1,3 +1,5 @@
+"""The admin panel: exports, notification settings and the menu of admin tools."""
+
 import io
 import zipfile
 from datetime import datetime

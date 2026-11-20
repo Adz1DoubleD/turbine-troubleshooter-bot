@@ -1,3 +1,5 @@
+"""Managing users: the user list, access and admin requests, and each user's card."""
+
 import html
 from collections import Counter
 from datetime import datetime

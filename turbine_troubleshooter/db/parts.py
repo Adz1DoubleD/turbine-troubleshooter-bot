@@ -1,3 +1,5 @@
+"""Saving spare parts."""
+
 import json
 
 from .core import db_session

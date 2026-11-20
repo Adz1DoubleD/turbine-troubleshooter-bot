@@ -1,3 +1,5 @@
+"""The troubleshooter's database: codes, parts, menus, users and settings."""
+
 from .codes import (
     fault_code_add,
 )

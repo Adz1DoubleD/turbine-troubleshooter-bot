@@ -1,3 +1,5 @@
+"""Searching fault codes and showing their advice."""
+
 from datetime import datetime
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update

@@ -1,3 +1,5 @@
+"""Replacing the IO board pin-outs."""
+
 from .core import db_session
 
 

@@ -1,3 +1,5 @@
+"""The troubleshooter's Telegram screens, starting with the main menu."""
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 

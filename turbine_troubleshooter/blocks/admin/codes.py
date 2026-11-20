@@ -1,3 +1,5 @@
+"""Adding, editing and deleting fault codes."""
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 

@@ -1,3 +1,5 @@
+"""Saving fault codes."""
+
 import json
 
 from .core import db_session

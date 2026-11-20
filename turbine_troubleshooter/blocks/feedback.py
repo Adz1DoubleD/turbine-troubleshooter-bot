@@ -1,3 +1,5 @@
+"""Sending feedback to the owner."""
+
 import sentry_sdk
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes

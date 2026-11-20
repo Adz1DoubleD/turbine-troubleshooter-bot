@@ -1,3 +1,5 @@
+"""Menu items and their attached files."""
+
 import json
 
 from .core import db_session

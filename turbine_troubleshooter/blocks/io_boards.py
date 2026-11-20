@@ -1,3 +1,5 @@
+"""IO board pin-out screens."""
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 

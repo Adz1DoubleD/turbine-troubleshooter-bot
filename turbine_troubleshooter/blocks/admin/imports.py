@@ -1,3 +1,5 @@
+"""Importing the turbine list and IO board pin-outs from a CSV file."""
+
 import csv
 import io
 import re

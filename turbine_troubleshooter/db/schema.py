@@ -1,3 +1,5 @@
+"""Creating the tables and loading everything into memory on start."""
+
 import json
 from pathlib import Path
 from types import SimpleNamespace

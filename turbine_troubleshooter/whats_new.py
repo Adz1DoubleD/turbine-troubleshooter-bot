@@ -1,3 +1,5 @@
+"""Plain-language notes about each release, offered to users once."""
+
 WHATS_NEW = {
     "2.1.0": (
         "• Admins can now update the menus straight from the bot, including new "

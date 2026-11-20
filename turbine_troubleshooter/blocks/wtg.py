@@ -1,3 +1,5 @@
+"""Looking up a turbine's serial number and IP address."""
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 

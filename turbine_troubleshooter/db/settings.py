@@ -1,3 +1,5 @@
+"""Saved on/off settings and one-off markers."""
+
 from ..settings import SETTINGS
 from .core import db_session
 

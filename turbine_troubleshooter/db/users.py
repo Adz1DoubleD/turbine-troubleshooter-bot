@@ -1,3 +1,5 @@
+"""Users, admins and access requests."""
+
 from .core import db_session
 
 USER_COLUMNS = (

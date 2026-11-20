@@ -1,3 +1,5 @@
+"""Handles the replies the troubleshooter asks users to type."""
+
 from telegram import Update
 from telegram.ext import ContextTypes
 

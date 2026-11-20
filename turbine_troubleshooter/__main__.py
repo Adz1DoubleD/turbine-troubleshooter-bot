@@ -1,3 +1,5 @@
+"""Run the troubleshooter on its own with `python -m turbine_troubleshooter`."""
+
 import asyncio
 import os
 from pathlib import Path

@@ -1,3 +1,5 @@
+"""Sending notifications to users, admins and the alerts chat."""
+
 import asyncio
 from datetime import timedelta
 

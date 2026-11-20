@@ -1,3 +1,5 @@
+"""Editing the menus: adding, renaming, rewriting and deleting submenus and pages."""
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes

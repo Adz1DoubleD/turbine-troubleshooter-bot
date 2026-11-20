@@ -1,3 +1,5 @@
+"""Delete requests waiting for the owner's approval."""
+
 from .core import db_session
 
 

@@ -1,3 +1,5 @@
+"""Replacing the turbine list."""
+
 from .core import db_session
 
 

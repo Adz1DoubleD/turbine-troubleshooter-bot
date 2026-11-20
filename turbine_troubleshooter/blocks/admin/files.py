@@ -1,3 +1,5 @@
+"""Photos and PDFs attached to menu pages, and saving them to the files repo."""
+
 import base64
 import re
 from pathlib import Path
