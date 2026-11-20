@@ -6,7 +6,7 @@ Thanks for helping. To get a copy running, follow [Run it yourself](README.md#ru
 
 1. Create a branch from `main`.
 2. Make your change, with tests for anything that changes behaviour.
-3. Run both checks before pushing:
+3. Run the checks before pushing:
    ```bash
    pre-commit run --all-files
    mypy src
