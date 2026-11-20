@@ -23,44 +23,6 @@ MAX_FILE_BYTES = 20 * 1024 * 1024
 FOLDERS = {"document": ("pdf", "pdf"), "photo": ("images", "jpg")}
 
 
-async def send_to_owner(context: ContextTypes.DEFAULT_TYPE, attachment):
-    send = (
-        own_bot(context).send_photo
-        if attachment["type"] == "photo"
-        else own_bot(context).send_document
-    )
-    try:
-        await send(
-            SETTINGS.alerts_chat_id,
-            attachment["file_id"],
-            caption=f"📎 *File to save*\n\nFor: "
-            f"{escape_markdown(where(attachment['node_id']))}\n"
-            f"Save it in the files folder as:\n`{attachment['path']}`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                (
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "💾 Save to Repo"
-                                if SETTINGS.files_repo and SETTINGS.files_repo_token
-                                else "💾 Save to Files Folder",
-                                callback_data="troubleshooter:menu_files:save:"
-                                f"{attachment['id']}",
-                            )
-                        ]
-                    ]
-                    if (SETTINGS.files_repo and SETTINGS.files_repo_token)
-                    or SETTINGS.files_dir
-                    else []
-                )
-                + [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
-            ),
-        )
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-
-
 async def attach(context: ContextTypes.DEFAULT_TYPE, user, node, file):
     folder, ext = FOLDERS[file["type"]]
     base = re.sub(r"\W+", "_", node["title"].lower()).strip("_") or "file"
@@ -72,7 +34,7 @@ async def attach(context: ContextTypes.DEFAULT_TYPE, user, node, file):
         node["id"], file["type"], file["file_id"], file["file_unique_id"], path, user.id
     )
     SETTINGS.menu["attachments"].append(attachment)
-    await send_to_owner(context, attachment)
+    await _send_to_owner(context, attachment)
     return attachment
 
 
@@ -218,7 +180,7 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         if len(bits) == 4 and bits[2] == "send":
             if chosen:
-                await send_to_owner(context, chosen)
+                await _send_to_owner(context, chosen)
             await query.answer("📤 Sent." if chosen else "Already saved.")
             return
         if len(bits) == 4 and bits[2] == "save":
@@ -441,3 +403,41 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await handle_text(
         update, context, (node["body"] or "") if node else (message.caption or "")
     )
+
+
+async def _send_to_owner(context: ContextTypes.DEFAULT_TYPE, attachment):
+    send = (
+        own_bot(context).send_photo
+        if attachment["type"] == "photo"
+        else own_bot(context).send_document
+    )
+    try:
+        await send(
+            SETTINGS.alerts_chat_id,
+            attachment["file_id"],
+            caption=f"📎 *File to save*\n\nFor: "
+            f"{escape_markdown(where(attachment['node_id']))}\n"
+            f"Save it in the files folder as:\n`{attachment['path']}`",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                (
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "💾 Save to Repo"
+                                if SETTINGS.files_repo and SETTINGS.files_repo_token
+                                else "💾 Save to Files Folder",
+                                callback_data="troubleshooter:menu_files:save:"
+                                f"{attachment['id']}",
+                            )
+                        ]
+                    ]
+                    if (SETTINGS.files_repo and SETTINGS.files_repo_token)
+                    or SETTINGS.files_dir
+                    else []
+                )
+                + [[InlineKeyboardButton("❌ Close", callback_data="cancel")]]
+            ),
+        )
+    except Exception as e:
+        sentry_sdk.capture_exception(e)

@@ -45,75 +45,6 @@ __all__ = [
 ]
 
 
-async def command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        await update.message.delete()
-    except Exception:
-        pass
-    user = update.effective_user
-
-    username = user.username if user.username else user.full_name
-    new = await user_add(user.id, username)
-    if new:
-        await send_notification_troubleshooter(user)
-    await set_user_roles(context, update.effective_user.id)
-    if not context.user_data["is_approved"]:
-        await update.message.reply_text(
-            LOCKED_TEXT.format(name=SETTINGS.name),
-            reply_markup=LOCKED_MARKUP,
-            parse_mode="Markdown",
-        )
-        return
-    block = await handle_block(context)
-    await update.message.reply_text(
-        block["text"],
-        reply_markup=block["reply_markup"],
-        parse_mode=block.get("parse_mode", "Markdown"),
-    )
-
-
-async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await set_user_roles(context, query.from_user.id)
-    data = query.data
-
-    if not context.user_data["is_approved"] and data not in (
-        "cancel",
-        "troubleshooter:access_request",
-    ):
-        await query.answer()
-        try:
-            await query.edit_message_text(
-                LOCKED_TEXT.format(name=SETTINGS.name),
-                reply_markup=LOCKED_MARKUP,
-                parse_mode="Markdown",
-            )
-        except BadRequest:
-            pass
-        return
-
-    await handle_button(update, context)
-
-
-async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user is None or context.user_data is None:
-        return
-    await set_user_roles(context, update.effective_user.id)
-    if not context.user_data["is_approved"]:
-        return
-    await handle_text_input(update, context)
-
-
-async def file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user is None or context.user_data is None:
-        return
-    await set_user_roles(context, update.effective_user.id)
-    if (context.user_data.get("state") or "").startswith("troubleshooter:import:"):
-        await admin_imports.handle_file(update, context)
-    elif context.user_data.get("is_admin"):
-        await admin_files.handle_file(update, context)
-
-
 async def start_troubleshooter_bot(
     share_with: Application | None = None, env_prefix: str | None = None, **options
 ) -> Application:
@@ -163,18 +94,18 @@ async def start_troubleshooter_bot(
         if share_with is not None:
             share_with.bot_data[key] = value
 
-    application.add_handler(CommandHandler("start", command_handler))
-    application.add_handler(CallbackQueryHandler(callback_handler))
+    application.add_handler(CommandHandler("start", _command_handler))
+    application.add_handler(CallbackQueryHandler(_callback_handler))
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND & ~filters.UpdateType.CHANNEL_POSTS,
-            text_handler,
+            _text_handler,
         )
     )
     application.add_handler(
         MessageHandler(
             (filters.Document.ALL | filters.PHOTO) & ~filters.UpdateType.CHANNEL_POSTS,
-            file_handler,
+            _file_handler,
         )
     )
     application.add_error_handler(error_handler)
@@ -205,3 +136,72 @@ async def stop_troubleshooter_bot() -> None:
             await application.shutdown()
         application = None
     await close_db()
+
+
+async def _command_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        await update.message.delete()
+    except Exception:
+        pass
+    user = update.effective_user
+
+    username = user.username if user.username else user.full_name
+    new = await user_add(user.id, username)
+    if new:
+        await send_notification_troubleshooter(user)
+    await set_user_roles(context, update.effective_user.id)
+    if not context.user_data["is_approved"]:
+        await update.message.reply_text(
+            LOCKED_TEXT.format(name=SETTINGS.name),
+            reply_markup=LOCKED_MARKUP,
+            parse_mode="Markdown",
+        )
+        return
+    block = await handle_block(context)
+    await update.message.reply_text(
+        block["text"],
+        reply_markup=block["reply_markup"],
+        parse_mode=block.get("parse_mode", "Markdown"),
+    )
+
+
+async def _callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await set_user_roles(context, query.from_user.id)
+    data = query.data
+
+    if not context.user_data["is_approved"] and data not in (
+        "cancel",
+        "troubleshooter:access_request",
+    ):
+        await query.answer()
+        try:
+            await query.edit_message_text(
+                LOCKED_TEXT.format(name=SETTINGS.name),
+                reply_markup=LOCKED_MARKUP,
+                parse_mode="Markdown",
+            )
+        except BadRequest:
+            pass
+        return
+
+    await handle_button(update, context)
+
+
+async def _text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user is None or context.user_data is None:
+        return
+    await set_user_roles(context, update.effective_user.id)
+    if not context.user_data["is_approved"]:
+        return
+    await handle_text_input(update, context)
+
+
+async def _file_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user is None or context.user_data is None:
+        return
+    await set_user_roles(context, update.effective_user.id)
+    if (context.user_data.get("state") or "").startswith("troubleshooter:import:"):
+        await admin_imports.handle_file(update, context)
+    elif context.user_data.get("is_admin"):
+        await admin_files.handle_file(update, context)

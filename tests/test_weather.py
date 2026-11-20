@@ -55,7 +55,7 @@ async def test_wind_today_skips_past_and_limits_to_hours(set_payload):
     f = wqf(times, [10] * 7, [12] * 7, ["SW"] * 7, ["Green"] * 7)
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data(hours=3)
+        out = await wq._get_windquest_data(hours=3)
     assert "💨 *Wind — Site 1*" in out
     assert "19:00" in out and "20:00" in out and "21:00" in out
     assert "17:00" not in out and "18:00" not in out
@@ -69,7 +69,7 @@ async def test_wind_tomorrow_is_three_hourly_from_six(set_payload):
     f = wqf(times, [10] * 7, [12] * 7, ["SW"] * 7, ["Green"] * 7)
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data(tomorrow=True)
+        out = await wq._get_windquest_data(tomorrow=True)
     assert "💨 *Wind — Tomorrow*" in out
     for h in ("06:00", "09:00", "12:00", "15:00"):
         assert h in out
@@ -81,7 +81,7 @@ async def test_no_lightning_line_when_all_green(set_payload):
     f = wqf(hours_today(19, 20), [10, 10], [12, 12], ["SW", "SW"], ["Green", "Green"])
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data()
+        out = await wq._get_windquest_data()
     assert "Lightning risk" not in out
 
 
@@ -90,7 +90,7 @@ async def test_lightning_single_hour_has_no_range(set_payload):
     f = wqf(hours_today(19, 20), [10, 10], [12, 12], ["SW", "SW"], ["Yellow", "Green"])
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data()
+        out = await wq._get_windquest_data()
     assert "*⚡ Lightning risk 🟡 19:00*" in out
     assert "19:00–" not in out
 
@@ -106,7 +106,7 @@ async def test_lightning_window_shows_peak_level(set_payload):
     )
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data()
+        out = await wq._get_windquest_data()
     assert "*⚡ Lightning risk 🟠 19:00–20:00*" in out
     assert "🟡" not in out
 
@@ -123,7 +123,7 @@ async def test_lightning_two_windows_separate_lines(set_payload):
     )
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data()
+        out = await wq._get_windquest_data()
     assert "*⚡ Lightning risk 🟡 19:00–20:00*" in out
     assert "*⚡ Lightning risk 🔴 22:00–23:00*" in out
 
@@ -139,7 +139,7 @@ async def test_lightning_window_still_emitted_when_open_at_limit(set_payload):
     )
     set_payload(payload([loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data(hours=3)
+        out = await wq._get_windquest_data(hours=3)
     assert "*⚡ Lightning risk 🟡 20:00–21:00*" in out
 
 
@@ -153,7 +153,7 @@ async def test_tides_today_next_high_and_low_chronological(set_payload):
     ]
     set_payload(payload([loc("Site 1", f)], tides))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data()
+        out = await wq._get_windquest_data()
     assert "🌙 *Tides*" in out
     assert "High 21:05 · 4.1m" in out
     assert "Low 03:30 · 1.6m" in out
@@ -176,7 +176,7 @@ async def test_tides_tomorrow_lists_that_day_only(set_payload):
     ]
     set_payload(payload([loc("Site 1", f)], tides))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data(tomorrow=True)
+        out = await wq._get_windquest_data(tomorrow=True)
     assert "🌙 *Tides — Tomorrow*" in out
     assert "High 08:15" in out and "Low 14:57" in out
     assert "21:05" not in out
@@ -187,7 +187,7 @@ async def test_named_location_wins(set_payload):
     f = wqf(hours_today(19), [10], [12], ["SW"], ["Green"])
     set_payload(payload([loc("Main Site", f, main="1"), loc("Site 1", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data(location="Site 1")
+        out = await wq._get_windquest_data(location="Site 1")
     assert "💨 *Wind — Site 1*" in out
 
 
@@ -196,7 +196,7 @@ async def test_falls_back_to_main_location(set_payload):
     f = wqf(hours_today(19), [10], [12], ["SW"], ["Green"])
     set_payload(payload([loc("Main Site", f, main="1"), loc("Other", f)]))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data(location="DOESNOTEXIST")
+        out = await wq._get_windquest_data(location="DOESNOTEXIST")
     assert "💨 *Wind — Main Site*" in out
 
 
@@ -209,7 +209,7 @@ async def test_assembly_order_is_tides_wind_lightning(set_payload):
     ]
     set_payload(payload([loc("Site 1", f)], tides))
     with freeze_time(FROZEN):
-        out = await wq.get_windquest_data()
+        out = await wq._get_windquest_data()
     assert out.startswith("🌙")
     assert out.index("🌙") < out.index("💨") < out.index("⚡")
     assert "\n\n💨" in out
@@ -220,21 +220,21 @@ async def test_assembly_order_is_tides_wind_lightning(set_payload):
 async def test_none_on_fetch_error(set_payload):
     set_payload({"error": True})
     with freeze_time(FROZEN):
-        assert await wq.get_windquest_data() is None
+        assert await wq._get_windquest_data() is None
 
 
 @pytest.mark.asyncio
 async def test_none_on_empty_forecast(set_payload):
     set_payload(payload([]))
     with freeze_time(FROZEN):
-        assert await wq.get_windquest_data() is None
+        assert await wq._get_windquest_data() is None
 
 
 @pytest.mark.asyncio
 async def test_none_without_credentials(monkeypatch):
     monkeypatch.setattr(wq.SETTINGS, "windquest_api_key", "")
     monkeypatch.setattr(wq.SETTINGS, "windquest_api_token", "")
-    assert await wq.get_windquest_data() is None
+    assert await wq._get_windquest_data() is None
 
 
 @pytest.mark.parametrize(
@@ -256,7 +256,7 @@ async def test_cefas_off_without_buoy(monkeypatch):
     monkeypatch.setattr(wq.SETTINGS, "cefas_buoy", None)
     monkeypatch.setattr(wq, "fetch", must_not_fetch)
 
-    assert await wq.get_cefas_data() == (None, None)
+    assert await wq._get_cefas_data() == (None, None)
 
 
 @pytest.mark.asyncio
@@ -289,9 +289,9 @@ async def test_cefas_reads_buoy_and_forecast(monkeypatch):
         return b"png"
 
     monkeypatch.setattr(wq, "fetch", fake_fetch)
-    monkeypatch.setattr(wq, "fetch_bytes", fake_bytes)
+    monkeypatch.setattr(wq, "_fetch_bytes", fake_bytes)
     with freeze_time(FROZEN):
-        text, image = await wq.get_cefas_data()
+        text, image = await wq._get_cefas_data()
 
     assert "BUOY1" in urls[0]
     assert "Now: 🟢 0.5m · SW" in text
@@ -307,10 +307,10 @@ async def test_no_weather_data_message(monkeypatch):
     async def no_wind(**k):
         return None
 
-    monkeypatch.setattr(wq, "get_cefas_data", nothing)
-    monkeypatch.setattr(wq, "get_windquest_data", no_wind)
+    monkeypatch.setattr(wq, "_get_cefas_data", nothing)
+    monkeypatch.setattr(wq, "_get_windquest_data", no_wind)
 
-    text, image = await wq.get_weather_data()
+    text, image = await wq._get_weather_data()
 
     assert "No weather data available" in text
     assert image is None
@@ -330,7 +330,7 @@ async def test_weather_block_keyboard(monkeypatch, buoy):
     async def data(**k):
         return "WEATHER", None
 
-    monkeypatch.setattr(wq, "get_weather_data", data)
+    monkeypatch.setattr(wq, "_get_weather_data", data)
     monkeypatch.setattr(wq.SETTINGS, "cefas_buoy", buoy)
 
     block = await wq.weather_block()
@@ -353,7 +353,7 @@ async def test_weather_block_for_host_bot(monkeypatch):
     async def data(**k):
         return "WEATHER", None
 
-    monkeypatch.setattr(wq, "get_weather_data", data)
+    monkeypatch.setattr(wq, "_get_weather_data", data)
 
     block = await wq.weather_block(
         is_tomorrow=True, base="weather:work", back=None, close=True

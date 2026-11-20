@@ -64,7 +64,84 @@ async def fetch(url, headers=None, params=None, timeout=5):
         return {"error": True, "status": 999, "message": str(e)}
 
 
-async def fetch_bytes(url, headers=None, params=None, timeout=5):
+async def get_windquest_service() -> bool:
+    """Whether the WindQuest API answers with the configured key and token."""
+    if not (SETTINGS.windquest_api_key and SETTINGS.windquest_api_token):
+        return False
+
+    data = await fetch(
+        WINDQUEST_URL,
+        params={
+            "APIKey": SETTINGS.windquest_api_key,
+            "APIToken": SETTINGS.windquest_api_token,
+            "Rand": "0",
+        },
+        timeout=WINDQUEST_TIMEOUT,
+    )
+    return bool(data) and not data.get("error") and bool(data.get("Forecast"))
+
+
+async def weather_block(
+    is_tomorrow: bool = False,
+    brief: bool = False,
+    base: str = "troubleshooter:weather",
+    back: tuple[str, str] | None = ("🔙 Back", "troubleshooter:home"),
+    close: bool = False,
+) -> dict:
+    """The work weather (WindQuest and CEFAS) as a block, with "text", "image"
+    and "reply_markup".
+
+    base: callback prefix for its Today, Tomorrow and Refresh buttons.
+    back: the (label, callback) of a back button, or None for none.
+    close: add a ❌ Close button.
+    """
+    text, image = await _get_weather_data(tomorrow=is_tomorrow, brief=brief)
+
+    today, tomorrow = base, f"{base}:tomorrow"
+    rows = [
+        [
+            InlineKeyboardButton(
+                "☀️ View Today" if is_tomorrow else "📅 View Tomorrow",
+                callback_data=today if is_tomorrow else tomorrow,
+            )
+        ]
+    ]
+    if SETTINGS.cefas_buoy:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    "🌍 Cefas Wavenet",
+                    url=CEFAS_PAGE_URL.format(buoy=SETTINGS.cefas_buoy),
+                )
+            ]
+        )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                "🔄 Refresh", callback_data=tomorrow if is_tomorrow else today
+            )
+        ]
+    )
+    if back:
+        rows.append([InlineKeyboardButton(back[0], callback_data=back[1])])
+    if close:
+        rows.append([InlineKeyboardButton("❌ Close", callback_data="cancel")])
+
+    return {
+        "text": text,
+        "image": image,
+        "reply_markup": InlineKeyboardMarkup(rows),
+        "parse_mode": "Markdown",
+    }
+
+
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    block = await weather_block(is_tomorrow=query.data.endswith(":tomorrow"))
+    await _send_block(query, block)
+
+
+async def _fetch_bytes(url, headers=None, params=None, timeout=5):
     try:
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=timeout)
@@ -76,11 +153,11 @@ async def fetch_bytes(url, headers=None, params=None, timeout=5):
         return None
 
 
-def degrees_to_heading(deg):
+def _degrees_to_heading(deg):
     return HEADINGS[round(deg / 22.5) % 16]
 
 
-def get_safety_emoji(value, kind="wave"):
+def _get_safety_emoji(value, kind="wave"):
     if kind == "wind":
         if value > 18:
             return "🔴"
@@ -94,7 +171,7 @@ def get_safety_emoji(value, kind="wave"):
     return "🟢"
 
 
-def parse_dt(raw_str):
+def _parse_dt(raw_str):
     if "T" in raw_str:
         dt = datetime.fromisoformat(raw_str.replace("Z", "+00:00"))
         if dt.tzinfo is None:
@@ -104,7 +181,7 @@ def parse_dt(raw_str):
     return dt, False
 
 
-async def get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = False):
+async def _get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = False):
     buoy = SETTINGS.cefas_buoy
     if not buoy:
         return None, None
@@ -130,7 +207,7 @@ async def get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = F
                     pass
             if "Hm0" not in vals:
                 continue
-            dt, _ = parse_dt(r["timestamp"])
+            dt, _ = _parse_dt(r["timestamp"])
             dt = dt.astimezone(local)
             rows.append((dt, r.get("isForecast", False), vals))
 
@@ -139,8 +216,8 @@ async def get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = F
 
         def line(dt, v):
             h = round(v["Hm0"], 2)
-            head = degrees_to_heading(v["W_PDIR"]) if "W_PDIR" in v else "N/A"
-            return f" ├ {dt:%H:%M} {get_safety_emoji(h)} {h}m · {head}"
+            head = _degrees_to_heading(v["W_PDIR"]) if "W_PDIR" in v else "N/A"
+            return f" ├ {dt:%H:%M} {_get_safety_emoji(h)} {h}m · {head}"
 
         if tomorrow:
             target = (datetime.now(local) + timedelta(days=1)).date()
@@ -167,9 +244,9 @@ async def get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = F
             if obs:
                 dt, _, v = obs[-1]
                 h = round(v["Hm0"], 2)
-                head = degrees_to_heading(v["W_PDIR"]) if "W_PDIR" in v else "N/A"
+                head = _degrees_to_heading(v["W_PDIR"]) if "W_PDIR" in v else "N/A"
                 lines.append(
-                    f" ├ Now: {get_safety_emoji(h)} {h}m · {head}  _(buoy {dt:%H:%M})_"
+                    f" ├ Now: {_get_safety_emoji(h)} {h}m · {head}  _(buoy {dt:%H:%M})_"
                 )
 
             now_hour = datetime.now(local).replace(minute=0, second=0, microsecond=0)
@@ -197,7 +274,7 @@ async def get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = F
             "showWQ": "true",
             "multi": "false",
         }
-        img = await fetch_bytes(
+        img = await _fetch_bytes(
             CEFAS_CHART_URL.format(buoy=buoy),
             headers=CEFAS_HEADERS,
             params=params,
@@ -210,7 +287,7 @@ async def get_cefas_data(brief: bool = False, hours: int = 6, tomorrow: bool = F
     return text, image
 
 
-async def get_windquest_data(
+async def _get_windquest_data(
     hours: int = 6, location: str | None = None, tomorrow: bool = False
 ):
     if not (SETTINGS.windquest_api_key and SETTINGS.windquest_api_token):
@@ -276,7 +353,7 @@ async def get_windquest_data(
         ms = round(float(s), 1)
         gms = round(float(g), 1)
         lines.append(
-            f" ├ {dt:%H:%M} {get_safety_emoji(ms, 'wind')} {ms}m/s (gust {gms}) · {d}"
+            f" ├ {dt:%H:%M} {_get_safety_emoji(ms, 'wind')} {ms}m/s (gust {gms}) · {d}"
         )
         lvl = lr.strip()
         if lvl in rank:
@@ -354,26 +431,9 @@ async def get_windquest_data(
     return out or None
 
 
-async def get_windquest_service() -> bool:
-    """Whether the WindQuest API answers with the configured key and token."""
-    if not (SETTINGS.windquest_api_key and SETTINGS.windquest_api_token):
-        return False
-
-    data = await fetch(
-        WINDQUEST_URL,
-        params={
-            "APIKey": SETTINGS.windquest_api_key,
-            "APIToken": SETTINGS.windquest_api_token,
-            "Rand": "0",
-        },
-        timeout=WINDQUEST_TIMEOUT,
-    )
-    return bool(data) and not data.get("error") and bool(data.get("Forecast"))
-
-
-async def get_weather_data(tomorrow: bool = False, brief: bool = False):
-    sea, image = await get_cefas_data(brief=brief, tomorrow=tomorrow)
-    wind = await get_windquest_data(tomorrow=tomorrow)
+async def _get_weather_data(tomorrow: bool = False, brief: bool = False):
+    sea, image = await _get_cefas_data(brief=brief, tomorrow=tomorrow)
+    wind = await _get_windquest_data(tomorrow=tomorrow)
 
     parts = [p for p in (sea, wind) if p]
     if not parts:
@@ -382,61 +442,7 @@ async def get_weather_data(tomorrow: bool = False, brief: bool = False):
     return "\n".join(parts) + "\n", image
 
 
-async def weather_block(
-    is_tomorrow: bool = False,
-    brief: bool = False,
-    base: str = "troubleshooter:weather",
-    back: tuple[str, str] | None = ("🔙 Back", "troubleshooter:home"),
-    close: bool = False,
-) -> dict:
-    """The work weather (WindQuest and CEFAS) as a block, with "text", "image"
-    and "reply_markup".
-
-    base: callback prefix for its Today, Tomorrow and Refresh buttons.
-    back: the (label, callback) of a back button, or None for none.
-    close: add a ❌ Close button.
-    """
-    text, image = await get_weather_data(tomorrow=is_tomorrow, brief=brief)
-
-    today, tomorrow = base, f"{base}:tomorrow"
-    rows = [
-        [
-            InlineKeyboardButton(
-                "☀️ View Today" if is_tomorrow else "📅 View Tomorrow",
-                callback_data=today if is_tomorrow else tomorrow,
-            )
-        ]
-    ]
-    if SETTINGS.cefas_buoy:
-        rows.append(
-            [
-                InlineKeyboardButton(
-                    "🌍 Cefas Wavenet",
-                    url=CEFAS_PAGE_URL.format(buoy=SETTINGS.cefas_buoy),
-                )
-            ]
-        )
-    rows.append(
-        [
-            InlineKeyboardButton(
-                "🔄 Refresh", callback_data=tomorrow if is_tomorrow else today
-            )
-        ]
-    )
-    if back:
-        rows.append([InlineKeyboardButton(back[0], callback_data=back[1])])
-    if close:
-        rows.append([InlineKeyboardButton("❌ Close", callback_data="cancel")])
-
-    return {
-        "text": text,
-        "image": image,
-        "reply_markup": InlineKeyboardMarkup(rows),
-        "parse_mode": "Markdown",
-    }
-
-
-async def send_block(query, block):
+async def _send_block(query, block):
     message = query.message
 
     if block.get("image"):
@@ -464,9 +470,3 @@ async def send_block(query, block):
 
     await message.delete()
     await message.reply_text(**text_args)
-
-
-async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    block = await weather_block(is_tomorrow=query.data.endswith(":tomorrow"))
-    await send_block(query, block)

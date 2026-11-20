@@ -266,7 +266,7 @@ async def test_users_list_pages_and_remembers_place(monkeypatch):
     assert len(user_buttons) == 5
     assert "troubleshooter:user_list:name:1" in callbacks(edit)
     assert context.user_data["user_list"] == ("name", 2)
-    assert users.users_back(context) == "troubleshooter:user_list:name:2"
+    assert users._users_back(context) == "troubleshooter:user_list:name:2"
 
 
 @pytest.mark.asyncio

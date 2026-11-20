@@ -161,7 +161,7 @@ async def upload(user, context, kind="pdf", caption=None, unique="U1", size=1000
     update = SimpleNamespace(
         message=message, effective_user=user, effective_chat=SimpleNamespace(id=user.id)
     )
-    await turbine_troubleshooter.file_handler(update, context)
+    await turbine_troubleshooter._file_handler(update, context)
     return context.bot.edit_message_text.await_args.kwargs
 
 
@@ -440,7 +440,7 @@ async def test_files_from_non_admins_are_ignored(db):
         entities=(),
         delete=AsyncMock(),
     )
-    await turbine_troubleshooter.file_handler(
+    await turbine_troubleshooter._file_handler(
         SimpleNamespace(
             message=message, effective_user=user, effective_chat=SimpleNamespace(id=9)
         ),

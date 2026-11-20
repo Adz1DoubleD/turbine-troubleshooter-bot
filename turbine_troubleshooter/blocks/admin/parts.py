@@ -20,57 +20,6 @@ PART_FIELDS = {
 }
 
 
-def _find_part(context, part_id):
-    return next(
-        (p for p in context.bot_data.get("parts", []) if p.get("id") == part_id), None
-    )
-
-
-async def _show_part(
-    context: ContextTypes.DEFAULT_TYPE, chat_id, msg_id, part, status=None
-):
-    section = escape_markdown(part["section"]) if part.get("section") else "_None_"
-    text = (f"{status}\n\n" if status else "") + (
-        f"🔩 *Edit Part*\n\n"
-        f"*Part Number:* `{part['part_no']}`\n"
-        f"*Description:* {escape_markdown(part['description'])}\n"
-        f"*Section:* {section}\n\n"
-        f"Select a field to change:"
-    )
-    kb = [
-        [
-            InlineKeyboardButton(
-                f"{icon} {label}",
-                callback_data=f"troubleshooter:part_edit_field:{field}:{part['id']}",
-            )
-        ]
-        for field, (icon, label, _) in PART_FIELDS.items()
-    ]
-    kb.append(
-        [
-            InlineKeyboardButton(
-                "🗑 Remove",
-                callback_data=f"troubleshooter:part_confirm_del:{part['id']}",
-            )
-        ]
-    )
-    kb.append(
-        [
-            InlineKeyboardButton(
-                "🔍 Search Parts", callback_data="troubleshooter:parts_search"
-            ),
-            InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home"),
-        ]
-    )
-    await context.bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=msg_id,
-        text=text,
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(kb),
-    )
-
-
 async def button_part_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
 
@@ -377,3 +326,54 @@ async def button_part_delete(update: Update, context: ContextTypes.DEFAULT_TYPE)
         status = "⚠️ Part not found in the database."
 
     await handle_block(update, context, status=status)
+
+
+def _find_part(context, part_id):
+    return next(
+        (p for p in context.bot_data.get("parts", []) if p.get("id") == part_id), None
+    )
+
+
+async def _show_part(
+    context: ContextTypes.DEFAULT_TYPE, chat_id, msg_id, part, status=None
+):
+    section = escape_markdown(part["section"]) if part.get("section") else "_None_"
+    text = (f"{status}\n\n" if status else "") + (
+        f"🔩 *Edit Part*\n\n"
+        f"*Part Number:* `{part['part_no']}`\n"
+        f"*Description:* {escape_markdown(part['description'])}\n"
+        f"*Section:* {section}\n\n"
+        f"Select a field to change:"
+    )
+    kb = [
+        [
+            InlineKeyboardButton(
+                f"{icon} {label}",
+                callback_data=f"troubleshooter:part_edit_field:{field}:{part['id']}",
+            )
+        ]
+        for field, (icon, label, _) in PART_FIELDS.items()
+    ]
+    kb.append(
+        [
+            InlineKeyboardButton(
+                "🗑 Remove",
+                callback_data=f"troubleshooter:part_confirm_del:{part['id']}",
+            )
+        ]
+    )
+    kb.append(
+        [
+            InlineKeyboardButton(
+                "🔍 Search Parts", callback_data="troubleshooter:parts_search"
+            ),
+            InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home"),
+        ]
+    )
+    await context.bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=msg_id,
+        text=text,
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(kb),
+    )

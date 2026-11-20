@@ -77,14 +77,6 @@ LOCKED_MARKUP = InlineKeyboardMarkup(
 )
 
 
-async def save_request(user_id, kind, name):
-    try:
-        await request_add(user_id, kind, name)
-    except Exception as e:
-        print(f"❌ [DB] Failed to save {kind} request: {e}")
-        sentry_sdk.capture_exception(e)
-
-
 async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user = query.from_user
@@ -95,7 +87,7 @@ async def button_request_access(update: Update, context: ContextTypes.DEFAULT_TY
 
     name = f"@{user.username}" if user.username else user.full_name
     pending[user.id] = name
-    await save_request(user.id, "access", name)
+    await _save_request(user.id, "access", name)
 
     kb = InlineKeyboardMarkup(
         [
@@ -138,7 +130,7 @@ async def button_request_admin(update: Update, context: ContextTypes.DEFAULT_TYP
 
     name = f"@{user.username}" if user.username else user.full_name
     pending[user.id] = name
-    await save_request(user.id, "admin", name)
+    await _save_request(user.id, "admin", name)
 
     kb = InlineKeyboardMarkup(
         [
@@ -160,3 +152,11 @@ async def button_request_admin(update: Update, context: ContextTypes.DEFAULT_TYP
         reply_markup=kb,
     )
     await query.answer("✅ Your request has been sent to the admin.", show_alert=True)
+
+
+async def _save_request(user_id, kind, name):
+    try:
+        await request_add(user_id, kind, name)
+    except Exception as e:
+        print(f"❌ [DB] Failed to save {kind} request: {e}")
+        sentry_sdk.capture_exception(e)

@@ -77,28 +77,17 @@ async def request_remove(user_id):
         return cur.rowcount > 0
 
 
-def user_from_row(record):
-    return {
-        "user_id": int(record["user_id"]),
-        "username": record.get("username"),
-        "is_admin": int(record["is_admin"]),
-        "last_login": record.get("last_login"),
-        "notifications_enabled": int(record.get("notifications_enabled", 1)),
-        "is_approved": int(record.get("is_approved") or 0),
-    }
-
-
 async def users_get():
     async with db_session() as cur:
         await cur.execute(USER_COLUMNS)
-        return [user_from_row(r) for r in await cur.fetchall()]
+        return [_user_from_row(r) for r in await cur.fetchall()]
 
 
 async def user_get(user_id):
     async with db_session() as cur:
         await cur.execute(f"{USER_COLUMNS} WHERE user_id = %s", (user_id,))
         row = await cur.fetchone()
-        return user_from_row(row) if row else None
+        return _user_from_row(row) if row else None
 
 
 async def user_notifications_toggle(user_id):
@@ -121,3 +110,14 @@ async def user_notifications_get(user_id):
         )
         row = await cur.fetchone()
         return int(row["notifications_enabled"]) if row else 1
+
+
+def _user_from_row(record):
+    return {
+        "user_id": int(record["user_id"]),
+        "username": record.get("username"),
+        "is_admin": int(record["is_admin"]),
+        "last_login": record.get("last_login"),
+        "notifications_enabled": int(record.get("notifications_enabled", 1)),
+        "is_approved": int(record.get("is_approved") or 0),
+    }

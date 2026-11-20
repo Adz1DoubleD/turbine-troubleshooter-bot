@@ -93,7 +93,7 @@ async def send(csv_text, user, context, name="list.csv", size=None):
     message = SimpleNamespace(
         document=document, photo=None, caption=None, delete=AsyncMock()
     )
-    await turbine_troubleshooter.file_handler(
+    await turbine_troubleshooter._file_handler(
         SimpleNamespace(
             message=message,
             effective_user=user,
@@ -330,7 +330,7 @@ async def test_files_from_anyone_else_are_ignored(db):
     message = SimpleNamespace(
         document=None, photo=None, caption=None, delete=AsyncMock()
     )
-    await turbine_troubleshooter.file_handler(
+    await turbine_troubleshooter._file_handler(
         SimpleNamespace(
             message=message, effective_user=user, effective_chat=SimpleNamespace(id=5)
         ),

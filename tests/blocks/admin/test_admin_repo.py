@@ -242,7 +242,7 @@ async def test_the_save_button_says_where_it_saves(
         monkeypatch.setattr(SETTINGS, "files_dir", None)
     user, context = make()
 
-    await files.send_to_owner(context, SETTINGS.menu["attachments"][0])
+    await files._send_to_owner(context, SETTINGS.menu["attachments"][0])
 
     markup = context.bot.send_document.await_args.kwargs["reply_markup"]
     texts = [b.text for row in markup.inline_keyboard for b in row]
