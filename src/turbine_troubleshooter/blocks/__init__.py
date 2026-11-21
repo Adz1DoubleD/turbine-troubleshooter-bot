@@ -9,7 +9,6 @@ from ..settings import SETTINGS
 
 
 async def handle_block(context: ContextTypes.DEFAULT_TYPE) -> dict:
-    """The troubleshooter's main menu as a block: {"text": ..., "reply_markup": ...}."""
     code_count = len(context.bot_data.get("codes", {}))
     part_count = len(context.bot_data.get("parts", []))
     is_troubleshooter = context.bot_data.get("is_troubleshooter")

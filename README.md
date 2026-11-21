@@ -28,7 +28,7 @@ await stop_troubleshooter_bot()
 
 A host can import these from `turbine_troubleshooter` and rely on them between releases:
 
-- `handle_block`, `handle_button` and `handle_text_input` show the troubleshooter menus in the host's bot. Forward any button whose data starts with `troubleshooter:` to `handle_button`.
+- `troubleshooter_block(context)` is the troubleshooter's main menu as a block, and `handle_button` and `handle_text_input` handle what happens next in the host's bot. Forward any button whose data starts with `troubleshooter:` to `handle_button`.
 - `weather_block(is_tomorrow=False, brief=False, base=..., back=..., close=False)` is the 🌦 Weather screen (sea state and WindQuest wind, lightning and tides), with `brief=True` for a short summary such as a daily message. `base` and `back` set the button data so the host can route them.
 - `await get_windquest_service()` returns `True` when WindQuest answers with a forecast, for a host's own health check.
 

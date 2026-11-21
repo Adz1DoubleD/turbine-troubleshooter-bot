@@ -39,13 +39,18 @@ application = None
 
 __all__ = [
     "get_windquest_service",
-    "handle_block",
     "handle_button",
     "handle_text_input",
     "start_troubleshooter_bot",
     "stop_troubleshooter_bot",
+    "troubleshooter_block",
     "weather_block",
 ]
+
+
+async def troubleshooter_block(context: ContextTypes.DEFAULT_TYPE) -> dict:
+    """The troubleshooter's main menu as a block: {"text": ..., "reply_markup": ...}."""
+    return await handle_block(context)
 
 
 async def start_troubleshooter_bot(

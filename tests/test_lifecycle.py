@@ -287,3 +287,15 @@ def test_hosts_can_import_the_public_api():
     assert {"weather_block", "get_windquest_service"} <= set(
         turbine_troubleshooter.__all__
     )
+
+
+@pytest.mark.asyncio
+async def test_troubleshooter_block_is_the_main_menu(monkeypatch):
+    from turbine_troubleshooter import blocks
+
+    menu = {"text": "menu", "reply_markup": None}
+    monkeypatch.setattr(blocks, "handle_block", AsyncMock(return_value=menu))
+    monkeypatch.setattr(turbine_troubleshooter, "handle_block", blocks.handle_block)
+
+    assert await turbine_troubleshooter.troubleshooter_block("ctx") == menu
+    assert "handle_block" not in turbine_troubleshooter.__all__
