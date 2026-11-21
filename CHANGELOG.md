@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.7.0...v3.0.0) (2026-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* introduce troubleshooter_block as the main menu and update README
+
+### Features
+
+* introduce troubleshooter_block as the main menu and update README ([4fcc7df](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/4fcc7df798314e5d793e208f56574101a879294d))
+
 ## [2.7.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.6.0...v2.7.0) (2026-11-20)
 
 
