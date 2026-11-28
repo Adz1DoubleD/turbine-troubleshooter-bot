@@ -108,8 +108,9 @@ async def test_part_edit_shows_fields_and_remove():
 
     await parts.button_part_edit(update, context)
 
-    assert callbacks(bot_edits[0]["reply_markup"])[:4] == [
+    assert callbacks(bot_edits[0]["reply_markup"])[:5] == [
         "troubleshooter:part_edit_field:part_no:7",
+        "troubleshooter:part_edit_field:stock_no:7",
         "troubleshooter:part_edit_field:description:7",
         "troubleshooter:part_edit_field:section:7",
         "troubleshooter:part_confirm_del:7",
@@ -159,7 +160,8 @@ async def test_part_edit_field_sets_state_and_prompt():
 @pytest.mark.parametrize(
     "field,text,saved_value,change",
     [
-        ("part_no", " pn999 ", "PN999", "Part Number: PN00400484 → PN999"),
+        ("part_no", " pn999 ", "PN999", "Part No: PN00400484 → PN999"),
+        ("stock_no", " 10255168 ", "10255168", "Stock No: None → 10255168"),
         (
             "description",
             "New desc",
@@ -291,9 +293,14 @@ async def test_part_delete_confirm_cancel_returns_to_part():
 async def test_part_add_flow(monkeypatch):
     added = []
 
-    async def fake_add(part_no, description, section="", added_by=None):
+    async def fake_add(part_no, description, section="", added_by=None, stock_no=None):
         added.append(
-            {"part_no": part_no, "description": description, "added_by": added_by}
+            {
+                "part_no": part_no,
+                "description": description,
+                "added_by": added_by,
+                "stock_no": stock_no,
+            }
         )
         return 42
 
@@ -325,9 +332,21 @@ async def test_part_add_flow(monkeypatch):
     assert "`PN123`" in bot_edits[-1]["text"]
 
     await parts.handle_part_add(update, context, "New pump", context.user_data["state"])
+    assert context.user_data["state"] == "troubleshooter:part_add:stock_no"
+    assert "Stock No" in bot_edits[-1]["text"]
+    assert added == []
+
+    await parts.handle_part_add(
+        update, context, " 10255168 ", context.user_data["state"]
+    )
 
     assert added == [
-        {"part_no": "PN123", "description": "New pump", "added_by": "@editor"}
+        {
+            "part_no": "PN123",
+            "description": "New pump",
+            "added_by": "@editor",
+            "stock_no": "10255168",
+        }
     ]
     assert context.bot_data["parts"] == [
         {
@@ -337,6 +356,7 @@ async def test_part_add_flow(monkeypatch):
             "edits": [],
             "part_no": "PN123",
             "description": "New pump",
+            "stock_no": "10255168",
         }
     ]
     assert context.user_data["state"] is None
@@ -449,8 +469,8 @@ async def test_part_edit_adds_to_existing_history(monkeypatch, part_notes):
 async def test_part_add_uses_full_name_without_username(monkeypatch):
     added = []
 
-    async def fake_add(part_no, description, section="", added_by=None):
-        added.append(added_by)
+    async def fake_add(part_no, description, section="", added_by=None, stock_no=None):
+        added.append((added_by, stock_no))
         return 42
 
     async def fake_block(update, context, status=None):
@@ -463,7 +483,8 @@ async def test_part_add_uses_full_name_without_username(monkeypatch):
     monkeypatch.setattr(parts, "handle_block", fake_block)
     monkeypatch.setattr(parts, "send_notification_troubleshooter", fake_notify)
     context, _ = make_context(
-        user_data={"new_part": {"part_no": "PN1"}}, bot_data={"parts": []}
+        user_data={"new_part": {"part_no": "PN1", "description": "Pump"}},
+        bot_data={"parts": []},
     )
     update = SimpleNamespace(
         effective_chat=SimpleNamespace(id=1),
@@ -471,7 +492,7 @@ async def test_part_add_uses_full_name_without_username(monkeypatch):
     )
 
     await parts.handle_part_add(
-        update, context, "Pump", "troubleshooter:part_add:description"
+        update, context, "-", "troubleshooter:part_add:stock_no"
     )
 
-    assert added == ["Ed Itor"]
+    assert added == [("Ed Itor", "")]

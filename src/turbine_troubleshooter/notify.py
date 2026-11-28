@@ -98,7 +98,10 @@ async def send_notification_troubleshooter(
                 if parts:
                     text += f"• Parts:\n{escape_markdown(parts)}\n\n"
             else:
-                text = f"🔩 *Spare Part {verb.capitalize()}*\n\n• Part: `{code}`\n"
+                text = (
+                    f"🔩 *Spare Part {verb.capitalize()}*\n\n"
+                    f"• {escape_markdown(SETTINGS.part_no_label)}: `{code}`\n"
+                )
                 if advice:
                     text += f"• Description: {escape_markdown(advice)}\n"
                 if message:

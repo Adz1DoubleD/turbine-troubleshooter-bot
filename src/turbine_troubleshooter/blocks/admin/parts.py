@@ -11,6 +11,7 @@ from turbine_troubleshooter.db import (
     part_update,
 )
 from turbine_troubleshooter.helpers import escape_markdown, is_owner
+from turbine_troubleshooter.settings import SETTINGS
 
 from ...helpers import user_is_admin
 from ...notify import send_notification_troubleshooter
@@ -18,7 +19,8 @@ from . import handle_block, local_now
 from .changes import ask_owner_to_delete
 
 PART_FIELDS = {
-    "part_no": ("🔢", "Part Number", 20),
+    "part_no": ("🔢", "", 20),
+    "stock_no": ("🏷️", "", 20),
     "description": ("📝", "Description", 160),
     "section": ("📂", "Section", 60),
 }
@@ -37,7 +39,8 @@ async def button_part_add(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     context.user_data["state"] = "troubleshooter:part_add:part_no"
     context.user_data["last_msg_id"] = query.message.message_id
     await query.edit_message_text(
-        "🔩 *Add Spare Part*\n\nStep 1: Enter the *Part Number*:",
+        "🔩 *Add Spare Part*\n\n"
+        f"Step 1: Enter the *{escape_markdown(SETTINGS.part_no_label)}*:",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -90,16 +93,20 @@ async def button_part_edit_field(
 
     await query.answer()
     _, label, limit = PART_FIELDS[field]
+    label = label or getattr(SETTINGS, f"{field}_label")
     current = escape_markdown(part.get(field) or "") or "_None_"
-    clear_hint = "\n_Send_ `-` _to clear it._" if field == "section" else ""
+    clear_hint = (
+        "\n_Send_ `-` _to clear it._" if field in ("section", "stock_no") else ""
+    )
 
     context.user_data["state"] = f"troubleshooter:part_await_edit:{field}:{part_id}"
     context.user_data["last_msg_id"] = query.message.message_id
 
     await query.edit_message_text(
-        f"✏️ *Updating {label}*\n\n"
+        f"✏️ *Updating {escape_markdown(label)}*\n\n"
         f"*Current:* {current}\n\n"
-        f"Enter the new {label.lower()} (max {limit} characters):{clear_hint}",
+        f"Enter the new {escape_markdown(label)} (max {limit} characters):"
+        f"{clear_hint}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -163,7 +170,29 @@ async def handle_part_add(
         await context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=user_data.get("last_msg_id"),
-            text=f"✅ Part: `{part_no}`\n\nStep 2: Enter the *Description*:",
+            text=f"✅ {escape_markdown(SETTINGS.part_no_label)}: `{part_no}`\n\n"
+            "Step 2: Enter the *Description*:",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "🔙 Back", callback_data="troubleshooter:admin_menu"
+                        )
+                    ]
+                ]
+            ),
+        )
+        return
+
+    if state == "troubleshooter:part_add:description":
+        user_data["new_part"]["description"] = text.strip()[:160]
+        user_data["state"] = "troubleshooter:part_add:stock_no"
+        await context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=user_data.get("last_msg_id"),
+            text="Step 3: Enter the "
+            f"*{escape_markdown(SETTINGS.stock_no_label)}*, or `-` if there isn't one:",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -178,13 +207,19 @@ async def handle_part_add(
         return
 
     entry = user_data.pop("new_part")
-    entry["description"] = text.strip()[:160]
+    stock_no = text.strip().upper()
+    entry["stock_no"] = "" if stock_no == "-" else stock_no[:20]
     user_data["state"] = None
 
     user = update.effective_user
     added_by = f"@{user.username}" if user.username else user.full_name
 
-    new_id = await part_add(entry["part_no"], entry["description"], added_by=added_by)
+    new_id = await part_add(
+        entry["part_no"],
+        entry["description"],
+        added_by=added_by,
+        stock_no=entry["stock_no"],
+    )
     if new_id:
         parts.append(
             {"id": new_id, "section": "", "added_by": added_by, "edits": [], **entry}
@@ -214,20 +249,20 @@ async def handle_part_edit(
         return
 
     value = text.strip()
-    if field == "part_no":
+    if field in ("part_no", "stock_no"):
         value = value.upper()
-    if field == "section" and value == "-":
+    if field in ("section", "stock_no") and value == "-":
         value = ""
     value = value[: PART_FIELDS[field][2]]
 
     parts = context.bot_data.get("parts", [])
-    label = PART_FIELDS[field][1]
+    label = PART_FIELDS[field][1] or getattr(SETTINGS, f"{field}_label")
     old_value = part.get(field) or ""
     user = update.effective_user
     editor = f"@{user.username}" if user.username else user.full_name
     edited_at = local_now().strftime("%Y-%m-%d %H:%M")
 
-    if not value and field != "section":
+    if not value and field not in ("section", "stock_no"):
         status = f"⚠️ {label} can't be empty."
     elif value == old_value:
         status = "ℹ️ No change."
@@ -357,9 +392,11 @@ async def _show_part(
     status: str | None = None,
 ) -> None:
     section = escape_markdown(part["section"]) if part.get("section") else "_None_"
+    stock_no = f"`{part['stock_no']}`" if part.get("stock_no") else "_None_"
     text = (f"{status}\n\n" if status else "") + (
         f"🔩 *Edit Part*\n\n"
-        f"*Part Number:* `{part['part_no']}`\n"
+        f"*{escape_markdown(SETTINGS.part_no_label)}:* `{part['part_no']}`\n"
+        f"*{escape_markdown(SETTINGS.stock_no_label)}:* {stock_no}\n"
         f"*Description:* {escape_markdown(part['description'])}\n"
         f"*Section:* {section}\n\n"
         f"Select a field to change:"
@@ -367,7 +404,7 @@ async def _show_part(
     kb = [
         [
             InlineKeyboardButton(
-                f"{icon} {label}",
+                f"{icon} {label or getattr(SETTINGS, f'{field}_label')}",
                 callback_data=f"troubleshooter:part_edit_field:{field}:{part['id']}",
             )
         ]

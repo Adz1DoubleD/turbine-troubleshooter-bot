@@ -4,6 +4,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from turbine_troubleshooter.helpers import escape_markdown
+from turbine_troubleshooter.settings import SETTINGS
 
 from ..helpers import find_parts
 
@@ -17,7 +18,9 @@ async def button_search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         [[InlineKeyboardButton("🔙 Back", callback_data="troubleshooter:home")]]
     )
     await query.edit_message_text(
-        "🔩 *Spare Parts*\n\nEnter a part name or part number:",
+        "🔩 *Spare Parts*\n\nEnter a part name, "
+        f"{escape_markdown(SETTINGS.part_no_label)} or "
+        f"{escape_markdown(SETTINGS.stock_no_label)}:",
         parse_mode="Markdown",
         reply_markup=kb,
     )
@@ -35,15 +38,23 @@ async def handle_search(
     )
 
     if results:
-        response = f"🔩 *Spare Parts:* {escape_markdown(text)}\n\n" + "\n\n".join(
-            f"*{escape_markdown(p['description'])}*\n"
-            + (
-                f"├ `{p['part_no']}`\n└ {escape_markdown(p['section'])}"
-                if p.get("section")
-                else f"└ `{p['part_no']}`"
+        found = []
+        for p in results:
+            lines = [f"{escape_markdown(SETTINGS.part_no_label)}: `{p['part_no']}`"]
+            if p.get("stock_no"):
+                lines.append(
+                    f"{escape_markdown(SETTINGS.stock_no_label)}: `{p['stock_no']}`"
+                )
+            if p.get("section"):
+                lines.append(escape_markdown(p["section"]))
+            found.append(
+                f"*{escape_markdown(p['description'])}*\n"
+                + "\n".join(
+                    ("└ " if i == len(lines) - 1 else "├ ") + line
+                    for i, line in enumerate(lines)
+                )
             )
-            for p in results
-        )
+        response = f"🔩 *Spare Parts:* {escape_markdown(text)}\n\n" + "\n\n".join(found)
     else:
         response = f"⚠️ *No Parts Found*\n\nNo results for: `{escape_markdown(text)}`"
 

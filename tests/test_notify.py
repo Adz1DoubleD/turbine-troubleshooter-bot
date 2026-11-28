@@ -557,7 +557,7 @@ async def test_part_edited_shows_the_change(users, monkeypatch):
     )
 
     assert "🔩 *Spare Part Edited*" in texts[0]
-    assert "• Part: `PN123`" in texts[0]
+    assert "• Part No: `PN123`" in texts[0]
     assert "• Description: New pump" in texts[0]
     assert "• Change: Section: Random\\_Parts → Pumps" in texts[0]
 

@@ -202,11 +202,12 @@ def find_parts(
     scored: list[tuple[float, dict[str, Any]]] = []
     for p in parts:
         part_no = p["part_no"].lower()
+        stock_no = (p.get("stock_no") or "").lower()
         desc = p["description"].lower()
         hay = f"{desc} {p['section'].lower()}"
-        if q == part_no:
+        if q in (part_no, stock_no):
             return [p]
-        if part_no.startswith(q):
+        if part_no.startswith(q) or (stock_no and stock_no.startswith(q)):
             scored.append((500, p))
             continue
         hits = sum(w in hay for w in words)
