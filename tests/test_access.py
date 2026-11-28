@@ -230,6 +230,34 @@ async def test_startup_adds_the_stock_number_to_an_older_parts_table(
 
 
 @pytest.mark.asyncio
+async def test_startup_merges_parts_listed_in_several_sections(
+    monkeypatch, make_cursor, patch_session
+):
+    monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
+    cur = make_cursor(
+        fetchone=[
+            {"t": "codes"},
+            {"t": "users"},
+            {"t": "parts"},
+            {"t": "stock_no"},
+            {"t": "section"},
+        ],
+        fetchall=[[], [], [], []],
+    )
+    patch_session(db, cur)
+
+    await db.init_troubleshooter_db(SimpleNamespace(bot_data={}))
+
+    sql = [c.args[0] for c in cur.execute.call_args_list]
+    keep = next(i for i, s in enumerate(sql) if "SET p.stock_no" in s)
+    drop = next(i for i, s in enumerate(sql) if s.startswith("DELETE p FROM parts"))
+    alter = next(i for i, s in enumerate(sql) if "DROP COLUMN section" in s)
+    assert keep < drop < alter
+    assert "ADD COLUMN location" in sql[alter]
+    assert "ADD UNIQUE KEY part_no" in sql[alter]
+
+
+@pytest.mark.asyncio
 async def test_startup_loads_saved_requests(monkeypatch, make_cursor, patch_session):
     monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
     cur = make_cursor()

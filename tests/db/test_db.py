@@ -56,7 +56,7 @@ async def test_part_add_returns_new_id(make_cursor, patch_session):
     cur.lastrowid = 42
     patch_session(ts, cur)
     assert await ts.part_add("PN123", "New pump") == 42
-    assert cur.execute.call_args.args[1] == ("PN123", None, "New pump", "", None)
+    assert cur.execute.call_args.args[1] == ("PN123", None, None, "New pump", None)
 
 
 @pytest.mark.asyncio
@@ -191,7 +191,7 @@ async def test_user_notifications_toggle(make_cursor, patch_session, row, expect
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("field", ["part_no", "description", "section"])
+@pytest.mark.parametrize("field", ["part_no", "stock_no", "location", "description"])
 async def test_part_update_success(make_cursor, patch_session, field):
     cur = make_cursor(rowcount=1)
     patch_session(ts, cur)
@@ -261,7 +261,7 @@ async def test_part_add_saves_who_added_it(make_cursor, patch_session):
     assert await ts.part_add("PN123", "New pump", added_by="@alice") == 42
     sql, params = cur.execute.call_args.args
     assert "added_by" in sql
-    assert params == ("PN123", None, "New pump", "", "@alice")
+    assert params == ("PN123", None, None, "New pump", "@alice")
 
 
 @pytest.mark.asyncio

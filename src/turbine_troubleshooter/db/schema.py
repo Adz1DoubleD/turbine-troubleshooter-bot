@@ -58,11 +58,11 @@ async def init_troubleshooter_db(application: Application) -> None:
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         part_no VARCHAR(20) NOT NULL,
                         stock_no VARCHAR(20) DEFAULT NULL,
+                        location VARCHAR(40) DEFAULT NULL,
                         description VARCHAR(160) NOT NULL,
-                        section VARCHAR(60) NOT NULL,
                         added_by TEXT DEFAULT NULL,
                         edits JSON NULL,
-                        UNIQUE KEY part_section (part_no, section)
+                        UNIQUE KEY part_no (part_no)
                     )
                 """)
 
@@ -71,6 +71,23 @@ async def init_troubleshooter_db(application: Application) -> None:
                 await cur.execute(
                     "ALTER TABLE parts ADD COLUMN stock_no VARCHAR(20) DEFAULT NULL "
                     "AFTER part_no"
+                )
+
+            await cur.execute("SHOW COLUMNS FROM parts LIKE 'section'")
+            if await cur.fetchone():
+                await cur.execute(
+                    "UPDATE parts p JOIN parts q "
+                    "ON q.part_no = p.part_no AND q.id > p.id "
+                    "SET p.stock_no = COALESCE(p.stock_no, q.stock_no)"
+                )
+                await cur.execute(
+                    "DELETE p FROM parts p JOIN parts q "
+                    "ON q.part_no = p.part_no AND q.id < p.id"
+                )
+                await cur.execute(
+                    "ALTER TABLE parts DROP INDEX part_section, DROP COLUMN section, "
+                    "ADD COLUMN location VARCHAR(40) DEFAULT NULL AFTER stock_no, "
+                    "ADD UNIQUE KEY part_no (part_no)"
                 )
 
             await cur.execute(
@@ -104,7 +121,7 @@ async def init_troubleshooter_db(application: Application) -> None:
             approved = {int(r["user_id"]) for r in await cur.fetchall()}
 
             await cur.execute(
-                "SELECT id, part_no, stock_no, description, section, added_by, edits "
+                "SELECT id, part_no, stock_no, location, description, added_by, edits "
                 "FROM parts"
             )
             parts = [
@@ -112,8 +129,8 @@ async def init_troubleshooter_db(application: Application) -> None:
                     "id": r["id"],
                     "part_no": r["part_no"],
                     "stock_no": r.get("stock_no") or "",
+                    "location": r.get("location") or "",
                     "description": r["description"],
-                    "section": r["section"],
                     "added_by": r.get("added_by"),
                     "edits": json.loads(r["edits"]) if r.get("edits") else [],
                 }

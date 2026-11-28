@@ -8,7 +8,7 @@ from turbine_troubleshooter.blocks.admin import parts
 
 OWNER = 123
 OTHER = 456
-OTHER_PART = {"id": 8, "part_no": "PN00400485", "description": "Other", "section": ""}
+OTHER_PART = {"id": 8, "part_no": "PN00400485", "description": "Other"}
 NOW = datetime(2026, 7, 2, 0, 30)
 
 
@@ -80,7 +80,7 @@ PART = {
     "id": 7,
     "part_no": "PN00400484",
     "description": "YAW MOTOR",
-    "section": "7.1 YAW Drive",
+    "location": "B016",
 }
 
 
@@ -111,8 +111,8 @@ async def test_part_edit_shows_fields_and_remove():
     assert callbacks(bot_edits[0]["reply_markup"])[:5] == [
         "troubleshooter:part_edit_field:part_no:7",
         "troubleshooter:part_edit_field:stock_no:7",
+        "troubleshooter:part_edit_field:location:7",
         "troubleshooter:part_edit_field:description:7",
-        "troubleshooter:part_edit_field:section:7",
         "troubleshooter:part_confirm_del:7",
     ]
     assert "`PN00400484`" in bot_edits[0]["text"]
@@ -168,7 +168,8 @@ async def test_part_edit_field_sets_state_and_prompt():
             "New desc",
             "Description: YAW MOTOR → New desc",
         ),
-        ("section", "-", "", "Section: 7.1 YAW Drive → None"),
+        ("location", "-", "", "Location: B016 → None"),
+        ("location", " a005 ", "A005", "Location: B016 → A005"),
     ],
 )
 async def test_part_edit_saves_field(
@@ -210,7 +211,7 @@ async def test_part_edit_saves_field(
 
 
 @pytest.mark.asyncio
-async def test_part_edit_adding_a_section_shows_none_as_old_value(
+async def test_part_edit_adding_a_location_shows_none_as_old_value(
     monkeypatch, part_notes
 ):
     async def fake_update(*args, **kwargs):
@@ -221,10 +222,10 @@ async def test_part_edit_adding_a_section_shows_none_as_old_value(
     context, _ = part_context()
 
     await parts.handle_part_edit(
-        update, context, "Spares", "troubleshooter:part_await_edit:section:8"
+        update, context, "b016", "troubleshooter:part_await_edit:location:8"
     )
 
-    assert part_notes[0][1] == {"message": "Section: None → Spares", "undo": None}
+    assert part_notes[0][1] == {"message": "Location: None → B016", "undo": None}
 
 
 @pytest.mark.asyncio
@@ -293,13 +294,16 @@ async def test_part_delete_confirm_cancel_returns_to_part():
 async def test_part_add_flow(monkeypatch):
     added = []
 
-    async def fake_add(part_no, description, section="", added_by=None, stock_no=None):
+    async def fake_add(
+        part_no, description, added_by=None, stock_no=None, location=None
+    ):
         added.append(
             {
                 "part_no": part_no,
                 "description": description,
                 "added_by": added_by,
                 "stock_no": stock_no,
+                "location": location,
             }
         )
         return 42
@@ -339,6 +343,12 @@ async def test_part_add_flow(monkeypatch):
     await parts.handle_part_add(
         update, context, " 10255168 ", context.user_data["state"]
     )
+    assert context.user_data["state"] == "troubleshooter:part_add:location"
+    assert "Step 4" in bot_edits[-1]["text"]
+    assert "Location" in bot_edits[-1]["text"]
+    assert added == []
+
+    await parts.handle_part_add(update, context, " b016 ", context.user_data["state"])
 
     assert added == [
         {
@@ -346,17 +356,18 @@ async def test_part_add_flow(monkeypatch):
             "description": "New pump",
             "added_by": "@editor",
             "stock_no": "10255168",
+            "location": "B016",
         }
     ]
     assert context.bot_data["parts"] == [
         {
             "id": 42,
-            "section": "",
             "added_by": "@editor",
             "edits": [],
             "part_no": "PN123",
             "description": "New pump",
             "stock_no": "10255168",
+            "location": "B016",
         }
     ]
     assert context.user_data["state"] is None
@@ -469,8 +480,10 @@ async def test_part_edit_adds_to_existing_history(monkeypatch, part_notes):
 async def test_part_add_uses_full_name_without_username(monkeypatch):
     added = []
 
-    async def fake_add(part_no, description, section="", added_by=None, stock_no=None):
-        added.append((added_by, stock_no))
+    async def fake_add(
+        part_no, description, added_by=None, stock_no=None, location=None
+    ):
+        added.append((added_by, stock_no, location))
         return 42
 
     async def fake_block(update, context, status=None):
@@ -492,7 +505,7 @@ async def test_part_add_uses_full_name_without_username(monkeypatch):
     )
 
     await parts.handle_part_add(
-        update, context, "-", "troubleshooter:part_add:stock_no"
+        update, context, "-", "troubleshooter:part_add:location"
     )
 
-    assert added == [("Ed Itor", "")]
+    assert added == [("Ed Itor", None, "")]

@@ -312,17 +312,14 @@ PARTS = [
     {
         "part_no": "PN00081115",
         "description": "OILPUMP W MOTOR,280L/MIN",
-        "section": "2.7 Gear Oil Pump and Cooler",
     },
     {
         "part_no": "PN10044840",
         "description": "Gear Oil Pump Bracket",
-        "section": "2.7 Gear Oil Pump and Cooler",
     },
     {
         "part_no": "PN00400484",
         "description": "YAW MOTOR",
-        "section": "7.1 YAW Drive",
     },
 ]
 
@@ -336,7 +333,7 @@ def test_find_parts_part_number_prefix():
 
 
 def test_find_parts_accessories_ranked_lower():
-    results = helpers.find_parts("gear oil pump", PARTS)
+    results = helpers.find_parts("oil pump", PARTS)
 
     assert results[0]["part_no"] == "PN00081115"
     assert results.index(PARTS[1]) > results.index(PARTS[0])

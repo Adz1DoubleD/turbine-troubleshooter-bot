@@ -45,8 +45,11 @@ async def handle_search(
                 lines.append(
                     f"{escape_markdown(SETTINGS.stock_no_label)}: `{p['stock_no']}`"
                 )
-            if p.get("section"):
-                lines.append(escape_markdown(p["section"]))
+            if p.get("location"):
+                lines.append(
+                    f"{escape_markdown(SETTINGS.location_label)}: "
+                    f"{escape_markdown(p['location'])}"
+                )
             found.append(
                 f"*{escape_markdown(p['description'])}*\n"
                 + "\n".join(

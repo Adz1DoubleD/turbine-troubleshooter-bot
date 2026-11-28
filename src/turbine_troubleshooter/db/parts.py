@@ -9,16 +9,16 @@ from .core import db_session
 async def part_add(
     part_no: str,
     description: str,
-    section: str = "",
     added_by: str | None = None,
     stock_no: str | None = None,
+    location: str | None = None,
 ) -> int | None:
     async with db_session() as cur:
         await cur.execute(
             "INSERT IGNORE INTO parts "
-            "(part_no, stock_no, description, section, added_by) "
+            "(part_no, stock_no, location, description, added_by) "
             "VALUES (%s, %s, %s, %s, %s)",
-            (part_no, stock_no or None, description, section, added_by),
+            (part_no, stock_no or None, location or None, description, added_by),
         )
         return cur.lastrowid if cur.rowcount else None
 
@@ -31,7 +31,7 @@ async def part_update(
     edited_at: str | None = None,
     old: Any = None,
 ) -> bool:
-    if field not in ("part_no", "stock_no", "description", "section"):
+    if field not in ("part_no", "stock_no", "location", "description"):
         raise ValueError(f"Unknown part field: {field}")
     async with db_session() as cur:
         if edited_by:
