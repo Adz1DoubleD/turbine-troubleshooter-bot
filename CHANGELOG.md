@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v3.1.0...v4.0.0) (2026-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* part_add() no longer takes section, and parts in bot_data have location instead of section.
+
+### Features
+
+* drop part sections and add a location ([#89](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/89)) ([5b11a7a](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/5b11a7a4efb1b043886075f49d4ac6906856e0fa))
+
 ## [3.1.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v3.0.0...v3.1.0) (2026-11-28)
 
 
