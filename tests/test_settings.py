@@ -82,6 +82,22 @@ def test_a_host_reads_the_prefixed_windquest_names(monkeypatch):
     assert SETTINGS.windquest_api_key == "new-key"
 
 
+def test_the_part_number_labels_default_and_can_be_renamed(monkeypatch):
+    monkeypatch.setattr(SETTINGS, "part_no_label", "Part No")
+    monkeypatch.setattr(SETTINGS, "stock_no_label", "Stock No")
+
+    setup("TROUBLESHOOTER_")
+
+    assert (SETTINGS.part_no_label, SETTINGS.stock_no_label) == ("Part No", "Stock No")
+
+    monkeypatch.setenv("TROUBLESHOOTER_PART_NO_LABEL", "Maker No")
+    monkeypatch.setenv("TROUBLESHOOTER_STOCK_NO_LABEL", "Store No")
+
+    setup("TROUBLESHOOTER_")
+
+    assert (SETTINGS.part_no_label, SETTINGS.stock_no_label) == ("Maker No", "Store No")
+
+
 def test_setup_arguments_override_environment(monkeypatch):
     monkeypatch.setenv("BOT_NAME", "From Env")
 

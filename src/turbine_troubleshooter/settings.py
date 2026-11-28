@@ -27,6 +27,8 @@ NOISE_FILTERS = (
 ENV_VARS = {
     "name": "BOT_NAME",
     "wtg_prefix": "WTG_PREFIX",
+    "part_no_label": "PART_NO_LABEL",
+    "stock_no_label": "STOCK_NO_LABEL",
     "token": "BOT_TOKEN",
     "owner_id": "OWNER_ID",
     "alerts_chat_id": "ALERTS_CHAT_ID",
@@ -46,6 +48,8 @@ ENV_VARS = {
 SETTINGS = SimpleNamespace(
     name="Troubleshooter",
     wtg_prefix="",
+    part_no_label="Part No",
+    stock_no_label="Stock No",
     token=None,
     owner_id=None,
     db_url=None,

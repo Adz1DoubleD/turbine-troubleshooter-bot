@@ -50,6 +50,7 @@ Upgrading from 2.4 or earlier: the old names are no longer read. Run on its own,
 |---|---|---|
 | `name` | `BOT_NAME` | Shown in menus and messages ("*name* Bot"). Default `Troubleshooter` |
 | `wtg_prefix` | `WTG_PREFIX` | Prefix for turbine IDs, e.g. `WT` turns `A5` into `WTA05` |
+| `part_no_label`, `stock_no_label` | `PART_NO_LABEL`, `STOCK_NO_LABEL` | What the two spare part numbers are called: usually the maker's number and your own stock number. Default `Part No` and `Stock No` |
 | `token` | `BOT_TOKEN` | Bot token from @BotFather (see [Create your Telegram bot](#create-your-telegram-bot)) |
 | `owner_id` | `OWNER_ID` | Your Telegram user ID; the owner approves access and admins ([how to find it](#your-telegram-user-id)) |
 | `alerts_chat_id` | `ALERTS_CHAT_ID` | Group or channel for everything the bot reports: new users, access requests, change notices, feedback, delete requests, ↩️ Undo, files to save and the *What's new* note. Defaults to the owner's private chat ([setting one up](#an-alerts-group-or-channel)) |
@@ -68,6 +69,8 @@ Upgrading from 2.4 or earlier: the old names are no longer read. Run on its own,
 ## Database
 
 MySQL, via `DB_URL`, e.g. `mysql://user:pass@host:3306/db`. It's required: the bot won't start without it, and never falls back to a host's own `JAWSDB_URL`, so it can't end up writing to the host's database. Tables are created on first start: `codes`, `parts`, `users`, `menus` and `attachments` (the menus, below), `io_boards` (every IO board pin-out, below), `wtgs` (turbine serials and IPs, below), `settings`, `requests` (access and admin requests waiting for the owner) and `delete_requests` (deletes by admins waiting for the owner).
+
+Each spare part has a `part_no` and an optional `stock_no`. 🔍 Search Spare Parts finds a part by either number, or by its description, and shows both numbers with their labels.
 
 Upgrading from 2.0: start version 2.1 once, then 2.6, before anything newer. 2.1 copies the old `content` rows and per-board IO tables into the tables above, and 2.2 to 2.6 remove the old ones (`content`, the per-board tables and `suggestions`). Later versions no longer have that step.
 

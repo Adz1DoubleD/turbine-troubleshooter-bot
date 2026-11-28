@@ -76,5 +76,39 @@ async def test_parts_search_hides_empty_section():
 
     await parts.handle_search(UPDATE, context, "admin part")
 
-    assert "└ `PN999`" in sent[0]["text"]
+    assert "└ Part No: `PN999`" in sent[0]["text"]
     assert "├" not in sent[0]["text"]
+
+
+@pytest.mark.asyncio
+async def test_parts_search_shows_both_numbers_with_their_labels(monkeypatch):
+    monkeypatch.setattr(parts.SETTINGS, "part_no_label", "Maker No")
+    monkeypatch.setattr(parts.SETTINGS, "stock_no_label", "Store No")
+    context, sent = parts_context(part_list=[{**PART, "stock_no": "10255168"}])
+
+    await parts.handle_search(UPDATE, context, "yaw motor")
+
+    assert (
+        "*YAW MOTOR*\n├ Maker No: `PN00400484`\n├ Store No: `10255168`\n└ 7.1 YAW Drive"
+    ) in sent[0]["text"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("text", ["10255168", "102551"], ids=["whole", "start"])
+async def test_parts_can_be_found_by_stock_number(text):
+    other = {"id": 8, "part_no": "PN1", "description": "Wing nut", "section": ""}
+    context, sent = parts_context(part_list=[other, {**PART, "stock_no": "10255168"}])
+
+    await parts.handle_search(UPDATE, context, text)
+
+    assert "YAW MOTOR" in sent[0]["text"]
+    assert "Wing nut" not in sent[0]["text"]
+
+
+@pytest.mark.asyncio
+async def test_a_part_without_a_stock_number_has_no_stock_line():
+    context, sent = parts_context()
+
+    await parts.handle_search(UPDATE, context, "yaw motor")
+
+    assert "Stock No" not in sent[0]["text"]

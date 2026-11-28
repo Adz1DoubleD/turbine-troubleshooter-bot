@@ -197,7 +197,7 @@ async def test_owner_denial_tells_user(monkeypatch):
 async def test_startup_loads_approved_users(monkeypatch, make_cursor, patch_session):
     monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
     cur = make_cursor(
-        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}],
+        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}, {"t": "stock_no"}],
         fetchall=[[], [], [{"user_id": 5}, {"user_id": 6}], []],
     )
     patch_session(db, cur)
@@ -209,6 +209,24 @@ async def test_startup_loads_approved_users(monkeypatch, make_cursor, patch_sess
     assert "SELECT user_id FROM users WHERE is_approved = 1 OR is_admin = 1" in sql
     assert not any("ALTER TABLE" in s for s in sql)
     assert app.bot_data["troubleshooter_approved"] == {5, 6}
+
+
+@pytest.mark.asyncio
+async def test_startup_adds_the_stock_number_to_an_older_parts_table(
+    monkeypatch, make_cursor, patch_session
+):
+    monkeypatch.setattr(SETTINGS.content, "IO_BOARDS", {})
+    cur = make_cursor(
+        fetchone=[{"t": "codes"}, {"t": "users"}, {"t": "parts"}, None],
+        fetchall=[[], [], [], []],
+    )
+    patch_session(db, cur)
+    app = SimpleNamespace(bot_data={})
+
+    await db.init_troubleshooter_db(app)
+
+    sql = [c.args[0] for c in cur.execute.call_args_list]
+    assert any("ALTER TABLE parts ADD COLUMN stock_no" in s for s in sql)
 
 
 @pytest.mark.asyncio

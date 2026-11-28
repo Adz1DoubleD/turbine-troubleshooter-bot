@@ -57,6 +57,7 @@ async def init_troubleshooter_db(application: Application) -> None:
                     CREATE TABLE parts (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         part_no VARCHAR(20) NOT NULL,
+                        stock_no VARCHAR(20) DEFAULT NULL,
                         description VARCHAR(160) NOT NULL,
                         section VARCHAR(60) NOT NULL,
                         added_by TEXT DEFAULT NULL,
@@ -64,6 +65,13 @@ async def init_troubleshooter_db(application: Application) -> None:
                         UNIQUE KEY part_section (part_no, section)
                     )
                 """)
+
+            await cur.execute("SHOW COLUMNS FROM parts LIKE 'stock_no'")
+            if not await cur.fetchone():
+                await cur.execute(
+                    "ALTER TABLE parts ADD COLUMN stock_no VARCHAR(20) DEFAULT NULL "
+                    "AFTER part_no"
+                )
 
             await cur.execute(
                 "SELECT id, code, advice, parts, added_by, added_at, edits FROM codes"
@@ -96,12 +104,14 @@ async def init_troubleshooter_db(application: Application) -> None:
             approved = {int(r["user_id"]) for r in await cur.fetchall()}
 
             await cur.execute(
-                "SELECT id, part_no, description, section, added_by, edits FROM parts"
+                "SELECT id, part_no, stock_no, description, section, added_by, edits "
+                "FROM parts"
             )
             parts = [
                 {
                     "id": r["id"],
                     "part_no": r["part_no"],
+                    "stock_no": r.get("stock_no") or "",
                     "description": r["description"],
                     "section": r["section"],
                     "added_by": r.get("added_by"),

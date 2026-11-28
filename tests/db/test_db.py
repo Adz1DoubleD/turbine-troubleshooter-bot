@@ -56,7 +56,7 @@ async def test_part_add_returns_new_id(make_cursor, patch_session):
     cur.lastrowid = 42
     patch_session(ts, cur)
     assert await ts.part_add("PN123", "New pump") == 42
-    assert cur.execute.call_args.args[1] == ("PN123", "New pump", "", None)
+    assert cur.execute.call_args.args[1] == ("PN123", None, "New pump", "", None)
 
 
 @pytest.mark.asyncio
@@ -261,7 +261,29 @@ async def test_part_add_saves_who_added_it(make_cursor, patch_session):
     assert await ts.part_add("PN123", "New pump", added_by="@alice") == 42
     sql, params = cur.execute.call_args.args
     assert "added_by" in sql
-    assert params == ("PN123", "New pump", "", "@alice")
+    assert params == ("PN123", None, "New pump", "", "@alice")
+
+
+@pytest.mark.asyncio
+async def test_part_add_saves_the_stock_number(make_cursor, patch_session):
+    cur = make_cursor(rowcount=1)
+    cur.lastrowid = 42
+    patch_session(ts, cur)
+
+    await ts.part_add("PN123", "New pump", stock_no="10255168")
+
+    sql, params = cur.execute.call_args.args
+    assert "stock_no" in sql
+    assert params[1] == "10255168"
+
+
+@pytest.mark.asyncio
+async def test_part_update_can_change_the_stock_number(make_cursor, patch_session):
+    cur = make_cursor(rowcount=1)
+    patch_session(ts, cur)
+
+    assert await ts.part_update(7, "stock_no", "10255168")
+    assert "`stock_no`" in cur.execute.call_args.args[0]
 
 
 @pytest.mark.asyncio
