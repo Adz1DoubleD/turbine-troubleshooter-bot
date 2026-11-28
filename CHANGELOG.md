@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v3.0.0...v3.1.0) (2026-11-28)
+
+
+### Features
+
+* add a second number to spare parts ([#87](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/issues/87)) ([d2d8182](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/commit/d2d8182a492e3e88bf5124776b45d01fa61720da))
+
 ## [3.0.0](https://github.com/Adz1DoubleD/turbine-troubleshooter-bot/compare/v2.7.0...v3.0.0) (2026-11-21)
 
 
