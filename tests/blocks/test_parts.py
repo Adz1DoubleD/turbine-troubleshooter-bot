@@ -8,7 +8,7 @@ PART = {
     "id": 7,
     "part_no": "PN00400484",
     "description": "YAW MOTOR",
-    "section": "7.1 YAW Drive",
+    "location": "B016",
 }
 
 
@@ -70,8 +70,8 @@ async def test_parts_search_admin_buttons(is_admin, shown):
 
 
 @pytest.mark.asyncio
-async def test_parts_search_hides_empty_section():
-    part = {"id": 3, "part_no": "PN999", "description": "Admin part", "section": ""}
+async def test_parts_search_hides_an_empty_location():
+    part = {"id": 3, "part_no": "PN999", "description": "Admin part"}
     context, sent = parts_context(part_list=[part])
 
     await parts.handle_search(UPDATE, context, "admin part")
@@ -81,22 +81,34 @@ async def test_parts_search_hides_empty_section():
 
 
 @pytest.mark.asyncio
-async def test_parts_search_shows_both_numbers_with_their_labels(monkeypatch):
+async def test_parts_search_shows_both_numbers_and_the_location(monkeypatch):
     monkeypatch.setattr(parts.SETTINGS, "part_no_label", "Maker No")
     monkeypatch.setattr(parts.SETTINGS, "stock_no_label", "Store No")
+    monkeypatch.setattr(parts.SETTINGS, "location_label", "Shelf")
     context, sent = parts_context(part_list=[{**PART, "stock_no": "10255168"}])
 
     await parts.handle_search(UPDATE, context, "yaw motor")
 
     assert (
-        "*YAW MOTOR*\n├ Maker No: `PN00400484`\n├ Store No: `10255168`\n└ 7.1 YAW Drive"
+        "*YAW MOTOR*\n├ Maker No: `PN00400484`\n├ Store No: `10255168`\n└ Shelf: B016"
     ) in sent[0]["text"]
+
+
+@pytest.mark.asyncio
+async def test_parts_can_be_found_by_their_location():
+    other = {"id": 8, "part_no": "PN1", "description": "Wing nut"}
+    context, sent = parts_context(part_list=[other, dict(PART)])
+
+    await parts.handle_search(UPDATE, context, "b016")
+
+    assert "YAW MOTOR" in sent[0]["text"]
+    assert "Wing nut" not in sent[0]["text"]
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("text", ["10255168", "102551"], ids=["whole", "start"])
 async def test_parts_can_be_found_by_stock_number(text):
-    other = {"id": 8, "part_no": "PN1", "description": "Wing nut", "section": ""}
+    other = {"id": 8, "part_no": "PN1", "description": "Wing nut"}
     context, sent = parts_context(part_list=[other, {**PART, "stock_no": "10255168"}])
 
     await parts.handle_search(UPDATE, context, text)

@@ -21,9 +21,10 @@ from .changes import ask_owner_to_delete
 PART_FIELDS = {
     "part_no": ("🔢", "", 20),
     "stock_no": ("🏷️", "", 20),
+    "location": ("📍", "", 40),
     "description": ("📝", "Description", 160),
-    "section": ("📂", "Section", 60),
 }
+OPTIONAL_FIELDS = ("stock_no", "location")
 
 
 async def button_part_add(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -95,9 +96,7 @@ async def button_part_edit_field(
     _, label, limit = PART_FIELDS[field]
     label = label or getattr(SETTINGS, f"{field}_label")
     current = escape_markdown(part.get(field) or "") or "_None_"
-    clear_hint = (
-        "\n_Send_ `-` _to clear it._" if field in ("section", "stock_no") else ""
-    )
+    clear_hint = "\n_Send_ `-` _to clear it._" if field in OPTIONAL_FIELDS else ""
 
     context.user_data["state"] = f"troubleshooter:part_await_edit:{field}:{part_id}"
     context.user_data["last_msg_id"] = query.message.message_id
@@ -134,9 +133,7 @@ async def handle_part_add(
         if existing:
             user_data["state"] = None
             lines = "\n".join(
-                f"• {escape_markdown(p['description'])}"
-                + (f" _({escape_markdown(p['section'])})_" if p.get("section") else "")
-                for p in existing
+                f"• {escape_markdown(p['description'])}" for p in existing
             )
             edit = [
                 InlineKeyboardButton(
@@ -185,14 +182,24 @@ async def handle_part_add(
         )
         return
 
-    if state == "troubleshooter:part_add:description":
-        user_data["new_part"]["description"] = text.strip()[:160]
-        user_data["state"] = "troubleshooter:part_add:stock_no"
+    if state in (
+        "troubleshooter:part_add:description",
+        "troubleshooter:part_add:stock_no",
+    ):
+        if state.endswith("description"):
+            user_data["new_part"]["description"] = text.strip()[:160]
+            step, field = 3, "stock_no"
+        else:
+            stock_no = text.strip().upper()
+            user_data["new_part"]["stock_no"] = "" if stock_no == "-" else stock_no[:20]
+            step, field = 4, "location"
+        user_data["state"] = f"troubleshooter:part_add:{field}"
+        label = getattr(SETTINGS, f"{field}_label")
         await context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=user_data.get("last_msg_id"),
-            text="Step 3: Enter the "
-            f"*{escape_markdown(SETTINGS.stock_no_label)}*, or `-` if there isn't one:",
+            text=f"Step {step}: Enter the *{escape_markdown(label)}*, "
+            "or `-` if there isn't one:",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -207,8 +214,8 @@ async def handle_part_add(
         return
 
     entry = user_data.pop("new_part")
-    stock_no = text.strip().upper()
-    entry["stock_no"] = "" if stock_no == "-" else stock_no[:20]
+    location = text.strip().upper()
+    entry["location"] = "" if location == "-" else location[:40]
     user_data["state"] = None
 
     user = update.effective_user
@@ -218,12 +225,11 @@ async def handle_part_add(
         entry["part_no"],
         entry["description"],
         added_by=added_by,
-        stock_no=entry["stock_no"],
+        stock_no=entry.get("stock_no"),
+        location=entry["location"],
     )
     if new_id:
-        parts.append(
-            {"id": new_id, "section": "", "added_by": added_by, "edits": [], **entry}
-        )
+        parts.append({"id": new_id, "added_by": added_by, "edits": [], **entry})
         status = f"✅ *Part Added*\n\n`{entry['part_no']}` – {escape_markdown(entry['description'])}"
         await send_notification_troubleshooter(
             update.effective_user, "part_added", entry["part_no"], entry["description"]
@@ -249,9 +255,9 @@ async def handle_part_edit(
         return
 
     value = text.strip()
-    if field in ("part_no", "stock_no"):
+    if field != "description":
         value = value.upper()
-    if field in ("section", "stock_no") and value == "-":
+    if field in OPTIONAL_FIELDS and value == "-":
         value = ""
     value = value[: PART_FIELDS[field][2]]
 
@@ -262,7 +268,7 @@ async def handle_part_edit(
     editor = f"@{user.username}" if user.username else user.full_name
     edited_at = local_now().strftime("%Y-%m-%d %H:%M")
 
-    if not value and field not in ("section", "stock_no"):
+    if not value and field not in OPTIONAL_FIELDS:
         status = f"⚠️ {label} can't be empty."
     elif value == old_value:
         status = "ℹ️ No change."
@@ -310,11 +316,10 @@ async def button_part_delete_confirm(
         await query.answer("Part not found.", show_alert=True)
         return
 
-    section = f"\n_{escape_markdown(part['section'])}_" if part.get("section") else ""
     owner = is_owner(query.from_user.id)
     await query.edit_message_text(
         f"⚠️ *Are you sure?*\n\nDelete `{part['part_no']}` – "
-        f"{escape_markdown(part['description'])}{section}"
+        f"{escape_markdown(part['description'])}"
         + ("" if owner else "\n\nThe owner has to approve it before it's removed."),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -391,14 +396,14 @@ async def _show_part(
     part: dict[str, Any],
     status: str | None = None,
 ) -> None:
-    section = escape_markdown(part["section"]) if part.get("section") else "_None_"
     stock_no = f"`{part['stock_no']}`" if part.get("stock_no") else "_None_"
+    location = escape_markdown(part["location"]) if part.get("location") else "_None_"
     text = (f"{status}\n\n" if status else "") + (
         f"🔩 *Edit Part*\n\n"
         f"*{escape_markdown(SETTINGS.part_no_label)}:* `{part['part_no']}`\n"
         f"*{escape_markdown(SETTINGS.stock_no_label)}:* {stock_no}\n"
-        f"*Description:* {escape_markdown(part['description'])}\n"
-        f"*Section:* {section}\n\n"
+        f"*{escape_markdown(SETTINGS.location_label)}:* {location}\n"
+        f"*Description:* {escape_markdown(part['description'])}\n\n"
         f"Select a field to change:"
     )
     kb = [

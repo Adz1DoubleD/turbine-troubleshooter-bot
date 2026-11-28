@@ -204,7 +204,7 @@ def find_parts(
         part_no = p["part_no"].lower()
         stock_no = (p.get("stock_no") or "").lower()
         desc = p["description"].lower()
-        hay = f"{desc} {p['section'].lower()}"
+        hay = f"{desc} {(p.get('location') or '').lower()}"
         if q in (part_no, stock_no):
             return [p]
         if part_no.startswith(q) or (stock_no and stock_no.startswith(q)):
